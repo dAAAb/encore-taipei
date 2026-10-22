@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import making from '@/data/making-of.json'
 import tvMaking from '@/data/encore-tv-making.json'
 import { useTv } from '../store'
@@ -7,10 +7,22 @@ const nf = new Intl.NumberFormat('zh-TW')
 const wan = (n: number) => `${nf.format(Math.round(n / 1e4))} 萬`
 
 type Block = { title: string; rows: [string, string][] } | { big: string; sub?: string }
+interface PhotoCredit {
+  title: string
+  author: string
+  license: string
+}
 
 /** The end-of-show roll: every channel's maker, the tools, the sources, and what it cost to make. */
 export function Credits({ duration, onEnd }: { duration: number; onEnd: () => void }) {
   const channels = useTv((s) => s.channels)
+  const [photos, setPhotos] = useState<PhotoCredit[]>([])
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}montage/credits.json`)
+      .then((r) => r.json() as Promise<{ credits: PhotoCredit[] }>)
+      .then((d) => setPhotos(d.credits))
+      .catch(() => {})
+  }, [])
   const blocks = useMemo<Block[]>(
     () => [
       { big: '台北安可電視台', sub: 'ENCORE.TAIPEI' },
@@ -29,6 +41,14 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
           ['星座臉孔', 'MediaPipe Face Landmarker'],
         ],
       },
+      ...(photos.length
+        ? [
+            {
+              title: '新聞特輯照片（Wikimedia Commons）',
+              rows: photos.map((p) => [p.license, `${p.author}《${p.title.replace(/\.(jpe?g|png|svg)$/i, '')}》`] as [string, string]),
+            },
+          ]
+        : []),
       {
         title: '開源工具',
         rows: [
@@ -48,7 +68,7 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
       { title: '特別感謝', rows: [['', '每一位做了自己舞台的市民'], ['', '還有，正在看的你']] },
       { big: '安可！', sub: '下一台，換你上台' },
     ],
-    [channels],
+    [channels, photos],
   )
 
   return (

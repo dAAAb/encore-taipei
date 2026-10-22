@@ -45,7 +45,8 @@ export function createScreenMaterial(map: THREE.Texture) {
         col = mix(col, vec3(l) * vec3(1.08, 0.98, 0.82), uSepia);
 
         float scan = 0.5 + 0.5 * sin(uv.y * uLines * 3.14159);
-        col *= 1.0 - uScan * 0.28 * scan;
+        float resolvable = clamp(1.6 - fwidth(uv.y * uLines) * 2.0, 0.0, 1.0);
+        col *= 1.0 - uScan * 0.28 * scan * resolvable;
         col *= 1.0 - uCurve * 0.42 * dot(c, c);
         col *= 1.0 + uScan * 0.04 * sin(uTime * 60.0);
 

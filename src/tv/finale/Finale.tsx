@@ -6,7 +6,7 @@ import { useTv } from '../store'
 import { Credits } from './Credits'
 import { FinaleScene } from './FinaleScene'
 
-const CREDITS_SECONDS = 58
+const CREDITS_SECONDS = 72
 
 type Stage = 'show' | 'credits' | 'slit' | 'through'
 
