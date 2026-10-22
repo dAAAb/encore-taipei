@@ -1,31 +1,55 @@
-# 台北安可之夜｜蔣萬安黃金十年政見 3D 互動派對
+# 台北安可電視台 ENCORE.TAIPEI
 
-一個互動 3D 網站：2033 年，松山機場遷移後的台北 AI 園區裡，園區最高樓的未來夜店今晚全場爆滿。
-場景向電玩《電馭叛客 2077》的傳奇酒吧「來生（Afterlife）」致敬。
-蔣萬安在中央舞台跳著麥可傑克森式的旋轉、月球漫步、踮腳與反重力傾斜舞步；政見以 3D 立體字從畫面外飛進他的對話泡泡；
-台下數百位背對鏡頭的群眾揮舞應援棒、尖叫，並喊出他們最有感的四年施政成績。
+空房間裡有一台電視。打開它，從十大建設、竹科、台積電一路看到公館圓環，鏡頭推進螢幕，轉到第 2026 台就是〈台北安可之夜〉；
+再往下轉，每一台都是一位市民用 AI 做的台北安可舞台。轉到最後一台「訊號徵求中」，你也可以送出自己的舞台。
 
 > 粉絲創作之互動藝術作品，非蔣萬安競選團隊官方網站。
 
-## 畫面風格
-
-- **Colorfigures 手繪等角風**（[april-zhu.com/colorfigures](https://april-zhu.com/colorfigures)）：三階平塗明暗（toon gradient map）、
-  粗墨線輪廓（inverted hull，連 instanced 群眾都有）、扁平靛藍投影、暖色紙張卡片與紙紋顆粒。
-- **Cyberpunk 2077「來生」夜店**：深紫夜色、腥紅霓虹招牌、青色雷射、體積光束、Bloom 光暈、掃描線與色差。
-- **2033 台北 AI 園區**：落地玻璃外是 110 公頃中央公園、基隆河、XY 軸磁浮捷運、無人機車流、AI 園區塔樓與遠方的台北 101。
-
-## 功能
-
-| 功能 | 說明 |
+| 網址 | 內容 |
 | --- | --- |
-| 舞台 | 蔣萬安 3D 角色（深藍西裝、淺藍領帶、MJ 白手套與白襪），40 拍一輪的舞步循環，跟著節拍跳 |
-| 3D 政見泡泡 | 每隔不定時間，從 22 條「黃金十年」政見中挑一條，每個字都是擠出成型的 3D 字，從畫面外旋轉飛入、落定、再炸開飛走 |
-| 群眾 | 約 450 位 instanced 人影，跳躍、揮手、應援棒、手機錄影；隨機冒出 HTML 對話泡泡喊出 35 項四年政績 |
-| LED 大螢幕 | 輪播「台北安可」、蔣萬安肖像、「黃金十年」、「870 公頃」，說政見時顯示政策分類 |
-| 背景音樂 | 以 YouTube 內嵌播放器播放蔣萬安頻道官方〈台北安可〉MV；無法載入時自動切換為網站內建的流行龐克節拍（Web Audio 即時合成，副歌會用語音合成喊「台北！安可！」） |
-| 視角 | 正面／特寫／等角／環繞，可拖曳旋轉、滾輪縮放 |
-| 政績資料 | 側欄列出所有政績與政見，每條附出處連結 |
-| 製作花絮 | 政績資料側欄最下方的「Made with Cursor × Opus 5.5 × Colorfigures」彩蛋：原始 prompt、製作時間、token 用量與費用估算（`src/data/making-of.json`） |
+| `/` | 電視台（後室、新聞特輯開場、轉台、片尾） |
+| `/2026/`、`/2027/`… | 直接轉到某一台，每台有自己的分享預覽圖與標題 |
+| `/club/` | 第 2026 台〈台北安可之夜〉單獨開啟 |
+| `/admin/` | 頻道管理（需要管理連結） |
+
+目前 Beta 版部署在 [encore.taipei/beta/](http://encore.taipei/beta/)，正式站 `encore.taipei/` 仍是第 2026 台。
+
+## 一次看完
+
+1. **後室開場**：黃色壁紙的 Backrooms 走廊盡頭有一台老電視。點一下，電視「啪」一聲亮起，播出〈台北安可 新聞特輯〉：
+   1974 十大建設、1980 新竹科學園區、1987 台積電、2012 美國免簽、2016 北門重見天日、2025 公館圓環拆除。
+   鏡頭一路推近，燈光從閃爍變得明亮，電視從 70 年代木頭電視、90 年代映像管電視變成液晶電視，最後依照你的螢幕比例推進到滿版。
+2. **轉台**：右下角漂浮的遙控器（像 GTA 的手機）可以轉台、調音量、靜音、輸入台號、看資訊、分享；
+   鍵盤 ← → 轉台、+ − 音量、M 靜音、I 資訊、數字鍵直接選台。轉台有雜訊與音效，右上角短暫顯示台號，就像液晶電視。
+3. **上架你的舞台**：最後一台是彩色條紋的「訊號徵求中」。按「怎麼做」拿到 prompt 與步驟，按「上架這一台」填網址，
+   送出後這一台立刻換成你的舞台（只有你看得到），管理員審核通過才正式上架。
+4. **關機彩蛋**：按遙控器電源鍵，鏡頭拉遠，電視其實站在大安森林公園露天音樂台上，噴出火焰飛上天，穿過雲層看見以台灣為中心的地球，
+   飛進星空。星星連成蔣萬安的臉、眨眼、閃十字光，〈台北安可〉響起，片尾名單滾動。最後畫面中間裂開一道白線，點一下穿過去，回到後室，電視掉在地上。
+
+## 頻道與後台
+
+頻道資料存在 Supabase（`ai2023` 專案中以 `encore_` 開頭的資料表），所有讀寫都經過 `supabase/migrations/` 裡的 SQL 函式：
+
+| 函式 | 誰能用 | 做什麼 |
+| --- | --- | --- |
+| `encore_public_channels()` | 所有人 | 已上架的頻道（不含聯絡 email） |
+| `encore_submit(...)` | 所有人 | 送出新舞台，狀態為「待審核」；限 https、同網址不重複、每小時上限 |
+| `encore_admin_list/update/delete(p_key, ...)` | 持管理金鑰者 | 列出全部投稿、上架／隱藏、改台號、刪除 |
+
+管理金鑰只存雜湊值（`encore_admin_keys`）。管理連結的格式是 `…/admin/#key=金鑰`，金鑰放在網址 `#` 後面，不會送到任何伺服器；
+第一次開啟後會記在瀏覽器裡，換電腦時再開一次連結即可。新增或更換金鑰：
+
+```sql
+insert into public.encore_admin_keys (key_hash, label)
+values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明');
+```
+
+上架或改台號後電視會立刻更新；每台的分享頁（`/2027/index.html` 與 `og/2027.png`）在建置時產生，GitHub Actions 每小時自動重建一次。
+
+### 給舞台作者：讓遙控器控制你的頁面（選用）
+
+電視會用 `postMessage` 傳 `{ type: 'encore:volume', volume: 0–1, muted }` 給你的頁面；
+你的頁面也可以把方向鍵傳回來：`parent.postMessage({ type: 'encore:key', key: 'ArrowRight' }, '*')`。
 
 ## 本機執行
 
@@ -33,30 +57,27 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:4733
+npm run dev        # http://localhost:4733（電視台）、/club/、/admin/、/2027/
+npm run build      # 產生 dist/（含每台的分享頁與預覽圖）
+npm run preview
 ```
 
-其他指令：
-
-```bash
-npm run build      # 產生 dist/
-npm run preview    # 預覽 production build（同樣在 4733 埠）
-```
-
-網址加上 `?autostart=1` 可略過進場畫面（無聲，方便截圖）；`?view=close` 直接以特寫視角開啟。
+第 2026 台單獨開啟時，網址加上 `?autostart=1` 可略過進場畫面；`?view=close` 直接以特寫視角開啟。
 
 ## 部署
 
-純靜態網站，`npm run build` 後把 `dist/` 放到任何靜態主機即可。兩個建置用環境變數：
+純靜態網站加 Supabase。建置用環境變數：
 
 | 變數 | 用途 | 例子 |
 | --- | --- | --- |
-| `BASE_PATH` | 網站不在網域根目錄時的子路徑 | `/taipei-encore/` |
-| `SITE_URL` | 公開網址，用來產生分享預覽圖（og:image）與 canonical 的絕對網址 | `https://you.github.io/taipei-encore` |
+| `BASE_PATH` | 網站不在網域根目錄時的子路徑 | `/beta/` |
+| `SITE_URL` | 公開網址，用來產生分享預覽圖與 canonical 的絕對網址 | `https://encore.taipei/beta` |
 
-**GitHub Pages + encore.taipei**：repo 已附 `.github/workflows/deploy-pages.yml`，推到 `main` 就會先建置，再發布 `dist/`。
-workflow 會透過 `actions/configure-pages` 讀取 Pages 的實際網址，自動設定資源路徑與分享網址；因此預設的
-[GitHub Pages 網址](https://daaab.github.io/encore-taipei/) 與自訂網域 [encore.taipei](https://encore.taipei) 都不需要手動修改 workflow。第一次設定：
+`.github/workflows/deploy-pages.yml` 在推到 `main`、手動執行或每小時整點過 17 分時：先建置 `main` 放在網站根目錄，
+再把 Beta 分支（`cursor/encore-tv-0d54`）建置到 `/beta/`。Beta 建置失敗不會影響正式站。
+Beta 測試順利後，把 Beta 分支合併進 `main`，電視台就會變成 `encore.taipei/`，各台網址變成 `encore.taipei/2027/`。
+
+GitHub Pages 與 encore.taipei 的第一次設定：
 
 1. GitHub repo 的 **Settings → Pages**：**Source** 選 **GitHub Actions**；**Custom domain** 填 `encore.taipei` 按 Save。
    請勿選 **Deploy from a branch → main / (root)**：這是 Vite 專案，原始碼根目錄不是可直接發布的成品。
@@ -73,17 +94,16 @@ workflow 會透過 `actions/configure-pages` 讀取 Pages 的實際網址，自�
 4. 到 **Actions → Deploy to GitHub Pages → Run workflow** 重新部署一次。之後每次新增、變更或移除 Custom domain，
    也要重新執行 workflow，讓建置使用更新後的網址與資源路徑。
 
-不用自訂網域時，清除 Pages 的 Custom domain，再重新執行 workflow，即可使用預設 GitHub Pages 網址。
+## 素材與資料
 
-分享預覽圖是 `public/og.jpg`（1200×630）。
+- **新聞特輯照片**：Wikimedia Commons 的公共領域與創用 CC 授權影像，作者與授權逐張列在 `public/montage/credits.json`，片尾名單也會顯示。
+- **新聞旁白**：Microsoft Edge 語音合成（zh-TW HsiaoChen），老年代片段加上收音機與雜訊效果（`public/montage/vo-*.mp3`）。
+- **地球夜景**：NASA Earth Observatory「Black Marble」（公共領域）。
+- **星座臉孔**：`scripts/build_face.py` 用 MediaPipe Face Landmarker 從 `public/images/mayor-portrait.jpg` 取 478 個臉部特徵點，挑出約 100 顆星連線。
+- **第 2026 台資料**：`src/data/achievements.json`（四年施政成績，整理自 gov.taipei 新聞稿、中央社、聯合報、公視等，每條附 `source`）、
+  `src/data/platform.json`（黃金十年政見）、`src/data/stage3d.json`（舞台喊話與 3D 招牌）。
 
-## 資料
-
-- `src/data/achievements.json`：四年施政成績（群眾喊話），整理自 gov.taipei 新聞稿、中央社、聯合報、公視等，每條附 `source`。
-- `src/data/platform.json`：黃金十年政見（舞台 3D 泡泡），來自競選文宣與 2026 年 8–10 月公開記者會；部分仍屬規劃階段，詳見各條 `detail`。
-- `src/data/stage3d.json`：舞台喊話與 3D 招牌文字。
-
-修改上述文字後，需重新產生字型子集（3D 字只收錄用到的字）：
+修改任何中文字後，需重新產生字型子集：
 
 ```bash
 pip install fonttools brotli skia-pathops
@@ -91,17 +111,23 @@ curl -L -o /tmp/NotoSansTC.ttf "https://github.com/google/fonts/raw/main/ofl/not
 python3 scripts/build_font.py /tmp/NotoSansTC.ttf
 ```
 
-會輸出 `public/fonts/noto-tc-black.typeface.json`（three.js 3D 字型）與兩個 UI 用 woff2。字型為 Noto Sans TC（SIL Open Font License 1.1）。
+字型為 Noto Sans TC（SIL Open Font License 1.1）。分享預覽圖用的 `scripts/assets/og-*.ttf` 只含 `scripts/channel-pages.ts` 裡用到的字。
 
 ## 技術
 
-Vite · React 19 · TypeScript · three.js · @react-three/fiber · drei · postprocessing · zustand · Tailwind CSS v4 · shadcn/ui
+Vite（多頁：電視台、第 2026 台、後台）· React 19 · TypeScript · three.js · @react-three/fiber · drei · postprocessing · zustand ·
+Tailwind CSS v4 · shadcn/ui · Supabase · resvg
 
 ```
 src/
-  scene/        Club（夜店與吧台）、Stage（舞台、LED、光束、雷射）、Mayor（角色與舞步）、
-                MayorSpeech（3D 政見泡泡）、Crowd（群眾與喊話）、City（2033 台北 AI 園區）
-  three/        toon 材質與墨線、幾何快取、3D 字型與排版
+  tv/           電視台：狀態、轉台、遙控器、OSD、上架表單
+    scene/      後室、三代電視機、螢幕 shader、開場導演
+    montage/    新聞特輯（2D canvas 逐格繪製）與旁白
+    finale/     關機彩蛋：大安森林公園、火箭、地球、星座臉、片尾名單
+  admin/        Steam 風格頻道管理
+  scene/        第 2026 台：夜店、舞台、角色、3D 政見泡泡、群眾、城市
+  three/        toon 材質與墨線、幾何快取、3D 字型
   audio/        節拍時鐘、Web Audio 合成器、YouTube 播放器
-  components/   進場畫面、HUD、政績資料側欄
+scripts/        字型子集、分享頁產生器、星座臉產生器
+supabase/       資料表與函式
 ```
