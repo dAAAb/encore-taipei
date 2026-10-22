@@ -20,8 +20,8 @@ export interface Channel {
   created_at?: string
 }
 
-export interface AdminChannel extends Channel {
-  channel: number
+export interface AdminChannel extends Omit<Channel, 'channel'> {
+  channel: number | null
   status: 'pending' | 'live' | 'hidden'
   contact: string | null
   updated_at: string

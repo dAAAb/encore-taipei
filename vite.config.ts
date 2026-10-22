@@ -47,14 +47,14 @@ export default defineConfig({
   base,
   plugins: [react(), tailwindcss(), shareUrls(), channelRoutes(), channelPages({ siteUrl, base })],
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') },
+    alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
   build: {
     rollupOptions: {
       input: {
-        tv: path.resolve(__dirname, 'index.html'),
-        club: path.resolve(__dirname, 'club/index.html'),
-        admin: path.resolve(__dirname, 'admin/index.html'),
+        tv: path.resolve(import.meta.dirname, 'index.html'),
+        club: path.resolve(import.meta.dirname, 'club/index.html'),
+        admin: path.resolve(import.meta.dirname, 'admin/index.html'),
       },
     },
   },

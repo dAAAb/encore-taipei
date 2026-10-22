@@ -67,6 +67,8 @@ export class Montage {
   }
 
   load() {
+    document.fonts?.load(`900 48px ${FONT}`).catch(() => {})
+    document.fonts?.load(`700 24px ${FONT}`).catch(() => {})
     for (const seg of SEGMENTS)
       for (const file of seg.images) {
         if (this.images.has(file)) continue

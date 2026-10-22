@@ -5,7 +5,7 @@ import { FALLBACK_CHANNELS, fetchLiveChannels, FIRST_CHANNEL, type Channel } fro
 
 /** Empty "signal wanted" channels pre-rendered past the last live one, so fresh share links still unfurl. */
 const SPARE_CHANNELS = 16
-const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(__dirname, 'assets', f))
+const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.meta.dirname, 'assets', f))
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
@@ -28,7 +28,7 @@ function setMeta(html: string, m: { title: string; description: string; image: s
   return html
 }
 
-const SCANLINES = `<pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="2" fill="#000" fill-opacity="0.22"/></pattern>`
+const SCANLINES = `<pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="2" fill="#000" fill-opacity="0.12"/></pattern>`
 const GLOW = `<filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`
 const BARS = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0']
 
@@ -36,7 +36,7 @@ function frame(inner: string, screen = '#0b1020') {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>${SCANLINES}${GLOW}
     <radialGradient id="room" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="#3a3115"/><stop offset="1" stop-color="#0b0906"/></radialGradient>
-    <radialGradient id="tube" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="${screen}" stop-opacity="0.6"/><stop offset="1" stop-color="#020306"/></radialGradient>
+    <radialGradient id="tube" cx="50%" cy="50%" r="72%"><stop offset="0.62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.6"/></radialGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#room)"/>
   <rect x="70" y="40" width="1060" height="550" rx="34" fill="#15120d" stroke="#0c0812" stroke-width="6"/>
