@@ -9,6 +9,8 @@ export type PlatformItem = (typeof platform)[number]
 interface ClubState {
   started: boolean
   musicMode: MusicMode
+  /** The listener's choice; YouTube may not be ready yet when they pick it. */
+  wantMusic: MusicMode
   youtubeReady: boolean
   youtubeFailed: boolean
   view: ViewMode
@@ -17,6 +19,7 @@ interface ClubState {
   hype: number
   start: () => void
   setMusicMode: (m: MusicMode) => void
+  setWantMusic: (m: MusicMode) => void
   setYoutubeReady: (v: boolean) => void
   setYoutubeFailed: () => void
   setView: (v: ViewMode) => void
@@ -27,6 +30,7 @@ interface ClubState {
 export const useClub = create<ClubState>((set) => ({
   started: false,
   musicMode: 'youtube',
+  wantMusic: 'youtube',
   youtubeReady: false,
   youtubeFailed: false,
   view: (new URLSearchParams(location.search).get('view') as ViewMode | null) ?? 'front',
@@ -35,6 +39,7 @@ export const useClub = create<ClubState>((set) => ({
   hype: 0,
   start: () => set({ started: true }),
   setMusicMode: (musicMode) => set({ musicMode }),
+  setWantMusic: (wantMusic) => set({ wantMusic }),
   setYoutubeReady: (youtubeReady) => set({ youtubeReady }),
   setYoutubeFailed: () =>
     set((s) => ({

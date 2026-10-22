@@ -24,6 +24,7 @@ export default function App() {
 
   useEffect(() => {
     if (new URLSearchParams(location.search).has('autostart')) start()
+    if (import.meta.env.DEV) Object.assign(window, { __club: useClub })
   }, [start])
 
   const enter = async () => {

@@ -1,6 +1,7 @@
 import { Disc3, ExternalLink, Music2, VolumeX } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { applyMusic, mountYouTube } from '@/audio/music'
+import { TAIPEI_ENCORE_URL } from '@/audio/youtube'
 import { useClub, type MusicMode, type ViewMode } from '@/lib/store'
 import { DataSheet } from './DataSheet'
 
@@ -46,6 +47,22 @@ function YouTubeCard() {
   )
 }
 
+function YouTubeFallback() {
+  const started = useClub((s) => s.started)
+  const failed = useClub((s) => s.youtubeFailed)
+  const mode = useClub((s) => s.musicMode)
+  if (!started || !failed) return null
+  return (
+    <div className="ink-card slide-up fixed bottom-3 left-3 z-20 w-[min(300px,calc(100vw-24px))] p-3 text-xs">
+      <p className="font-black">這個瀏覽器無法嵌入播放〈台北安可〉MV</p>
+      <p className="mt-1 text-[#4a4f6e]">{mode === 'synth' ? '已改用網站內建的流行龐克節拍。' : '可切換到內建節拍。'}</p>
+      <a href={TAIPEI_ENCORE_URL} target="_blank" rel="noreferrer" className="mt-1.5 inline-flex items-center gap-1 font-black text-[#1f4fd1] hover:underline">
+        到 YouTube 聽官方 MV <ExternalLink className="size-3" />
+      </a>
+    </div>
+  )
+}
+
 function PolicyCaption() {
   const speech = useClub((s) => s.speech)
   if (!speech) return null
@@ -81,7 +98,10 @@ export function Hud() {
   const setView = useClub((s) => s.setView)
   const ytFailed = useClub((s) => s.youtubeFailed)
 
+  const setWant = useClub((s) => s.setWantMusic)
+
   const pickMusic = async (m: MusicMode) => {
+    setWant(m)
     const actual = await applyMusic(m)
     setMode(actual)
   }
@@ -89,6 +109,7 @@ export function Hud() {
   return (
     <>
       <YouTubeCard />
+      <YouTubeFallback />
       {started && (
         <>
           <header className="pointer-events-none fixed top-3 left-3 z-20 select-none">

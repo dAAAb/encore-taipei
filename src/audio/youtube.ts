@@ -39,22 +39,15 @@ declare global {
 
 let apiPromise: Promise<YTNamespace> | null = null
 
-export function loadYouTubeApi(timeoutMs = 12000): Promise<YTNamespace> {
+export function loadYouTubeApi(): Promise<YTNamespace> {
   if (apiPromise) return apiPromise
   apiPromise = new Promise((resolve, reject) => {
     if (window.YT?.Player) return resolve(window.YT)
-    const timer = window.setTimeout(() => reject(new Error('YouTube API timeout')), timeoutMs)
-    window.onYouTubeIframeAPIReady = () => {
-      window.clearTimeout(timer)
-      resolve(window.YT!)
-    }
+    window.onYouTubeIframeAPIReady = () => resolve(window.YT!)
     const s = document.createElement('script')
     s.src = 'https://www.youtube.com/iframe_api'
     s.async = true
-    s.onerror = () => {
-      window.clearTimeout(timer)
-      reject(new Error('YouTube API blocked'))
-    }
+    s.onerror = () => reject(new Error('YouTube API blocked'))
     document.head.appendChild(s)
   })
   return apiPromise

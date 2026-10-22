@@ -21,10 +21,20 @@ export function mountYouTube(el: HTMLElement) {
           playsinline: 1,
           loop: 1,
           playlist: TAIPEI_ENCORE_VIDEO_ID,
+          origin: location.origin,
         },
         events: {
-          onReady: () => setYoutubeReady(true),
-          onError: () => setYoutubeFailed(),
+          onReady: () => {
+            setYoutubeReady(true)
+            const s = useClub.getState()
+            if (s.started && s.wantMusic === 'youtube' && s.musicMode !== 'youtube') {
+              applyMusic('youtube').then((m) => useClub.getState().setMusicMode(m))
+            }
+          },
+          onError: (e) => {
+            console.warn('YouTube player error', e.data)
+            setYoutubeFailed()
+          },
           onStateChange: (e) => {
             if (e.data === 0) {
               e.target.seekTo(0, true)
