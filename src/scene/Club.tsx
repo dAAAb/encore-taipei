@@ -4,7 +4,8 @@ import * as THREE from 'three'
 import { beatNow, isChorus, pulse } from '@/audio/beat'
 import { cyl, rbox, sphere, torus } from '@/three/geo'
 import { Part } from '@/three/Part'
-import { neon, SANITIZE, shadowCatcher, toon } from '@/three/toon'
+import { BANDS, neon, SANITIZE, shadowCatcher, toon } from '@/three/toon'
+import { FLOOR } from './Clouds'
 import { NeonText } from './NeonText'
 
 export const GLASS_Z = -21
@@ -196,55 +197,48 @@ function HangingRings() {
   )
 }
 
-const ROOM_W = 52
-const ROOM_H = 18
-const ROOM_FRONT = 21
-
-/** Side walls and ceiling so the club never reads as a floating set piece. */
-function Shell() {
-  const len = ROOM_FRONT - GLASS_Z
-  const midZ = (ROOM_FRONT + GLASS_Z) / 2
-  const pillars = useMemo(() => Array.from({ length: 7 }, (_, i) => GLASS_Z + 2.5 + i * 6.4), [])
+/** Club floor that dissolves into the cloud banks instead of ending on a hard edge. */
+function Floor() {
+  const mat = useMemo(() => {
+    const m = new THREE.MeshToonMaterial({ color: '#1d1629', gradientMap: BANDS })
+    m.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec2 vFloorXZ;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFloorXZ = (modelMatrix * vec4(transformed, 1.0)).xz;')
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec2 vFloorXZ;')
+        .replace(
+          '#include <dithering_fragment>',
+          `float edge = smoothstep(${(FLOOR.halfW - 9).toFixed(1)}, ${(FLOOR.halfW - 0.5).toFixed(1)}, abs(vFloorXZ.x));
+          edge = max(edge, 1.0 - smoothstep(${(FLOOR.back + 0.5).toFixed(1)}, ${(FLOOR.back + 4).toFixed(1)}, vFloorXZ.y));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.36, 0.25, 0.58), edge * 0.85);
+          #include <dithering_fragment>`,
+        )
+    }
+    m.customProgramCacheKey = () => 'club-floor'
+    return m
+  }, [])
+  const w = FLOOR.halfW * 2
+  const d = FLOOR.front - FLOOR.back
+  const z = (FLOOR.front + FLOOR.back) / 2
   return (
-    <group>
-      {[-1, 1].map((s) => (
-        <group key={s} position={[(s * ROOM_W) / 2, 0, 0]}>
-          <mesh position={[0, ROOM_H / 2, midZ]} rotation={[0, -s * (Math.PI / 2), 0]} material={toon('#171124')}>
-            <planeGeometry args={[len, ROOM_H]} />
-          </mesh>
-          {pillars.map((z, i) => (
-            <group key={z} position={[-s * 0.3, 0, z]}>
-              <Part geo={rbox(0.6, ROOM_H, 0.8, 0.08)} mat={toon('#1f1830')} position={[0, ROOM_H / 2, 0]} outline={0.04} />
-              <mesh geometry={rbox(0.06, ROOM_H - 1.6, 0.06, 0.02)} material={neon(i % 2 ? '#2ef2ff' : '#ff2a4d', 2.2)} position={[-s * 0.34, ROOM_H / 2, 0]} />
-            </group>
-          ))}
-          <mesh geometry={rbox(0.08, 0.08, len, 0.02)} material={neon('#ff2a4d', 2.6)} position={[-s * 0.1, 0.55, midZ]} />
-          <mesh geometry={rbox(0.08, 0.08, len, 0.02)} material={neon('#2f7bff', 2.4)} position={[-s * 0.1, 7.6, midZ]} />
-          <mesh geometry={rbox(0.08, 0.08, len, 0.02)} material={neon('#ffd400', 2)} position={[-s * 0.1, 16.8, midZ]} />
-        </group>
-      ))}
-      <mesh position={[0, ROOM_H, midZ]} rotation={[Math.PI / 2, 0, 0]} material={toon('#0f0b18')}>
-        <planeGeometry args={[ROOM_W, len]} />
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, z]} material={mat}>
+        <planeGeometry args={[w, d]} />
       </mesh>
-      {[-12, -2, 8, 17].map((z) => (
-        <Part key={z} geo={rbox(ROOM_W, 0.5, 0.5, 0.06)} mat={toon('#1f1830')} position={[0, ROOM_H - 0.4, z]} outline={0.03} />
-      ))}
-    </group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, z]} receiveShadow material={shadowCatcher(0.5)}>
+        <planeGeometry args={[w, d]} />
+      </mesh>
+    </>
   )
 }
 
 export function Club() {
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -2]} material={toon('#1d1629')}>
-        <planeGeometry args={[60, 46]} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, -2]} receiveShadow material={shadowCatcher(0.5)}>
-        <planeGeometry args={[60, 46]} />
-      </mesh>
+      <Floor />
       <DanceFloor />
       <GlassFacade />
-      <Shell />
       <AfterlifeBar />
       <EncoreLounge />
       <HangingRings />

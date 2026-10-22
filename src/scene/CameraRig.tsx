@@ -6,8 +6,10 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useClub, type ViewMode } from '@/lib/store'
 
 const TARGET = new THREE.Vector3(0, 3.5, -8.5)
-/** Beyond this the camera leaves the room (walls at x ±26, open front at z 21, ceiling at y 18). */
-const MAX_DIST = 30
+const MAX_DIST = 38
+
+export const CAMERA_TARGET: Readonly<THREE.Vector3> = TARGET
+export const maxCameraDistance = (portrait: boolean) => MAX_DIST * (portrait ? 0.86 : 1)
 
 const PRESETS: Record<ViewMode, { az: number; polar: number; dist: number }> = {
   front: { az: 0, polar: 1.3, dist: 23 },
@@ -68,11 +70,11 @@ export function CameraRig() {
       enableDamping
       dampingFactor={0.08}
       minDistance={7}
-      maxDistance={MAX_DIST * (portrait ? 0.86 : 1)}
+      maxDistance={maxCameraDistance(portrait)}
       minPolarAngle={1.1}
       maxPolarAngle={1.5}
-      minAzimuthAngle={-0.8}
-      maxAzimuthAngle={0.8}
+      minAzimuthAngle={-0.9}
+      maxAzimuthAngle={0.9}
       rotateSpeed={0.6}
       onStart={() => {
         userActive.current = true

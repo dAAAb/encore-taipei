@@ -5,8 +5,10 @@ import { Suspense } from 'react'
 import * as THREE from 'three'
 import { CameraRig } from './CameraRig'
 import { City } from './City'
+import { Clouds } from './Clouds'
 import { Club } from './Club'
 import { Crowd } from './Crowd'
+import { Haze } from './Haze'
 import { Lights } from './Lights'
 import { Mayor } from './Mayor'
 import { MayorSpeech } from './MayorSpeech'
@@ -30,6 +32,7 @@ export function ClubScene({ lowPower }: { lowPower: boolean }) {
       <Suspense fallback={null}>
         <Lights />
         <Club />
+        <Clouds />
         <City />
         <Stage />
         <Mayor />
@@ -37,6 +40,7 @@ export function ClubScene({ lowPower }: { lowPower: boolean }) {
         <MayorSpeech />
         <CameraRig />
         <EffectComposer multisampling={lowPower ? 0 : 4}>
+          <Haze lowPower={lowPower} />
           <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.2} intensity={1.15} radius={0.72} />
           <ChromaticAberration offset={CA_OFFSET} radialModulation={false} modulationOffset={0} />
           <Noise premultiply blendFunction={BlendFunction.SCREEN} opacity={0.18} />
