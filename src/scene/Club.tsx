@@ -130,8 +130,8 @@ function AfterlifeBar() {
         </group>
       ))}
       <group ref={sign} position={[-13.6, 6.3, z + 1.5]}>
-        <NeonText text="來生" size={2.1} material={neon('#ff2a4d', 4)} position={[0, 0.55, 0]} />
-        <NeonText text="AFTERLIFE" size={0.82} material={neon('#ff6a7d', 3)} position={[0, -0.85, 0]} />
+        <NeonText text="黃金十年" size={1.5} material={neon('#ff2a4d', 4)} position={[0, 0.4, 0]} />
+        <NeonText text="GOLDEN DECADE" size={0.6} material={neon('#ffb800', 3.4)} position={[0, -0.95, 0]} />
       </group>
       <Part geo={rbox(7.2, 4.4, 0.25, 0.1)} mat={toon('#120a10')} position={[-13.6, 6.15, z + 1.3]} outline={0.04} />
       {[-1, 1].map((s) => (
