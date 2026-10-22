@@ -2,6 +2,7 @@ import { ExternalLink, ScrollText } from 'lucide-react'
 import achievements from '@/data/achievements.json'
 import platform from '@/data/platform.json'
 import { TAIPEI_ENCORE_URL } from '@/audio/youtube'
+import { MakingOf } from '@/components/MakingOf'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -41,7 +42,7 @@ export function DataSheet() {
             <TabsTrigger value="about" className="font-black data-active:bg-[#ffd400]">關於</TabsTrigger>
           </TabsList>
           <TabsContent value="done" className="min-h-0">
-            <ScrollArea className="h-[calc(100dvh-190px)] pr-3">
+            <ScrollArea className="h-[calc(100dvh-226px)] pr-3">
               <ol className="space-y-3 pb-6">
                 {achievements.map((a) => (
                   <li key={a.short} className="rounded-xl border-2 border-[#0c0812] bg-white/60 p-3 shadow-[3px_3px_0_#2b2f9e]">
@@ -59,7 +60,7 @@ export function DataSheet() {
             </ScrollArea>
           </TabsContent>
           <TabsContent value="next" className="min-h-0">
-            <ScrollArea className="h-[calc(100dvh-190px)] pr-3">
+            <ScrollArea className="h-[calc(100dvh-226px)] pr-3">
               <ol className="space-y-3 pb-6">
                 {platform.map((p) => (
                   <li key={p.short} className="rounded-xl border-2 border-[#0c0812] bg-white/60 p-3 shadow-[3px_3px_0_#2b2f9e]">
@@ -78,7 +79,7 @@ export function DataSheet() {
           </TabsContent>
           <TabsContent value="about" className="space-y-3 text-[13px] leading-relaxed text-[#2a2f52]">
             <p>
-              這是一件粉絲創作的互動 3D 作品：想像 2033 年，松山機場遷移後的台北 AI 園區裡，一間 Cyberpunk 風格的夜店「來生 AFTERLIFE」。
+              「台北安可之夜」是一件粉絲創作的互動 3D 作品：想像 2033 年，松山機場遷移後的台北 AI 園區裡，一間向電玩《電馭叛客 2077》傳奇酒吧「來生（Afterlife）」致敬的未來夜店。
               畫面採用 Colorfigures 的手繪描線、三階平塗明暗與扁平藍色投影，再加上霓虹夜店的光影。
             </p>
             <p>
@@ -94,6 +95,9 @@ export function DataSheet() {
             <p className="font-bold">本網站非蔣萬安競選團隊官方網站。</p>
           </TabsContent>
         </Tabs>
+        <footer className="border-t-2 border-dashed border-[#0c0812]/25 px-4 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <MakingOf />
+        </footer>
       </SheetContent>
     </Sheet>
   )
