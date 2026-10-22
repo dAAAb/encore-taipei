@@ -1,0 +1,77 @@
+html,
+body,
+#root {
+  overflow: auto;
+  background: #10151d;
+}
+
+.steam-bg {
+  background:
+    radial-gradient(1200px 500px at 20% -10%, rgba(102, 192, 244, 0.16), transparent 60%),
+    radial-gradient(900px 400px at 100% 0%, rgba(255, 212, 0, 0.08), transparent 60%),
+    #10151d;
+  color: #c7d5e0;
+}
+.steam-card {
+  background: linear-gradient(180deg, #1f2a38, #18212c);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+.steam-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  border-color: rgba(102, 192, 244, 0.6);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(102, 192, 244, 0.35);
+}
+.steam-btn {
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 800;
+  font-size: 0.85rem;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+.steam-btn:disabled {
+  opacity: 0.5;
+}
+.steam-btn--go {
+  background: linear-gradient(90deg, #75b022, #588a1b);
+  color: #fff;
+}
+.steam-btn--go:hover {
+  background: linear-gradient(90deg, #8ed02a, #6ba61f);
+}
+.steam-btn--plain {
+  background: rgba(103, 193, 245, 0.18);
+  color: #66c0f4;
+}
+.steam-btn--plain:hover {
+  background: #66c0f4;
+  color: #10151d;
+}
+.steam-btn--danger {
+  background: rgba(255, 90, 110, 0.14);
+  color: #ff8a99;
+}
+.steam-btn--danger:hover {
+  background: #e0304a;
+  color: #fff;
+}
+.steam-input {
+  background: #0d1218;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #e6eef5;
+  padding: 0.45rem 0.7rem;
+  outline: none;
+}
+.steam-input:focus {
+  border-color: #66c0f4;
+}
