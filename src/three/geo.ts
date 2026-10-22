@@ -12,6 +12,29 @@ function memo(key: string, make: () => THREE.BufferGeometry) {
   return g
 }
 
+/**
+ * Degenerate triangles (collinear outline points in glyphs and extruded shapes) get zero-length
+ * normals; the shader's normalize() turns them into NaN pixels, which the bloom mip chain smears
+ * into flashing black squares. Give them a sane fallback instead.
+ */
+export function repairNormals(geo: THREE.BufferGeometry, fallback = new THREE.Vector3(0, 0, 1)) {
+  const n = geo.getAttribute('normal') as THREE.BufferAttribute | undefined
+  if (!n) return geo
+  for (let i = 0; i < n.count; i++) {
+    const x = n.getX(i)
+    const y = n.getY(i)
+    const z = n.getZ(i)
+    const len = Math.hypot(x, y, z)
+    if (Number.isFinite(len) && len > 1e-6) {
+      if (Math.abs(len - 1) > 1e-4) n.setXYZ(i, x / len, y / len, z / len)
+    } else {
+      n.setXYZ(i, fallback.x, fallback.y, fallback.z)
+    }
+  }
+  n.needsUpdate = true
+  return geo
+}
+
 export const rbox = (w: number, h: number, d: number, r = 0.04, seg = 2) =>
   memo(`rbox|${w}|${h}|${d}|${r}|${seg}`, () => new RoundedBoxGeometry(w, h, d, seg, Math.min(r, w / 2, h / 2, d / 2)))
 

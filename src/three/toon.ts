@@ -7,6 +7,12 @@ import * as THREE from 'three'
 
 export const INK = '#0c0812'
 
+// Last line of defence for the bloom pass: a single NaN/Inf pixel gets blurred into a flashing black block.
+const NAN_GUARD = '\nif (any(isnan(gl_FragColor)) || any(isinf(gl_FragColor))) gl_FragColor = vec4(0.0, 0.0, 0.0, gl_FragColor.a == gl_FragColor.a ? clamp(gl_FragColor.a, 0.0, 1.0) : 1.0);\n'
+if (!THREE.ShaderChunk.dithering_fragment.includes('isnan')) {
+  THREE.ShaderChunk.dithering_fragment += NAN_GUARD
+}
+
 function makeGradient(stops: number[]) {
   const data = new Uint8Array(stops.length * 4)
   stops.forEach((v, i) => data.set([v, v, v, 255], i * 4))
@@ -69,7 +75,7 @@ export function ink(thickness = 0.025) {
     m.onBeforeCompile = (shader) => {
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
-        `#include <begin_vertex>\n transformed += normalize(normal) * ${thickness.toFixed(4)};`,
+        `#include <begin_vertex>\n transformed += normal * inversesqrt(max(dot(normal, normal), 1e-8)) * ${thickness.toFixed(4)};`,
       )
     }
     m.customProgramCacheKey = () => `ink-${thickness}`

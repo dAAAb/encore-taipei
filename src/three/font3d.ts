@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { FontLoader, type Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
+import { repairNormals } from './geo'
 
 let fontPromise: Promise<Font> | null = null
 
@@ -38,6 +39,7 @@ export function glyph(font: Font, ch: string): Glyph {
       bevelSegments: 1,
     })
     geo.computeVertexNormals()
+    repairNormals(geo)
   }
   g = { geo, advance }
   glyphs.set(ch, g)

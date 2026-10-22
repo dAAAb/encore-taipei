@@ -8,6 +8,7 @@ import platform from '@/data/platform.json'
 import stage3d from '@/data/stage3d.json'
 import { hypeRef, useClub, type PlatformItem } from '@/lib/store'
 import { glyph, layout, loadFont, wrapSlogan } from '@/three/font3d'
+import { repairNormals } from '@/three/geo'
 import { INK, toon } from '@/three/toon'
 import { MAYOR_POS, MAYOR_SCALE } from './Mayor'
 
@@ -98,9 +99,9 @@ function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => 
     const w = lay.width + 1.1
     const h = lay.height + 0.7
     const extrude = { depth: 0.16, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2, curveSegments: 8 }
-    const paper = new THREE.ExtrudeGeometry(bubbleShape(w, h, 0.45, line.side), extrude)
-    const inkGeo = new THREE.ExtrudeGeometry(bubbleShape(w, h, 0.45, line.side, 0.08), { ...extrude, bevelEnabled: false, depth: 0.1 })
-    const shadow = new THREE.ShapeGeometry(bubbleShape(w, h, 0.45, line.side, 0.02), 8)
+    const paper = repairNormals(new THREE.ExtrudeGeometry(bubbleShape(w, h, 0.45, line.side), extrude))
+    const inkGeo = repairNormals(new THREE.ExtrudeGeometry(bubbleShape(w, h, 0.45, line.side, 0.08), { ...extrude, bevelEnabled: false, depth: 0.1 }))
+    const shadow = repairNormals(new THREE.ShapeGeometry(bubbleShape(w, h, 0.45, line.side, 0.02), 8))
 
     const chars: CharAnim[] = []
     lay.chars.forEach((c, i) => {
