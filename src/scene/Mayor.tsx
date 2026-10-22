@@ -8,7 +8,7 @@ import { Part } from '@/three/Part'
 import { neon, toon } from '@/three/toon'
 
 export const MAYOR_POS = new THREE.Vector3(0, 1.2, -8.6)
-export const MAYOR_SCALE = 1.5
+export const MAYOR_SCALE = 2.2
 const HIP_H = 0.865
 /** World position of the mayor's head, updated every frame. */
 export const mayorHead = new THREE.Vector3()

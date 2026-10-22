@@ -271,7 +271,7 @@ function Taipei101() {
     })
   })
   return (
-    <group position={[-92, 0, -300]}>
+    <group position={[128, 0, -300]}>
       {parts.map((p, i) => (
         <group key={i} position={[0, p.y, 0]}>
           <mesh geometry={p.geo} material={toon('#173a3a', { emissive: '#0a2a2a', emissiveIntensity: 0.6 })} />

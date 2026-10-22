@@ -25,7 +25,7 @@ interface Person {
 
 const SHIRTS = ['#231b36', '#2d1d40', '#14263c', '#3b1724', '#1c2c2b', '#2a2a3a', '#1a1a24', '#402033']
 const FAN_SHIRTS = ['#1e5bd6', '#f2c40c']
-const HAIRS = ['#0d0a0e', '#120d0b', '#1d130f', '#0d0a0e', '#2b1a12', '#b8325f', '#3fc9f2', '#d9d1c4']
+const HAIRS = ['#0d0a0e', '#120d0b', '#1d130f', '#0d0a0e', '#2b1a12', '#0d0a0e', '#160f12', '#1d130f', '#0d0a0e', '#2b1a12', '#120d0b', '#b8325f', '#3fc9f2']
 const STICKS = ['#ffd400', '#2f7bff', '#ffd400', '#2f7bff', '#ff2a4d', '#2ef2ff']
 
 const SHOUTS = [
@@ -51,7 +51,7 @@ function makeCrowd(): Person[] {
       const jx = x + (rnd() - 0.5) * 0.5
       const jz = z + (rnd() - 0.5) * 0.45
       const r = rnd()
-      const kind: Kind = r < 0.38 ? JUMP : r < 0.6 ? WAVE : r < 0.88 ? STICK : PHONE
+      const kind: Kind = r < 0.42 ? JUMP : r < 0.72 ? WAVE : r < 0.88 ? STICK : PHONE
       out.push({ x: jx, z: jz, s: 0.88 + rnd() * 0.22, phase: rnd(), kind, stickColor: Math.floor(rnd() * STICKS.length) })
     }
   }
@@ -63,10 +63,10 @@ export const CROWD = makeCrowd()
 const BODY_GEO = capsule(0.2, 0.86)
 const HEAD_GEO = sphere(0.14, 16, 12)
 const HAIR_GEO = sphere(0.152, 16, 12)
-const ARM_GEO = limb(0.058, 0.5)
+const ARM_GEO = limb(0.066, 0.44)
 const STICK_GEO = (() => {
-  const g = cyl(0.03, 0.03, 0.42, 8).clone()
-  g.translate(0, -0.78, 0)
+  const g = cyl(0.024, 0.024, 0.3, 8).clone()
+  g.translate(0, -0.72, 0)
   return g
 })()
 const PHONE_GEO = (() => {
@@ -110,7 +110,7 @@ export function Crowd() {
       head.current!.setColorAt(i, c)
     })
     stickIdx.forEach((pi, j) => {
-      c.set(STICKS[CROWD[pi].stickColor]).multiplyScalar(4)
+      c.set(STICKS[CROWD[pi].stickColor]).multiplyScalar(2.6)
       sticks.current!.setColorAt(j, c)
     })
     for (const m of [body, armA, armB, hair, head, sticks]) if (m.current!.instanceColor) m.current!.instanceColor.needsUpdate = true

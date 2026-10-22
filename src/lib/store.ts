@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import platform from '@/data/platform.json'
 
 export type MusicMode = 'youtube' | 'synth' | 'off'
-export type ViewMode = 'front' | 'iso' | 'orbit'
+export type ViewMode = 'front' | 'close' | 'iso' | 'orbit'
 
 export type PlatformItem = (typeof platform)[number]
 
@@ -29,7 +29,7 @@ export const useClub = create<ClubState>((set) => ({
   musicMode: 'youtube',
   youtubeReady: false,
   youtubeFailed: false,
-  view: 'front',
+  view: (new URLSearchParams(location.search).get('view') as ViewMode | null) ?? 'front',
   viewNonce: 0,
   speech: null,
   hype: 0,

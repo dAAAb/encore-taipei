@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { applyMusic } from '@/audio/music'
 import { engine } from '@/audio/synth'
 import { Hud } from '@/components/Hud'
@@ -21,6 +21,10 @@ export default function App() {
   const setMode = useClub((s) => s.setMusicMode)
   const webgl = useMemo(detectWebGL, [])
   const lowPower = useMemo(() => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.hardwareConcurrency ?? 8) <= 4, [])
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has('autostart')) start()
+  }, [start])
 
   const enter = async () => {
     start()

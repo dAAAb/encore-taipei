@@ -12,6 +12,7 @@ const MUSIC: { id: MusicMode; label: string; icon: typeof Music2 }[] = [
 
 const VIEWS: { id: ViewMode; label: string }[] = [
   { id: 'front', label: '正面' },
+  { id: 'close', label: '特寫' },
   { id: 'iso', label: '等角' },
   { id: 'orbit', label: '環繞' },
 ]
@@ -32,7 +33,7 @@ function YouTubeCard() {
   const visible = started && mode === 'youtube' && !failed
   return (
     <div
-      className={`ink-card fixed bottom-3 left-3 z-20 w-[min(356px,calc(100vw-24px))] overflow-hidden p-0 transition-opacity ${visible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+      className={`ink-card fixed bottom-3 left-3 z-20 w-[240px] overflow-hidden p-0 transition-opacity sm:w-[356px] ${visible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
       aria-hidden={!visible}
     >
       <div className="flex items-center justify-between gap-2 border-b-2 border-[#0c0812] bg-[#ffd400] px-3 py-1 text-xs font-black">
@@ -51,7 +52,7 @@ function PolicyCaption() {
   return (
     <div
       key={speech.short}
-      className="ink-card slide-up fixed right-3 bottom-[228px] z-20 w-[min(420px,calc(100vw-24px))] p-4 sm:bottom-3 md:right-4"
+      className="ink-card slide-up fixed right-3 bottom-3 z-20 hidden w-[min(420px,calc(100vw-400px))] min-w-[280px] p-4 md:right-4 md:block"
       role="status"
       aria-live="polite"
     >
@@ -92,7 +93,7 @@ export function Hud() {
         <>
           <header className="pointer-events-none fixed top-3 left-3 z-20 select-none">
             <p className="neon-title flicker text-3xl leading-none font-black sm:text-4xl">來生</p>
-            <p className="mt-1 text-[11px] font-black tracking-[0.32em] text-[#ff8fa3] sm:text-xs">AFTERLIFE · 台北 AI 園區 2033</p>
+            <p className="mt-1 hidden text-[11px] font-black tracking-[0.32em] text-[#ff8fa3] sm:block sm:text-xs">AFTERLIFE · 台北 AI 園區 2033</p>
           </header>
 
           <nav className="fixed top-3 right-3 z-20 flex max-w-[calc(100vw-120px)] flex-col items-end gap-2" aria-label="場景控制">

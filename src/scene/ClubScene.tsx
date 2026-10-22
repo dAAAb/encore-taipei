@@ -20,7 +20,7 @@ export function ClubScene({ lowPower }: { lowPower: boolean }) {
       flat
       shadows
       dpr={lowPower ? [1, 1.25] : [1, 1.75]}
-      camera={{ position: [0, 8.4, 16.5], fov: 34, near: 0.5, far: 3200 }}
+      camera={{ position: [0, 9.7, 13.7], fov: 34, near: 0.5, far: 3200 }}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       onCreated={({ scene }) => {
         scene.background = new THREE.Color('#07040c')

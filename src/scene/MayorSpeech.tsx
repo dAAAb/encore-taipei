@@ -9,7 +9,7 @@ import stage3d from '@/data/stage3d.json'
 import { hypeRef, useClub, type PlatformItem } from '@/lib/store'
 import { glyph, layout, loadFont, wrapSlogan } from '@/three/font3d'
 import { INK, toon } from '@/three/toon'
-import { MAYOR_POS } from './Mayor'
+import { MAYOR_POS, MAYOR_SCALE } from './Mayor'
 
 interface Line {
   id: number
@@ -23,7 +23,8 @@ const TEXT_FRONT = toon('#13204f')
 const TEXT_SIDE = toon('#ffd400')
 const HI_FRONT = toon('#1f6bff')
 const HI_SIDE = toon('#ffd400')
-const PAPER_MAT = toon(PAPER)
+const PAPER_FACE = new THREE.MeshBasicMaterial({ color: PAPER })
+const PAPER_SIDE = toon('#e6d3ae')
 const INK_MAT = new THREE.MeshBasicMaterial({ color: INK })
 const SHADOW_MAT = new THREE.MeshBasicMaterial({ color: '#2b2f9e', transparent: true, opacity: 0.85 })
 
@@ -57,7 +58,6 @@ function bubbleShape(w: number, h: number, r: number, side: 1 | -1, inflate = 0)
     s.lineTo(tipX, tipY)
     s.lineTo(tx + bw, y0)
   } else {
-    s.lineTo(tx - bw, y0)
     s.lineTo(tipX, tipY)
     s.lineTo(tx + bw, y0)
   }
@@ -81,7 +81,8 @@ interface CharAnim {
   delay: number
 }
 
-const SIZE = 0.48
+const SIZE = 0.62
+const tmp = new THREE.Vector3()
 
 function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => void }) {
   const group = useRef<THREE.Group>(null)
@@ -94,8 +95,8 @@ function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => 
   const built = useMemo(() => {
     const lines = wrapSlogan(line.text, 9)
     const lay = layout(font, lines, SIZE)
-    const w = lay.width + 1.0
-    const h = lay.height + 0.6
+    const w = lay.width + 1.1
+    const h = lay.height + 0.7
     const extrude = { depth: 0.16, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2, curveSegments: 8 }
     const paper = new THREE.ExtrudeGeometry(bubbleShape(w, h, 0.45, line.side), extrude)
     const inkGeo = new THREE.ExtrudeGeometry(bubbleShape(w, h, 0.45, line.side, 0.08), { ...extrude, bevelEnabled: false, depth: 0.1 })
@@ -107,7 +108,7 @@ function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => 
       const hi = isHighlight(c.ch)
       const mesh = new THREE.Mesh(c.glyph.geo, hi ? [HI_FRONT, HI_SIDE] : [TEXT_FRONT, TEXT_SIDE])
       mesh.castShadow = false
-      const target = new THREE.Vector3(c.x, c.y, 0.24)
+      const target = new THREE.Vector3(c.x, c.y, 0.22)
       const a = Math.random() * Math.PI * 2
       const from = new THREE.Vector3(Math.cos(a) * (16 + Math.random() * 6), Math.sin(a) * (10 + Math.random() * 5), 4 + Math.random() * 8)
       const b = Math.random() * Math.PI * 2
@@ -136,8 +137,19 @@ function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => 
     const vw = viewport.getCurrentViewport(camera, new THREE.Vector3(0, 4, MAYOR_POS.z)).width
     const fit = Math.min(1, (vw * (narrow ? 0.92 : 0.42)) / built.w)
     const cx = narrow ? line.side * 0.4 : line.side * (1.0 + (built.w * fit) / 2)
-    const cy = MAYOR_POS.y + (narrow ? 5.6 : 4.6)
-    group.current!.position.set(MAYOR_POS.x + cx, cy + Math.sin(age * 1.6) * 0.08, MAYOR_POS.z + 1.4)
+    const headTop = MAYOR_POS.y + 1.8 * MAYOR_SCALE
+    const cy = headTop + (narrow ? 1.4 : 0.5) + (built.h / 2 + 0.8) * fit
+    const pos = tmp.set(MAYOR_POS.x + cx, cy, MAYOR_POS.z + 1.4).applyMatrix4(camera.matrixWorldInverse)
+    const cam = camera as THREE.PerspectiveCamera
+    const halfH = -pos.z * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+    const halfW = halfH * cam.aspect
+    const fitView = Math.min(1, (halfW * 1.9) / built.w, (halfH * 1.1) / (built.h + 0.8))
+    const bw = (built.w * fit * fitView) / 2
+    const bh = ((built.h + 0.8) * fit * fitView) / 2
+    pos.x = THREE.MathUtils.clamp(pos.x, -halfW + bw + 0.1 * halfW, halfW - bw - 0.1 * halfW)
+    pos.y = Math.min(pos.y, halfH * 0.86 - bh)
+    pos.applyMatrix4(camera.matrixWorld)
+    group.current!.position.set(pos.x, pos.y + Math.sin(age * 1.6) * 0.08, pos.z)
     group.current!.quaternion.copy(camera.quaternion)
     group.current!.rotateZ(Math.sin(age * 1.2) * 0.02)
 
@@ -145,7 +157,7 @@ function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => 
     const pop = age < 0.45 ? easeOutBack(clamp01(age / 0.45)) : 1
     const shrink = age > outStart + 0.35 ? 1 - easeIn(clamp01((age - outStart - 0.35) / 0.35)) : 1
     body.current!.scale.setScalar(Math.max(0.0001, pop * shrink))
-    group.current!.scale.setScalar(fit)
+    group.current!.scale.setScalar(fit * fitView)
 
     const beat = beatNow()
     built.chars.forEach((c, i) => {
@@ -179,7 +191,7 @@ function Bubble({ line, font, onDone }: { line: Line; font: Font; onDone: () => 
       <group ref={body}>
         <mesh geometry={built.shadow} material={SHADOW_MAT} position={[0.22, -0.24, -0.14]} />
         <mesh geometry={built.inkGeo} material={INK_MAT} position={[0, 0, -0.04]} />
-        <mesh geometry={built.paper} material={PAPER_MAT} />
+        <mesh geometry={built.paper} material={[PAPER_FACE, PAPER_SIDE]} />
       </group>
       <group ref={charsGroup} />
     </group>

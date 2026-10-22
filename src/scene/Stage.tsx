@@ -89,25 +89,25 @@ function drawLed(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null, be
     ctx.fillText(s, x, y)
   }
 
+  const portrait = () => {
+    if (!img) return
+    const ih = H
+    const iw = (img.width / img.height) * ih
+    ctx.drawImage(img, W - iw - 20, 0, iw, ih)
+    const fade = ctx.createLinearGradient(W - iw - 20, 0, W - iw + 120, 0)
+    fade.addColorStop(0, 'rgba(20,70,200,1)')
+    fade.addColorStop(1, 'rgba(20,70,200,0)')
+    ctx.fillStyle = fade
+    ctx.fillRect(W - iw - 20, 0, 140, H)
+  }
+
   if (speech) {
-    ctx.fillStyle = yellow
-    ctx.fillRect(60, 70, 230, 64)
-    text(speech.tag, 175, 117, 40, '#0c1a5a', 'center')
-    const s = speech.short
-    const half = s.length > 10 ? Math.ceil(s.length / 2) : s.length
-    text(s.slice(0, half), W / 2, 280, 96 + k * 6, '#ffffff', 'center')
-    if (half < s.length) text(s.slice(half), W / 2, 400, 96 + k * 6, yellow, 'center')
+    portrait()
+    text('蔣萬安 · 黃金十年政見', 60, 120, 40, '#bfe3ff')
+    text(speech.tag, 52, 300, 150 + k * 8, yellow)
+    text('LIVE · 台北安可之夜', 60, 380, 44, '#ffffff', 'left', 500)
   } else if (slide === 0 || slide === 3) {
-    if (img) {
-      const ih = H
-      const iw = (img.width / img.height) * ih
-      ctx.drawImage(img, W - iw - 20, 0, iw, ih)
-      const fade = ctx.createLinearGradient(W - iw - 20, 0, W - iw + 120, 0)
-      fade.addColorStop(0, 'rgba(20,70,200,1)')
-      fade.addColorStop(1, 'rgba(20,70,200,0)')
-      ctx.fillStyle = fade
-      ctx.fillRect(W - iw - 20, 0, 140, H)
-    }
+    portrait()
     text('2033 · 來生 AFTERLIFE', 60, 110, 34, '#bfe3ff')
     text('台北安可', 52, 290, 150 + k * 8, yellow)
     text('TAIPEI ENCORE', 60, 370, 54, '#ffffff')
@@ -183,9 +183,9 @@ function LedWall() {
   return (
     <group position={[0, STAGE_H + 4.6, STAGE_Z - 5.2]}>
       <mesh geometry={geo} material={mat} />
-      <Part geo={rbox(16.8, 8.8, 0.5, 0.15)} mat={toon('#120f1c')} position={[0, 0, 1.2]} scale={[1, 1, 1]} outline={0.06} />
-      <mesh geometry={rbox(16.9, 0.08, 0.08, 0.03)} material={neon('#ff2a4d', 3)} position={[0, 4.42, 1.6]} />
-      <mesh geometry={rbox(16.9, 0.08, 0.08, 0.03)} material={neon('#ff2a4d', 3)} position={[0, -4.42, 1.6]} />
+      <Part geo={rbox(16.8, 8.8, 0.5, 0.15)} mat={toon('#120f1c')} position={[0, 0, -0.35]} outline={0.06} />
+      <mesh geometry={rbox(16.9, 0.08, 0.08, 0.03)} material={neon('#ff2a4d', 3)} position={[0, 4.42, 0.2]} />
+      <mesh geometry={rbox(16.9, 0.08, 0.08, 0.03)} material={neon('#ff2a4d', 3)} position={[0, -4.42, 0.2]} />
     </group>
   )
 }

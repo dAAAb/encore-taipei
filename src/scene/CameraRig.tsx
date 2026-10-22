@@ -5,10 +5,11 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useClub, type ViewMode } from '@/lib/store'
 
-const TARGET = new THREE.Vector3(0, 3.6, -8.5)
+const TARGET = new THREE.Vector3(0, 3.5, -8.5)
 
 const PRESETS: Record<ViewMode, { az: number; polar: number; dist: number }> = {
-  front: { az: 0, polar: 1.39, dist: 25.5 },
+  front: { az: 0, polar: 1.3, dist: 23 },
+  close: { az: 0.12, polar: 1.5, dist: 9.5 },
   iso: { az: 0.62, polar: 1.12, dist: 28 },
   orbit: { az: 0, polar: 1.3, dist: 27 },
 }
@@ -24,14 +25,14 @@ export function CameraRig() {
 
   useEffect(() => {
     const cam = camera as THREE.PerspectiveCamera
-    cam.fov = portrait ? 58 : 34
+    cam.fov = portrait ? 60 : 34
     cam.updateProjectionMatrix()
   }, [camera, portrait])
 
   useEffect(() => {
     const p = PRESETS[view]
     const from = new THREE.Spherical().setFromVector3(camera.position.clone().sub(TARGET))
-    const to = new THREE.Spherical(p.dist * (portrait ? 1.08 : 1), p.polar, p.az)
+    const to = new THREE.Spherical(p.dist * (portrait ? 0.82 : 1), p.polar, p.az)
     anim.current = { from, to, t: 0 }
   }, [view, nonce, camera, portrait])
 
@@ -64,7 +65,7 @@ export function CameraRig() {
       enablePan={false}
       enableDamping
       dampingFactor={0.08}
-      minDistance={12}
+      minDistance={7}
       maxDistance={44}
       minPolarAngle={0.7}
       maxPolarAngle={1.5}

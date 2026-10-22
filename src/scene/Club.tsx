@@ -128,11 +128,11 @@ function AfterlifeBar() {
           <Part geo={cyl(0.3, 0.3, 0.1, 16)} mat={toon('#7a1f30')} position={[0, 0.8, 0]} outline={0.02} />
         </group>
       ))}
-      <group ref={sign} position={[-13.6, 7.4, z + 1.5]}>
+      <group ref={sign} position={[-13.6, 6.3, z + 1.5]}>
         <NeonText text="來生" size={2.1} material={neon('#ff2a4d', 4)} position={[0, 0.55, 0]} />
         <NeonText text="AFTERLIFE" size={0.82} material={neon('#ff6a7d', 3)} position={[0, -0.85, 0]} />
       </group>
-      <Part geo={rbox(7.2, 4.4, 0.25, 0.1)} mat={toon('#120a10')} position={[-13.6, 7.25, z + 1.3]} outline={0.04} />
+      <Part geo={rbox(7.2, 4.4, 0.25, 0.1)} mat={toon('#120a10')} position={[-13.6, 6.15, z + 1.3]} outline={0.04} />
       {[-1, 1].map((s) => (
         <mesh key={s} geometry={cyl(0.02, 0.02, 6, 4)} material={toon('#0c0812')} position={[-13.6 + s * 3, 12.5, z + 1.3]} />
       ))}
@@ -159,7 +159,7 @@ function EncoreLounge() {
           <mesh geometry={sphere(0.14, 10, 8)} material={neon('#ffd400', 2.6)} position={[0, 1.1, 1.5]} />
         </group>
       ))}
-      <group ref={sign} position={[14.0, 7.6, z + 1.0]}>
+      <group ref={sign} position={[14.0, 6.4, z + 1.0]}>
         <Part geo={rbox(8.4, 3.4, 0.3, 0.3)} mat={toon('#0e1a4a')} position={[0, 0, -0.2]} outline={0.05} />
         <NeonText text="台北安可" size={1.5} material={neon('#ffd400', 3.6)} position={[0, 0.35, 0]} />
         <NeonText text="TAIPEI ENCORE" size={0.6} material={neon('#2f9bff', 3.6)} position={[0, -1.0, 0]} />
