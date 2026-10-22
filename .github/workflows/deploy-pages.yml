@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Picks up newly approved Encore TV channels (per-channel share pages are generated at build time).
+  schedule:
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
@@ -13,6 +16,9 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: true
+
+env:
+  BETA_BRANCH: cursor/encore-tv-0d54
 
 jobs:
   build:
@@ -33,6 +39,26 @@ jobs:
           # Match both the default /encore-taipei/ URL and a custom domain at /.
           BASE_PATH: ${{ steps.pages.outputs.base_path }}/
           SITE_URL: ${{ steps.pages.outputs.base_url }}
+      # The beta never blocks the production deploy.
+      - name: Check out beta
+        id: beta-src
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BETA_BRANCH }}
+          path: beta-src
+      - name: Build beta into /beta/
+        if: steps.beta-src.outcome == 'success'
+        continue-on-error: true
+        working-directory: beta-src
+        run: |
+          npm ci
+          npm run build
+          rm -rf ../dist/beta
+          cp -r dist ../dist/beta
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/beta/
+          SITE_URL: ${{ steps.pages.outputs.base_url }}/beta
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
