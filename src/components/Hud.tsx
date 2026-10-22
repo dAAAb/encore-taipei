@@ -113,8 +113,13 @@ export function Hud() {
       {started && (
         <>
           <header className="pointer-events-none fixed top-3 left-3 z-20 select-none">
-            <p className="neon-title flicker text-3xl leading-none font-black sm:text-4xl">來生</p>
-            <p className="mt-1 hidden text-[11px] font-black tracking-[0.32em] text-[#ff8fa3] sm:block sm:text-xs">AFTERLIFE · 台北 AI 園區 2033</p>
+            <p className="neon-title flicker text-2xl leading-[1.05] font-black md:text-4xl md:leading-none">
+              <span className="block md:inline">
+                黃金十年<span className="hidden md:inline">．</span>
+              </span>
+              <span className="block md:inline">台北安可</span>
+            </p>
+            <p className="mt-1.5 hidden text-[11px] font-black tracking-[0.32em] text-[#ff8fa3] sm:block sm:text-xs">來生 AFTERLIFE · 台北 AI 園區 2033</p>
           </header>
 
           <nav className="fixed top-3 right-3 z-20 flex max-w-[calc(100vw-120px)] flex-col items-end gap-2" aria-label="場景控制">
