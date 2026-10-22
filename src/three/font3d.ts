@@ -7,7 +7,7 @@ let fontPromise: Promise<Font> | null = null
 
 export function loadFont(): Promise<Font> {
   if (!fontPromise) {
-    fontPromise = new FontLoader().loadAsync('/fonts/noto-tc-black.typeface.json')
+    fontPromise = new FontLoader().loadAsync(`${import.meta.env.BASE_URL}fonts/noto-tc-black.typeface.json`)
   }
   return fontPromise
 }

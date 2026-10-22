@@ -19,15 +19,19 @@ export function StartGate({ onEnter, webgl }: { onEnter: () => void; webgl: bool
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(40,10,40,0.55),rgba(5,3,10,0.94)_70%)] p-4 backdrop-blur-[2px]">
       <div className="ink-card slide-up w-full max-w-lg p-6 sm:p-8">
-        <p className="text-xs font-black tracking-[0.3em] text-[#c8234a]">TAIPEI AI PARK · 2033</p>
-        <h1 className="mt-2 text-4xl font-black leading-tight sm:text-5xl">
-          來生 <span className="text-[#c8234a]">AFTERLIFE</span>
-        </h1>
-        <p className="mt-1 text-lg font-black text-[#1f4fd1]">台北安可之夜 · 黃金十年演唱會</p>
-        <p className="mt-4 text-[15px] leading-relaxed text-[#2a2f52]">
-          2033 年，松山機場遷移後的台北 AI 園區。高樓頂端的夜店「來生」今晚全場爆滿，蔣萬安在中央舞台跳著月球漫步與旋轉舞步，
-          政見從四面八方飛進他的 3D 對話泡泡，台下群眾高喊感謝他四年來的施政。
+        <p className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#0c0812] bg-[#ffd400] px-2.5 py-0.5 text-[11px] font-black tracking-[0.16em] text-[#0c0812]">
+          <span className="live-dot" aria-hidden />
+          LIVE · 2033 台北 AI 園區
         </p>
+        <h1 className="mt-3 text-[42px] font-black leading-none tracking-[0.04em] sm:text-[54px]">
+          台北安可<span className="text-[#c8234a]">之夜</span>
+        </h1>
+        <p className="mt-2 text-lg font-black text-[#1f4fd1]">蔣萬安 · 黃金十年 3D 互動派對</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-[#2a2f52]">
+          2033 年，松山機場遷移後的台北 AI 園區。園區最高樓的未來夜店今晚全場爆滿，蔣萬安在中央舞台跳起麥可傑克森的旋轉舞步，
+          黃金十年政見從四面八方飛進他的 3D 對話泡泡，台下群眾高喊感謝他四年來的施政。
+        </p>
+        <p className="mt-2 text-xs text-[#6a6f8e]">場景靈感來自電玩《電馭叛客 2077》裡的傳奇酒吧「來生」。</p>
         <ul className="mt-4 space-y-1 text-sm text-[#4a4f6e]">
           <li className="flex items-center gap-2">
             <Volume2 className="size-4 shrink-0" /> 建議開啟聲音：背景播放〈台北安可〉官方 MV

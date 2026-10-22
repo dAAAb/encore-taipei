@@ -36,7 +36,7 @@ export default function App() {
 
   return (
     <main className="relative h-full w-full">
-      <h1 className="sr-only">來生 AFTERLIFE · 2033 台北 AI 園區 · 蔣萬安台北安可之夜</h1>
+      <h1 className="sr-only">台北安可之夜｜蔣萬安黃金十年政見 3D 互動派對 · 2033 台北 AI 園區</h1>
       {webgl && <ClubScene lowPower={lowPower} />}
       <div className="scanlines" />
       <div className="grain" />

@@ -113,16 +113,17 @@ export function Hud() {
       {started && (
         <>
           <header className="pointer-events-none fixed top-3 left-3 z-20 select-none">
-            <p className="neon-title flicker text-2xl leading-[1.05] font-black md:text-4xl md:leading-none">
-              <span className="block md:inline">
-                黃金十年<span className="hidden md:inline">．</span>
-              </span>
-              <span className="block md:inline">台北安可</span>
+            <p className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#0c0812] bg-[#ffd400] px-2 py-px text-[10px] font-black tracking-[0.14em] text-[#0c0812] shadow-[2px_2px_0_#0c0812] sm:text-[11px]">
+              <span className="live-dot" aria-hidden />
+              LIVE · 2033<span className="hidden sm:inline"> 台北 AI 園區</span>
             </p>
-            <p className="mt-1.5 hidden text-[11px] font-black tracking-[0.32em] text-[#ff8fa3] sm:block sm:text-xs">來生 AFTERLIFE · 台北 AI 園區 2033</p>
+            <p className="title-lockup mt-2 text-[22px] leading-none font-black tracking-[0.06em] sm:text-[34px]">台北安可之夜</p>
+            <p className="mt-2 hidden text-xs font-black tracking-[0.2em] text-[#ffe9a8] [text-shadow:0_1px_0_#0c0812,0_0_10px_rgba(255,42,77,0.65)] sm:block">
+              蔣萬安 · 黃金十年 3D 派對
+            </p>
           </header>
 
-          <nav className="fixed top-3 right-3 z-20 flex max-w-[calc(100vw-120px)] flex-col items-end gap-2" aria-label="場景控制">
+          <nav className="fixed top-3 right-3 z-20 flex max-w-[calc(100vw-150px)] flex-col items-end gap-2 sm:max-w-[calc(100vw-120px)]" aria-label="場景控制">
             <div className="flex flex-wrap justify-end gap-1.5">
               {MUSIC.map(({ id, label, icon: Icon }) => (
                 <button

@@ -108,7 +108,7 @@ function drawLed(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null, be
     text('LIVE · 台北安可之夜', 60, 380, 44, '#ffffff', 'left', 500)
   } else if (slide === 0 || slide === 3) {
     portrait()
-    text('2033 · 來生 AFTERLIFE', 60, 110, 34, '#bfe3ff')
+    text('2033 · 台北 AI 園區', 60, 110, 34, '#bfe3ff')
     text('台北安可', 52, 290, 150 + k * 8, yellow)
     text('TAIPEI ENCORE', 60, 370, 54, '#ffffff')
     text(slide === 0 ? '蔣萬安 · 黃金十年' : '城市持續進步，願景持續實現', 60, 440, 36, '#bfe3ff', 'left', 500)
@@ -154,7 +154,7 @@ function LedWall() {
 
   useEffect(() => {
     const i = new Image()
-    i.src = '/images/mayor-portrait.jpg'
+    i.src = `${import.meta.env.BASE_URL}images/mayor-portrait.jpg`
     i.onload = () => (img.current = i)
   }, [])
 
