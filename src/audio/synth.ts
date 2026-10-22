@@ -27,6 +27,8 @@ class Engine {
   stepIndex = 0
   musicOn = false
   chantOn = true
+  /** Set by the Encore TV remote when this page runs inside its iframe. */
+  outputLevel = 1
 
   ensure() {
     if (this.ctx) return this.ctx
@@ -37,7 +39,7 @@ class Engine {
     comp.ratio.value = 4
     comp.connect(ctx.destination)
     this.master = ctx.createGain()
-    this.master.gain.value = 0.9
+    this.master.gain.value = 0.9 * this.outputLevel
     this.master.connect(comp)
     this.music = ctx.createGain()
     this.music.gain.value = 0
@@ -65,6 +67,11 @@ class Engine {
     guitarGain.gain.value = 0.16
     this.dist.connect(guitarTone).connect(guitarGain).connect(this.music)
     return ctx
+  }
+
+  setOutput(level: number) {
+    this.outputLevel = level
+    if (this.ctx) this.master.gain.setTargetAtTime(0.9 * level, this.ctx.currentTime, 0.05)
   }
 
   async resume() {

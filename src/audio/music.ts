@@ -67,3 +67,15 @@ export async function applyMusic(mode: MusicMode) {
   engine.startMusic()
   return 'synth' as const
 }
+
+/** Volume from the Encore TV remote (0–1), applied to both the MV and the synth fallback. */
+export function setExternalVolume(volume: number, muted: boolean) {
+  const level = muted ? 0 : Math.max(0, Math.min(1, volume))
+  engine.setOutput(level)
+  if (!player) return
+  if (level === 0) player.mute()
+  else {
+    player.unMute()
+    player.setVolume(Math.round(85 * level))
+  }
+}
