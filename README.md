@@ -54,8 +54,23 @@ npm run preview    # 預覽 production build（同樣在 4733 埠）
 | `BASE_PATH` | 網站不在網域根目錄時的子路徑 | `/taipei-encore/` |
 | `SITE_URL` | 公開網址，用來產生分享預覽圖（og:image）與 canonical 的絕對網址 | `https://you.github.io/taipei-encore` |
 
-**GitHub Pages**：repo 已附 `.github/workflows/deploy-pages.yml`，推到 `main` 就會自動建置部署到
-`https://<帳號>.github.io/<repo 名稱>/`。第一次使用前，到 GitHub repo 的 **Settings → Pages → Build and deployment → Source** 選 **GitHub Actions**。
+**GitHub Pages + encore.taipei**：repo 已附 `.github/workflows/deploy-pages.yml`，推到 `main` 就會自動建置，部署到
+[https://encore.taipei](https://encore.taipei)。第一次設定：
+
+1. GitHub repo 的 **Settings → Pages**：**Source** 選 **GitHub Actions**；**Custom domain** 填 `encore.taipei` 按 Save。
+2. Gandi 的 **Domain → encore.taipei → DNS Records**：刪掉預設的 `@ A 217.70.184.38` 與 `www CNAME webredir.vip.gandi.net.`，改成：
+
+   | 名稱 | 類型 | 值 |
+   | --- | --- | --- |
+   | `@` | A | `185.199.108.153`、`185.199.109.153`、`185.199.110.153`、`185.199.111.153`（四筆） |
+   | `@` | AAAA | `2606:50c0:8000::153`、`2606:50c0:8001::153`、`2606:50c0:8002::153`、`2606:50c0:8003::153`（四筆） |
+   | `www` | CNAME | `daaab.github.io.` |
+
+   MX、TXT 等郵件相關紀錄不用動。
+3. DNS 生效、GitHub 憑證核發後（通常幾分鐘到一小時），回到 Settings → Pages 勾選 **Enforce HTTPS**。
+4. 到 **Actions → Deploy to GitHub Pages → Run workflow** 重新部署一次（第一次推送時 Pages 還沒開，那次會失敗是正常的）。
+
+不用自訂網域時，把 workflow 裡的 `BASE_PATH` 改成 `/<repo 名稱>/`、`SITE_URL` 改成 `https://<帳號>.github.io/<repo 名稱>`。
 
 分享預覽圖是 `public/og.jpg`（1200×630）。
 
