@@ -85,7 +85,7 @@ function CrtTv({ screen }: { screen: THREE.Material }) {
 }
 
 /** Today's flat panel on a floor stand; its screen takes the viewer's aspect ratio. */
-function LcdTv({ screen, aspect }: { screen: THREE.Material; aspect: number }) {
+export function LcdTv({ screen, aspect }: { screen: THREE.Material; aspect: number }) {
   const { w, h } = lcdSize(aspect)
   const bottom = SCREEN_Y - h / 2
   return (
