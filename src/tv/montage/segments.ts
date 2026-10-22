@@ -22,7 +22,7 @@ export const SEGMENTS: Segment[] = [
     headline: '十大建設全面動工',
     sub: '中山高速公路・桃園國際機場・台中港',
     narration: '一九七四年，十大建設動工。高速公路、國際機場，一項一項蓋起來。',
-    images: ['ten-1.jpg', 'ten-2.jpg', 'ten-3.jpg'],
+    images: ['ten-1.jpg', 'ten-2.jpg', 'ten-4.jpg', 'ten-3.jpg'],
     tint: ['#6b6b6b', '#1b1b1b'],
   },
   {
