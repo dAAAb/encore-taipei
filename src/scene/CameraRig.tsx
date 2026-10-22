@@ -6,6 +6,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useClub, type ViewMode } from '@/lib/store'
 
 const TARGET = new THREE.Vector3(0, 3.5, -8.5)
+/** Beyond this the camera leaves the room (walls at x ±26, open front at z 21, ceiling at y 18). */
+const MAX_DIST = 30
 
 const PRESETS: Record<ViewMode, { az: number; polar: number; dist: number }> = {
   front: { az: 0, polar: 1.3, dist: 23 },
@@ -52,7 +54,7 @@ export function CameraRig() {
       if (a.t >= 1) anim.current = null
     } else if (view === 'orbit' && !userActive.current) {
       const s = new THREE.Spherical().setFromVector3(camera.position.clone().sub(TARGET))
-      s.theta = 0.75 * Math.sin(state.clock.elapsedTime * 0.12)
+      s.theta = 0.6 * Math.sin(state.clock.elapsedTime * 0.12)
       camera.position.copy(TARGET).add(new THREE.Vector3().setFromSpherical(s))
     }
     c.update()
@@ -66,11 +68,11 @@ export function CameraRig() {
       enableDamping
       dampingFactor={0.08}
       minDistance={7}
-      maxDistance={44}
-      minPolarAngle={0.7}
+      maxDistance={MAX_DIST * (portrait ? 0.86 : 1)}
+      minPolarAngle={1.1}
       maxPolarAngle={1.5}
-      minAzimuthAngle={-1.05}
-      maxAzimuthAngle={1.05}
+      minAzimuthAngle={-0.8}
+      maxAzimuthAngle={0.8}
       rotateSpeed={0.6}
       onStart={() => {
         userActive.current = true
