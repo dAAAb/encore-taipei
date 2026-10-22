@@ -7,10 +7,17 @@ import * as THREE from 'three'
 
 export const INK = '#0c0812'
 
-// Last line of defence for the bloom pass: a single NaN/Inf pixel gets blurred into a flashing black block.
-const NAN_GUARD = '\nif (any(isnan(gl_FragColor)) || any(isinf(gl_FragColor))) gl_FragColor = vec4(0.0, 0.0, 0.0, gl_FragColor.a == gl_FragColor.a ? clamp(gl_FragColor.a, 0.0, 1.0) : 1.0);\n'
-if (!THREE.ShaderChunk.dithering_fragment.includes('isnan')) {
-  THREE.ShaderChunk.dithering_fragment += NAN_GUARD
+/**
+ * Last line of defence for the bloom pass: one NaN/Inf pixel gets smeared by the mip-chain blur into
+ * a black block that can swallow most of the screen. Checked on the raw exponent bits because
+ * isnan()/isinf() are compiled away under fast-math (ANGLE on Metal, i.e. every Mac).
+ */
+export const SANITIZE = /* glsl */ `
+  if (any(equal(floatBitsToUint(gl_FragColor) & uvec4(0x7f800000u), uvec4(0x7f800000u)))) gl_FragColor = vec4(0.0);
+  gl_FragColor = min(gl_FragColor, vec4(4096.0));
+`
+if (!THREE.ShaderChunk.dithering_fragment.includes('floatBitsToUint')) {
+  THREE.ShaderChunk.dithering_fragment += SANITIZE
 }
 
 function makeGradient(stops: number[]) {

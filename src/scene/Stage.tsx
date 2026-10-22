@@ -6,7 +6,7 @@ import { useClub } from '@/lib/store'
 import { glyph } from '@/three/font3d'
 import { cyl, rbox, torus } from '@/three/geo'
 import { Part } from '@/three/Part'
-import { neon, shadowCatcher, toon } from '@/three/toon'
+import { neon, SANITIZE, shadowCatcher, toon } from '@/three/toon'
 import { useFont3D } from '@/three/useFont3D'
 import { MAYOR_POS } from './Mayor'
 
@@ -211,9 +211,10 @@ function beamMaterial(color: string) {
       uniform vec3 uColor; uniform float uOpacity;
       varying float vFade; varying vec3 vN; varying vec3 vV;
       void main() {
-        float edge = pow(abs(dot(vN, vV)), 1.6);
-        float a = pow(1.0 - vFade, 1.4) * edge * uOpacity;
+        float edge = pow(clamp(abs(dot(vN, vV)), 1e-4, 1.0), 1.6);
+        float a = pow(clamp(1.0 - vFade, 1e-4, 1.0), 1.4) * edge * uOpacity;
         gl_FragColor = vec4(uColor * 1.6, a);
+        ${SANITIZE}
       }`,
     transparent: true,
     depthWrite: false,

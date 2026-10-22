@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { beatNow, pulse } from '@/audio/beat'
-import { neon, toon } from '@/three/toon'
+import { neon, SANITIZE, toon } from '@/three/toon'
 import { NeonText } from './NeonText'
 
 /** The club sits high in a tower; the city ground is far below. */
@@ -54,6 +54,7 @@ const towerFragment = /* glsl */ `
     }
     gl_FragColor = vec4(col, 1.0);
     #include <fog_fragment>
+    ${SANITIZE}
   }`
 
 function Towers() {
@@ -139,6 +140,7 @@ function Ground() {
             vec3 col = vec3(0.03, 0.02, 0.06) + road * mix(vec3(1.0, 0.55, 0.15), vec3(0.2, 0.9, 1.0), step(0.5, flow)) * 0.9;
             gl_FragColor = vec4(col, 1.0);
             #include <fog_fragment>
+            ${SANITIZE}
           }`,
         fog: true,
       }),
@@ -346,8 +348,9 @@ function Sky() {
             vec3 top = vec3(0.02, 0.01, 0.06);
             vec3 col = mix(horizon, mid, smoothstep(-0.05, 0.12, h));
             col = mix(col, top, smoothstep(0.12, 0.5, h));
-            col = mix(col, vec3(0.08, 0.02, 0.1), smoothstep(-0.02, -0.25, h));
+            col = mix(col, vec3(0.08, 0.02, 0.1), 1.0 - smoothstep(-0.25, -0.02, h));
             gl_FragColor = vec4(col, 1.0);
+            ${SANITIZE}
           }`,
       }),
     [],
