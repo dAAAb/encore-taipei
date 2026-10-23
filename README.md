@@ -47,7 +47,9 @@
 | `encore_admin_list/update/delete(p_key, ...)` | 持管理金鑰者 | 列出全部投稿、上架／隱藏、改台號、刪除 |
 
 管理金鑰只存雜湊值（`encore_admin_keys`）。管理連結的格式是 `…/admin/#key=金鑰`，金鑰放在網址 `#` 後面，不會送到任何伺服器；
-第一次開啟後會記在瀏覽器裡，換電腦時再開一次連結即可。新增或更換金鑰：
+第一次開啟後會記在瀏覽器裡，換電腦時再開一次連結即可。後台右上角「更換金鑰」會產生新連結並讓舊連結立刻失效
+（`encore_admin_rotate`），連結外流時用它。後台每張卡片的縮圖就是該台分享連結實際會顯示的圖，
+並標示「分享圖已更新」或「等待重建」；「立即重建分享圖」連到 GitHub Actions 手動重建。也可以用 SQL 新增金鑰：
 
 ```sql
 insert into public.encore_admin_keys (key_hash, label)

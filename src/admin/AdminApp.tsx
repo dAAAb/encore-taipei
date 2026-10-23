@@ -1,10 +1,12 @@
-import { ExternalLink, Eye, EyeOff, KeyRound, Loader2, LogOut, RefreshCw, Trash2 } from 'lucide-react'
+import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { rpc, RpcError, type AdminChannel } from '@/tv/channel-data'
-import { stageUrl } from '@/tv/routing'
+import { useCopy } from '@/tv/components/useCopy'
+import { channelPath, stageUrl } from '@/tv/routing'
 
 const KEY = 'encore.adminKey'
+const REBUILD_URL = 'https://github.com/dAAAb/encore-taipei/actions/workflows/deploy-pages.yml'
 type Filter = 'all' | 'pending' | 'live' | 'hidden'
 
 const STATUS: Record<AdminChannel['status'], { label: string; cls: string }> = {
@@ -26,19 +28,126 @@ function readKey() {
 const fmt = (iso: string) =>
   new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 
-function Capsule({ ch }: { ch: AdminChannel }) {
-  const [broken, setBroken] = useState(false)
-  if (ch.og_image && !broken)
-    return <img src={ch.og_image} alt="" className="aspect-video w-full object-cover" loading="lazy" onError={() => setBroken(true)} />
+interface ShareCard {
+  image: string | null
+  fresh: boolean
+}
+
+/**
+ * What a shared link to this channel shows right now, read from its built share page.
+ * `fresh` means the last build already knew this channel's title.
+ */
+function useShareCard(ch: AdminChannel, nonce: number): ShareCard | null {
+  const [card, setCard] = useState<ShareCard | null>(null)
+  useEffect(() => {
+    if (ch.channel == null) return setCard(null)
+    let alive = true
+    fetch(channelPath(ch.channel), { cache: 'no-store' })
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((html) => {
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        const meta = (p: string) => doc.querySelector(`meta[property="og:${p}"]`)?.getAttribute('content') ?? ''
+        const image = meta('image')
+        if (alive) setCard({ image: image ? `${image}${image.includes('?') ? '&' : '?'}v=${nonce}` : null, fresh: meta('title').includes(ch.title) })
+      })
+      .catch(() => alive && setCard(null))
+    return () => {
+      alive = false
+    }
+  }, [ch.channel, ch.title, nonce])
+  return card
+}
+
+function Capsule({ ch, nonce }: { ch: AdminChannel; nonce: number }) {
+  const card = useShareCard(ch, nonce)
+  const [broken, setBroken] = useState<string | null>(null)
+  const src = ch.og_image ?? card?.image ?? null
   const hue = (ch.title.length * 47 + (ch.channel ?? 0) * 13) % 360
   return (
-    <div
-      className="relative flex aspect-video w-full items-end overflow-hidden p-3"
-      style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 35%), hsl(${(hue + 60) % 360} 70% 18%))` }}
-    >
-      <span className="absolute top-1 right-3 text-5xl font-black text-white/15 tabular-nums">{ch.channel ?? '—'}</span>
-      <span className="line-clamp-2 text-lg leading-tight font-black text-white drop-shadow">{ch.title}</span>
+    <div className="relative">
+      {src && broken !== src ? (
+        <img src={src} alt={`第 ${ch.channel} 台分享預覽圖`} className="aspect-[1200/630] w-full bg-black object-cover" loading="lazy" onError={() => setBroken(src)} />
+      ) : (
+        <div
+          className="relative flex aspect-[1200/630] w-full items-end overflow-hidden p-3"
+          style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 35%), hsl(${(hue + 60) % 360} 70% 18%))` }}
+        >
+          <span className="absolute top-1 right-3 text-5xl font-black text-white/15 tabular-nums">{ch.channel ?? '—'}</span>
+          <span className="line-clamp-2 text-lg leading-tight font-black text-white drop-shadow">{ch.title}</span>
+        </div>
+      )}
+      {ch.status === 'live' && card && (
+        <span
+          className={`absolute bottom-2 left-2 flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-black ${card.fresh || ch.og_image ? 'bg-[#10151d]/85 text-[#b6ffb0]' : 'bg-[#ffd400] text-[#10151d]'}`}
+          title={card.fresh || ch.og_image ? '分享連結已經會顯示這張圖' : '分享頁還是上次建置的版本，每小時第 17 分自動重建'}
+        >
+          {card.fresh || ch.og_image ? <Check className="size-3" /> : <Clock className="size-3" />}
+          {card.fresh || ch.og_image ? '分享圖已更新' : '分享圖等待重建'}
+        </span>
+      )}
     </div>
+  )
+}
+
+function RotateKey({ adminKey, onRotated }: { adminKey: string; onRotated: (k: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [fresh, setFresh] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { copied, copy } = useCopy()
+  const link = fresh ? `${location.origin}${import.meta.env.BASE_URL}admin/#key=${fresh}` : ''
+
+  const rotate = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      const k = await rpc<string>('encore_admin_rotate', { p_key: adminKey })
+      localStorage.setItem(KEY, k)
+      setFresh(k)
+      onRotated(k)
+    } catch (e) {
+      setError(`更換失敗：${(e as Error).message}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => setOpen(true)}>
+        <KeyRound className="size-4" /> 更換金鑰
+      </button>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o)
+          if (!o) setFresh(null)
+        }}
+      >
+        <DialogContent className="border border-white/10 bg-[#18212c] text-[#c7d5e0] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-white">{fresh ? '新的管理連結' : '更換管理金鑰'}</DialogTitle>
+            <DialogDescription className="text-[#8fa3b5]">
+              {fresh ? '舊連結已經失效。請把新連結存進密碼管理器或書籤，這個視窗關掉後就看不到了。' : '會產生一組新金鑰，舊的管理連結立刻失效。這台瀏覽器會自動換成新金鑰，不用重新登入。'}
+            </DialogDescription>
+          </DialogHeader>
+          {error && <p className="rounded-md bg-[#e0304a]/20 p-2 text-sm text-[#ff8a99]">{error}</p>}
+          {fresh ? (
+            <div className="space-y-3">
+              <p className="rounded-md bg-black/40 p-3 font-mono text-xs break-all text-[#b6ffb0]">{link}</p>
+              <button type="button" className="steam-btn steam-btn--go flex w-full items-center justify-center gap-1.5" onClick={() => copy(link, 'admin-link')}>
+                {copied === 'admin-link' ? <Check className="size-4" /> : <Copy className="size-4" />}
+                {copied === 'admin-link' ? '已複製' : '複製新連結'}
+              </button>
+            </div>
+          ) : (
+            <button type="button" disabled={busy} className="steam-btn steam-btn--danger flex w-full items-center justify-center gap-1.5" onClick={rotate}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} 確定更換
+            </button>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -75,9 +184,11 @@ export function AdminApp() {
   const [filter, setFilter] = useState<Filter>('all')
   const [openId, setOpenId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [nonce, setNonce] = useState(() => Date.now())
 
   const load = useCallback(async (k: string) => {
     setLoading(true)
+    setNonce(Date.now())
     setError(null)
     try {
       setRows(await rpc<AdminChannel[]>('encore_admin_list', { p_key: k }))
@@ -146,6 +257,10 @@ export function AdminApp() {
           <a href={import.meta.env.BASE_URL} className="steam-btn steam-btn--plain flex items-center gap-1.5">
             <ExternalLink className="size-4" /> 打開電視
           </a>
+          <a href={REBUILD_URL} target="_blank" rel="noreferrer" className="steam-btn steam-btn--plain flex items-center gap-1.5" title="到 GitHub Actions 按 Run workflow，分享頁和分享圖會在幾分鐘內更新">
+            <Hammer className="size-4" /> 立即重建分享圖
+          </a>
+          <RotateKey adminKey={key} onRotated={setKey} />
           <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => load(key)} disabled={loading}>
             <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} /> 重新整理
           </button>
@@ -194,7 +309,7 @@ export function AdminApp() {
           {shown.map((ch) => (
             <button key={ch.id} type="button" className="steam-card group overflow-hidden rounded-lg text-left" onClick={() => setOpenId(ch.id)}>
               <div className="relative">
-                <Capsule ch={ch} />
+                <Capsule ch={ch} nonce={nonce} />
                 <span className={`absolute top-2 left-2 rounded px-2 py-0.5 text-[11px] font-black ${STATUS[ch.status].cls}`}>{STATUS[ch.status].label}</span>
                 {ch.channel != null && (
                   <span className="absolute top-2 right-2 rounded bg-black/70 px-2 py-0.5 font-mono text-xs font-bold text-[#b6ffb0]">CH {ch.channel}</span>
@@ -316,7 +431,9 @@ export function AdminApp() {
                     </div>
                   )}
                 </dl>
-                <p className="text-xs text-[#8fa3b5]">上架或改台號後，電視會立刻顯示；分享預覽圖每小時自動更新。</p>
+                <p className="text-xs leading-relaxed text-[#8fa3b5]">
+                  上架或改台號後，電視會立刻顯示；分享頁和分享圖每小時第 17 分自動重建，急的話按上方「立即重建分享圖」，到 GitHub 按 Run workflow。
+                </p>
               </div>
             </div>
           </DialogContent>
