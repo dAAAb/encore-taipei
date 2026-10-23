@@ -4,9 +4,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  # Picks up newly approved Encore TV channels (per-channel share pages are generated at build time).
+  # Encore TV: every 10 minutes, rebuild only if the live channel list changed, so newly approved
+  # channels get their share pages and screenshots quickly. Plus one daily refresh.
   schedule:
-    - cron: '17 * * * *'
+    - cron: '*/10 * * * *'
 
 permissions:
   contents: read
@@ -15,13 +16,36 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   BETA_BRANCH: cursor/encore-tv-0d54
+  SUPABASE_URL: https://ogvqrfdgflxhfdqwtrxq.supabase.co
+  SUPABASE_KEY: sb_publishable_Fe_h6sRUasUjh3jCuXkgKA_qtCRfwpM
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.diff.outputs.build }}
+    steps:
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "schedule" ] || [ "$(date -u +%H%M)" -lt "0010" ]; then
+            echo build=true >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          norm='[.[] | {channel, title, url, author, message, og_image}] | sort_by(.channel)'
+          site=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url | sed 's#/*$##')
+          live=$(curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/encore_public_channels" \
+            -H "apikey: $SUPABASE_KEY" -H 'Content-Type: application/json' -d '{}' | jq -cS "$norm") || live=error
+          built=$(curl -fsS "$site/beta/channels.json?t=$(date +%s)" | jq -cS "$norm") || built=missing
+          if [ "$live" = "$built" ]; then echo build=false; else echo build=true; fi >> "$GITHUB_OUTPUT"
+
   build:
+    needs: check
+    if: needs.check.outputs.build == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +71,11 @@ jobs:
         with:
           ref: ${{ env.BETA_BRANCH }}
           path: beta-src
+      # Stage screenshots for share images need CJK fonts on the runner.
+      - name: Install CJK fonts
+        if: steps.beta-src.outcome == 'success'
+        continue-on-error: true
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
       - name: Build beta into /beta/
         if: steps.beta-src.outcome == 'success'
         continue-on-error: true
