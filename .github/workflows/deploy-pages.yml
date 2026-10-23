@@ -94,12 +94,14 @@ jobs:
           npm run build
           rm -rf ../dist/beta
           cp -r dist ../dist/beta
-          # The Encore Tower is also published at the site root. Its asset URLs are absolute (/beta/...),
-          # so the pages work unchanged from /tower/.
-          if [ -d dist/tower ]; then
-            rm -rf ../dist/tower
-            cp -r dist/tower ../dist/tower
-          fi
+          # The Encore Tower and the submit page are also published at the site root. Their asset URLs are
+          # absolute (/beta/...), so the pages work unchanged from /tower/ and /submit/.
+          for page in tower submit; do
+            if [ -d "dist/$page" ]; then
+              rm -rf "../dist/$page"
+              cp -r "dist/$page" "../dist/$page"
+            fi
+          done
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}/beta/
           SITE_URL: ${{ steps.pages.outputs.base_url }}/beta
