@@ -15,6 +15,7 @@ import { setHum, startHum } from './sfx'
 import { useTower } from './store'
 import { DronePad } from './ui/DronePad'
 import { FloorView } from './ui/FloorView'
+import { HoverTag } from './ui/HoverTag'
 import { RoofChat } from './ui/RoofChat'
 
 const BASE = import.meta.env.BASE_URL
@@ -258,6 +259,7 @@ export function TowerApp() {
             </button>
           </nav>
           {mode === 'tower' && <DronePad floors={floors} onEnter={enter} />}
+          {mode === 'tower' && <HoverTag floors={floors} />}
           {nearRoof && <RoofChat messages={messages} loading={chatLoading} onPosted={(m) => setMessages((ms) => [m, ...ms.filter((x) => x.id !== m.id)])} />}
         </>
       )}
