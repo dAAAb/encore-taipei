@@ -25,7 +25,8 @@ function Field({ label, hint, children }: { label: string; hint?: ReactNode; chi
 const input =
   'w-full rounded-xl border-2 border-[#0c0812] bg-white px-3 py-2 text-[15px] text-[#13204f] shadow-[2px_2px_0_#2b2f9e] outline-none placeholder:text-[#9aa0bb] focus:border-[#1f4fd1]'
 
-export function SubmitForm() {
+/** `unit` is how a slot is counted where the form opens: TV channels (台) or tower floors (樓). */
+export function SubmitForm({ unit = '台' }: { unit?: '台' | '樓' }) {
   const open = useTv((s) => s.submitOpen)
   const setOpen = useTv((s) => s.setSubmitOpen)
   const setPending = useTv((s) => s.setPending)
@@ -131,9 +132,9 @@ export function SubmitForm() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="ink-card max-h-[90dvh] overflow-y-auto border-0 p-5 sm:max-w-lg sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-[#13204f]">上架第 {nextNumber} 台</DialogTitle>
+          <DialogTitle className="text-2xl font-black text-[#13204f]">上架第 {nextNumber} {unit}</DialogTitle>
           <DialogDescription className="text-[#4a4f6e]">
-            送出後這一台馬上換成你的舞台（只有你看得到）。管理員審核通過才會正式上架，台號可能會變動。
+            送出後這一{unit}馬上換成你的舞台（只有你看得到）。管理員審核通過才會正式上架，號碼可能會變動。
           </DialogDescription>
         </DialogHeader>
 
@@ -190,7 +191,7 @@ export function SubmitForm() {
 
           <button type="submit" disabled={busy} className="ink-btn flex w-full items-center justify-center gap-2 px-5 py-2.5 text-base disabled:opacity-60" data-on="true">
             {busy && <Loader2 className="size-4 animate-spin" />}
-            {busy ? '送出中…' : `送出，佔下第 ${nextNumber} 台`}
+            {busy ? '送出中…' : `送出，佔下第 ${nextNumber} ${unit}`}
           </button>
         </form>
       </DialogContent>

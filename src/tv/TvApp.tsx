@@ -248,6 +248,9 @@ export function TvApp() {
               略過開場，直接轉到第 2026 台
             </button>
           )}
+          <a href={`${BASE}tower/`} className="tv-caption mt-3 text-sm font-bold text-[#ffd400]/90 underline underline-offset-4 hover:text-[#ffd400]">
+            新玩法：搭無人機逛「台北安可大樓」→
+          </a>
           <p className="tv-caption mt-4 text-xs text-white/55">iPhone 請關掉靜音模式 · 鍵盤 ← → 轉台</p>
           <p className="tv-caption fixed bottom-[max(0.6rem,env(safe-area-inset-bottom))] left-3 font-mono text-[10px] tracking-widest text-white/35" title={layout.name}>
             後室 {layout.id}

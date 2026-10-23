@@ -11,6 +11,7 @@
 | `/2026/`、`/2027/`… | 直接轉到某一台，每台有自己的分享預覽圖與標題 |
 | `/club/` | 第 2026 台〈台北安可之夜〉單獨開啟 |
 | `/admin/` | 頻道管理（需要管理連結） |
+| `/tower/`、`/tower/2027/`… | 台北安可大樓：每台是一層樓，搭無人機逛；同一份頁面也發布在網站根目錄的 `encore.taipei/tower/` |
 
 目前 Beta 版部署在 [encore.taipei/beta/](http://encore.taipei/beta/)，正式站 `encore.taipei/` 仍是第 2026 台。
 
@@ -35,6 +36,24 @@
 市民朋友（上班族、高中生、阿嬤、外送員、護理師、夜市主廚、阿伯、籃球少年）→ 大家一起。「獨舞」讓市長一個人跳。
 網址加 `?troupe=animals`、`citizens` 或 `mix` 可以直接帶伴舞開場，每次進來的陣容和順序都不同。
 第 2028 台就是 `club/?troupe=animals`：同一座夜店，標題換成「台北安可大舞團」。角色定義在 `src/scene/troupe-looks.ts`。
+
+## 台北安可大樓（`/tower/`）
+
+同一份頻道清單的另一種逛法：每一台是一層樓，第 2026 台是一樓，往上依序疊；大樓至少蓋到 2035 樓（黃金十年），
+台數更多就繼續長高。最上面是紐約風頂樓花園。
+
+- **大樓外**：玻璃帷幕大樓，每層落地窗裡看得到那一台的分享預覽圖，霧面模糊、慢慢漂移，加上派對燈光與玻璃反光，
+  像一段一直循環的朦朧 GIF；不用同時跑十座 3D 舞台。空著的那一層掛「招租中」，再往上是「即將開放」的空辦公室。
+- **無人機**：畫面下方是你的無人機。滾輪或上下拖曳／滑動是上下飛，左右拖曳繞著大樓轉，雙指或 ＋ − 拉近拉遠；
+  右下角遙控器有上下一層、遠近、頂樓、回最底層與「飛進」。鍵盤 ↑ ↓ 換樓層、Enter 飛進去。放開後自動對準最近的一層。
+- **飛進樓層**：點樓層（或按「飛進」），無人機衝向那一層的窗戶、鏡頭推到窗戶剛好填滿螢幕，接著換成那一台的舞台本身。
+  畫面四周有一圈薄霧（像隔著玻璃），中間清楚；薄霧可以關。↑ ↓ 搭電梯換樓層（電梯門關上、叮一聲、門打開），
+  Esc、瀏覽器上一頁或「飛出大樓」飛回大樓外。從最高的一層再往上，就飛到頂樓。
+- **頂樓花園**：木棧板、玻璃欄杆、串燈、躺椅、立燈、火盆桌、植栽、紐約水塔，與「台北安可 黃金十年」燈泡招牌（燈泡會跑馬）。
+  飛到頂樓會出現聊天室；最新幾句話會變成對話泡泡，浮在躺椅上。留言存在 Supabase `encore_chat`，
+  只能透過 `encore_chat_post` 寫入（暱稱 20 字、內容 140 字、不能重複洗版、全站每分鐘上限 30 則），後台「頂樓聊天」分頁可以隱藏留言。
+- 空樓層一樣可以「一鍵交給你的 AI Agent」或直接上架，送出後那一層馬上換成你的舞台（只有你看得到）。
+- `/tower/2027/` 會直接飛進 2027 樓，每層有自己的分享標題與預覽圖。程式在 `src/tower/`。
 
 ## 頻道與後台
 
@@ -89,6 +108,8 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 | `tv_power_off`、`finale_complete` | 關機彩蛋開始、穿過裂縫回到後室 |
 | `club_enter`、`troupe_switch`、`music_mode`、`camera_view`、`sound_unlock` | 夜店頁互動（`embedded` 表示在電視裡） |
 | `datasheet_open`、`making_of_open` | 政績資料、製作花絮 |
+| `tower_takeoff`、`floor_enter`、`floor_switch`、`floor_exit` | 大樓：起飛、飛進樓層、搭電梯、飛出（樓層另記虛擬瀏覽 `/tower/2027/`） |
+| `roof_visit`、`roof_chat_post`、`switch_to_tv` | 大樓：上頂樓、留言、切回電視模式 |
 
 
 
@@ -96,7 +117,7 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 
 ```bash
 npm install
-npm run dev        # http://localhost:4733（電視台）、/club/、/admin/、/2027/
+npm run dev        # http://localhost:4733（電視台）、/club/、/admin/、/2027/、/tower/
 npm run build      # 產生 dist/（含每台的分享頁與預覽圖）
 npm run preview
 ```
@@ -113,7 +134,8 @@ npm run preview
 | `SITE_URL` | 公開網址，用來產生分享預覽圖與 canonical 的絕對網址 | `https://encore.taipei/beta` |
 
 `.github/workflows/deploy-pages.yml` 在推到 `main`、手動執行或每小時整點過 17 分時：先建置 `main` 放在網站根目錄，
-再把 Beta 分支（`cursor/encore-tv-0d54`）建置到 `/beta/`。Beta 建置失敗不會影響正式站。
+再把 Beta 分支（`cursor/encore-tv-0d54`）建置到 `/beta/`，並把其中的 `tower/` 複製一份到網站根目錄（`/tower/`）。
+Beta 建置失敗不會影響正式站。
 Beta 測試順利後，把 Beta 分支合併進 `main`，電視台就會變成 `encore.taipei/`，各台網址變成 `encore.taipei/2027/`。
 
 GitHub Pages 與 encore.taipei 的第一次設定：

@@ -28,7 +28,15 @@ async function requestRebuild(adminKey: string): Promise<RebuildResult> {
     return { ok: false, reason: 'failed', message: (e as Error).message }
   }
 }
-type Filter = 'all' | 'pending' | 'live' | 'hidden'
+type Filter = 'all' | 'pending' | 'live' | 'hidden' | 'chat'
+
+interface ChatRow {
+  id: number
+  name: string
+  body: string
+  hidden: boolean
+  created_at: string
+}
 
 const STATUS: Record<AdminChannel['status'], { label: string; cls: string }> = {
   pending: { label: '待審核', cls: 'bg-[#ffd400] text-[#10151d]' },
@@ -169,6 +177,59 @@ function RotateKey({ adminKey, onRotated }: { adminKey: string; onRotated: (k: s
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+/** Tower rooftop chat moderation: every message, newest first, each one hideable. */
+function RoofChatAdmin({ adminKey }: { adminKey: string }) {
+  const [rows, setRows] = useState<ChatRow[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState<number | null>(null)
+
+  useEffect(() => {
+    rpc<ChatRow[]>('encore_admin_chat', { p_key: adminKey })
+      .then(setRows)
+      .catch(() => setError('讀不到頂樓留言。'))
+  }, [adminKey])
+
+  const toggle = async (row: ChatRow) => {
+    setBusy(row.id)
+    try {
+      const hidden = await rpc<boolean>('encore_admin_chat_hide', { p_key: adminKey, p_id: row.id, p_hidden: !row.hidden })
+      setRows((rs) => (rs ?? []).map((r) => (r.id === row.id ? { ...r, hidden } : r)))
+    } catch {
+      setError('更新失敗，請再試一次。')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  if (error) return <p className="rounded-md bg-[#e0304a]/20 p-3 text-sm text-[#ff8a99]">{error}</p>
+  if (!rows)
+    return (
+      <p className="flex items-center gap-2 text-sm">
+        <Loader2 className="size-4 animate-spin" /> 讀取頂樓留言中…
+      </p>
+    )
+  if (rows.length === 0) return <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm">頂樓還沒有人留言。</p>
+  return (
+    <ul className="divide-y divide-white/10 overflow-hidden rounded-lg border border-white/10 bg-[#18212c]">
+      {rows.map((r) => (
+        <li key={r.id} className={`flex items-start gap-3 p-3 ${r.hidden ? 'opacity-50' : ''}`}>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm">
+              <b className="text-white">{r.name}</b> <span className="text-xs text-[#8fa3b5]">{fmt(r.created_at)}</span>
+              {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">已隱藏</span>}
+            </p>
+            <p className="break-words text-[#c7d5e0]">{r.body}</p>
+          </div>
+          <button type="button" disabled={busy === r.id} className="steam-btn steam-btn--plain flex shrink-0 items-center gap-1.5 text-xs" onClick={() => toggle(r)}>
+            {r.hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+            {r.hidden ? '恢復' : '隱藏'}
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -373,7 +434,7 @@ export function AdminApp() {
   }
 
   const counts = useMemo(() => {
-    const c = { all: 0, pending: 0, live: 0, hidden: 0 }
+    const c = { all: 0, pending: 0, live: 0, hidden: 0, chat: '' as number | '' }
     for (const r of rows ?? []) {
       c.all++
       c[r.status]++
@@ -381,7 +442,7 @@ export function AdminApp() {
     return c
   }, [rows])
 
-  const shown = (rows ?? []).filter((r) => filter === 'all' || r.status === filter)
+  const shown = filter === 'chat' ? [] : (rows ?? []).filter((r) => filter === 'all' || r.status === filter)
   const current = rows?.find((r) => r.id === openId) ?? null
 
   const update = async (id: string, patch: { p_status?: AdminChannel['status']; p_channel?: number | null }) => {
@@ -459,6 +520,7 @@ export function AdminApp() {
               ['pending', '待審核'],
               ['live', '上架中'],
               ['hidden', '已隱藏'],
+              ['chat', '頂樓聊天'],
             ] as [Filter, string][]
           ).map(([f, label]) => (
             <button
@@ -493,7 +555,8 @@ export function AdminApp() {
             <Loader2 className="size-4 animate-spin" /> 讀取投稿中…
           </p>
         )}
-        {rows && shown.length === 0 && <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm">這裡還沒有東西。</p>}
+        {filter === 'chat' && <RoofChatAdmin adminKey={key} />}
+        {rows && filter !== 'chat' && shown.length === 0 && <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm">這裡還沒有東西。</p>}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shown.map((ch) => (
             <button key={ch.id} type="button" className="steam-card group overflow-hidden rounded-lg text-left" onClick={() => setOpenId(ch.id)}>

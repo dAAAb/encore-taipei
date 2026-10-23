@@ -234,6 +234,23 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         fs.mkdirSync(path.join(out, String(n)), { recursive: true })
         fs.writeFileSync(path.join(out, String(n), 'index.html'), html)
       }
+      // The tower gets one page per occupied floor; it is also published at the site root, its canonical home.
+      const towerIndex = path.join(out, 'tower', 'index.html')
+      if (fs.existsSync(towerIndex)) {
+        const towerTemplate = fs.readFileSync(towerIndex, 'utf8')
+        const towerRoot = siteUrl ? `${siteUrl.replace(/\/beta$/, '')}/tower/` : `${base}tower/`
+        for (const ch of channels) {
+          const n = ch.channel
+          const html = setMeta(towerTemplate, {
+            title: `${n} 樓｜${ch.title}｜台北安可大樓`,
+            description: `${ch.author} 做的台北安可派對，在台北安可大樓 ${n} 樓。${ch.message ?? ''}`.slice(0, 160),
+            image: images.get(n) ?? `${root}og/${n}.png`,
+            url: `${towerRoot}${n}/`,
+          })
+          fs.mkdirSync(path.join(out, 'tower', String(n)), { recursive: true })
+          fs.writeFileSync(path.join(out, 'tower', String(n), 'index.html'), html)
+        }
+      }
       config.logger.info(`[channel-pages] ${channels.length} live channels, pages ${FIRST_CHANNEL}–${last + SPARE_CHANNELS}`)
     },
   }

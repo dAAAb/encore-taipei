@@ -15,7 +15,8 @@ function shareUrls(): Plugin {
     name: 'share-urls',
     transformIndexHtml(html, ctx) {
       const page = ctx.path.replace(/^\//, '').replace(/index\.html$/, '')
-      const url = `${root}${page}`
+      // the tower is also published at the site root (/tower/), which is its canonical home
+      const url = page.startsWith('tower/') && siteUrl ? `${siteUrl.replace(/\/beta$/, '')}/${page}` : `${root}${page}`
       return {
         html: html.replaceAll('%SITE_ROOT%', root).replaceAll('%PAGE_URL%', url),
         tags: siteUrl
@@ -29,7 +30,7 @@ function shareUrls(): Plugin {
   }
 }
 
-/** /2026, /2027 … are TV channels served by the hub page. */
+/** /2026, /2027 … are TV channels served by the hub page; /tower/2027 are floors served by the tower page. */
 function channelRoutes(): Plugin {
   const rewrite = (url = '') => url.replace(/^(.*?\/)(\d{4,5})\/?(\?.*)?$/, (_m, pre: string, _n, q = '') => `${pre}index.html${q}`)
   return {
@@ -55,6 +56,7 @@ export default defineConfig({
         tv: path.resolve(import.meta.dirname, 'index.html'),
         club: path.resolve(import.meta.dirname, 'club/index.html'),
         admin: path.resolve(import.meta.dirname, 'admin/index.html'),
+        tower: path.resolve(import.meta.dirname, 'tower/index.html'),
       },
     },
   },
