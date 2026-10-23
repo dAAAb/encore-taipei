@@ -5,6 +5,7 @@ import { sfx } from '../sfx'
 import { useTv } from '../store'
 import { Credits } from './Credits'
 import { FinaleScene } from './FinaleScene'
+import { Slit } from './Slit'
 
 const CREDITS_SECONDS = 72
 
@@ -75,18 +76,19 @@ export default function Finale({ onDone, lowPower }: { onDone: () => void; lowPo
   const through = () => {
     if (stage !== 'slit') return
     setStage('through')
-    sfx.whoosh(0.9, true, 0.7)
+    sfx.whoosh(1.1, true, 0.8)
+    sfx.ting()
     try {
       player.current?.pauseVideo()
     } catch {
       /* already gone */
     }
     if (synthOn.current) engine.stopMusic()
-    window.setTimeout(onDone, 750)
+    window.setTimeout(onDone, 1100)
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-black" onClick={through}>
+    <div className="fixed inset-0 z-40 bg-black">
       <FinaleScene
         lowPower={lowPower}
         onCloud={() => {
@@ -111,15 +113,7 @@ export default function Finale({ onDone, lowPower }: { onDone: () => void; lowPo
 
       {stage === 'credits' && <Credits duration={CREDITS_SECONDS} onEnd={() => setStage('slit')} />}
 
-      {(stage === 'slit' || stage === 'through') && (
-        <div className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center">
-          <div
-            className={`slit slit-glow h-full w-[3px] origin-center bg-white transition-transform duration-700 ease-in ${stage === 'through' ? 'scale-x-[900]' : ''}`}
-            style={{ boxShadow: '0 0 24px 6px rgba(255,255,255,0.8), 0 0 80px 24px rgba(170,200,255,0.4)' }}
-          />
-          {stage === 'slit' && <p className="tv-caption gate-pulse absolute bottom-[18vh] text-sm tracking-[0.3em] text-white/80">點一下，穿過去</p>}
-        </div>
-      )}
+      {(stage === 'slit' || stage === 'through') && <Slit opening={stage === 'through'} onEnter={through} />}
 
       {stage === 'show' || stage === 'credits' ? (
         <button

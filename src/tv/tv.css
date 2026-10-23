@@ -146,33 +146,6 @@ body,
     transform: translateY(-100%);
   }
 }
-.slit {
-  animation: slit-open 1.6s cubic-bezier(0.7, 0, 0.2, 1) forwards;
-}
-@keyframes slit-open {
-  0% {
-    transform: scaleY(0);
-    opacity: 0;
-  }
-  40% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-.slit-glow {
-  animation: slit-glow 1.8s ease-in-out infinite;
-}
-@keyframes slit-glow {
-  50% {
-    box-shadow:
-      0 0 40px 10px rgba(255, 255, 255, 0.85),
-      0 0 120px 40px rgba(170, 200, 255, 0.45);
-  }
-}
 .flash-white {
   animation: flash-white 0.9s ease-out forwards;
 }
@@ -198,5 +171,20 @@ body,
   }
   100% {
     opacity: 0;
+  }
+}
+
+.shake {
+  animation: shake 0.12s linear infinite;
+}
+@keyframes shake {
+  25% {
+    transform: translate(2px, -1px);
+  }
+  50% {
+    transform: translate(-2px, 1px);
+  }
+  75% {
+    transform: translate(1px, 2px);
   }
 }
