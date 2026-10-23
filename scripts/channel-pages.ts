@@ -7,6 +7,15 @@ import { FALLBACK_CHANNELS, fetchLiveChannels, FIRST_CHANNEL, type Channel } fro
 const SPARE_CHANNELS = 16
 const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.meta.dirname, 'assets', f))
 
+/** Screenshots are reused from the live site until the stage's URL or title changes, or they get this old. */
+const SHOT_MAX_AGE_DAYS = 7
+const CHROME_PATHS = ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/local/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser']
+
+interface ShotEntry {
+  key: string
+  at: string
+}
+
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 function setMeta(html: string, m: { title: string; description: string; image: string; url: string }) {
@@ -73,6 +82,38 @@ function hubCard() {
   )
 }
 
+/** The stage in a 1200×630 frame with the TV's channel number and a station tag, like a still from the broadcast. */
+function shotPage(stage: string, n: number, title: string) {
+  return `<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=block">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: 'Noto Sans TC', sans-serif; }
+  iframe { position: absolute; inset: 0; width: 1200px; height: 630px; border: 0; }
+  .osd { position: absolute; top: 20px; right: 30px; font: 900 66px/1 ui-monospace, 'DejaVu Sans Mono', monospace; color: #b6ffb0;
+    text-shadow: 0 0 14px rgba(90, 255, 130, 0.75), 3px 3px 0 #000; letter-spacing: 2px; }
+  .tag { position: absolute; left: 24px; bottom: 22px; max-width: 1060px; display: flex; gap: 12px; align-items: center; padding: 9px 18px;
+    border-radius: 999px; background: rgba(10, 8, 18, 0.84); border: 3px solid #ffd400; color: #fff; font-weight: 900; font-size: 27px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 4px 4px 0 #0c0812; }
+  .tag b { color: #ffd400; }
+</style></head><body>
+<iframe src="${esc(stage)}" allow="autoplay; fullscreen"></iframe>
+<div class="osd">${n}</div>
+<div class="tag"><b>台北安可電視台</b><span>第 ${n} 台・${esc(title)}</span></div>
+</body></html>`
+}
+
+async function stageOgImage(stage: string) {
+  try {
+    const html = await fetch(stage, { signal: AbortSignal.timeout(6000) }).then((r) => r.text())
+    const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+    if (!m) return null
+    const u = new URL(m[1], stage)
+    return u.protocol === 'https:' ? u.toString() : null
+  } catch {
+    return null
+  }
+}
+
 export function channelPages({ siteUrl, base }: { siteUrl: string; base: string }): Plugin {
   let config: ResolvedConfig
   return {
@@ -114,12 +155,81 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
 
       const root = siteUrl ? `${siteUrl}/` : base
       const last = Math.max(FIRST_CHANNEL, ...channels.map((c) => c.channel))
+      const images = new Map<number, string>()
+
+      // Live channels without a hand-made og/<n>.jpg get a screenshot of their stage. Only deploy builds
+      // (SITE_URL set) shoot, since they can reuse last build's images from the live site.
+      const handmade = new Set(channels.filter((c) => fs.existsSync(path.join(ogDir, `${c.channel}.jpg`))).map((c) => c.channel))
+      const shots: Record<string, ShotEntry> = {}
+      const chrome = process.env.CHROME_PATH ?? CHROME_PATHS.find((p) => fs.existsSync(p))
+      const wantShots = (!!siteUrl || process.env.ENCORE_OG_SHOTS === '1') && process.env.ENCORE_OG_SHOTS !== '0'
+      if (wantShots) {
+        const prev: Record<string, ShotEntry> = await fetch(`${root}og/shots.json`, { signal: AbortSignal.timeout(8000) })
+          .then((r) => (r.ok ? r.json() : {}))
+          .catch(() => ({}))
+        const todo: Channel[] = []
+        for (const ch of channels) {
+          if (handmade.has(ch.channel)) continue
+          const key = `${ch.url}|${ch.title}`
+          const old = prev[ch.channel]
+          const fresh = old && old.key === key && Date.now() - Date.parse(old.at) < SHOT_MAX_AGE_DAYS * 864e5
+          if (fresh) {
+            const bytes = await fetch(`${root}og/${ch.channel}.jpg`, { signal: AbortSignal.timeout(8000) })
+              .then((r) => (r.ok ? r.arrayBuffer() : null))
+              .catch(() => null)
+            if (bytes) {
+              fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), Buffer.from(bytes))
+              shots[ch.channel] = old
+              continue
+            }
+          }
+          todo.push(ch)
+        }
+        if (todo.length && chrome) {
+          const puppeteer = await import('puppeteer-core')
+          const browser = await puppeteer.launch({
+            executablePath: chrome,
+            headless: true,
+            args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--mute-audio', '--autoplay-policy=no-user-gesture-required', '--hide-scrollbars'],
+          })
+          try {
+            for (const ch of todo) {
+              const stage = /^https?:\/\//.test(ch.url) ? ch.url : `${root}${ch.url.replace(/^\//, '')}`
+              const page = await browser.newPage()
+              try {
+                await page.setViewport({ width: 1200, height: 630 })
+                await page.setContent(shotPage(stage, ch.channel, ch.title), { waitUntil: 'load', timeout: 40000 })
+                await new Promise((r) => setTimeout(r, 9000))
+                const jpg = await page.screenshot({ type: 'jpeg', quality: 86 })
+                fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
+                shots[ch.channel] = { key: `${ch.url}|${ch.title}`, at: new Date().toISOString() }
+                config.logger.info(`[channel-pages] screenshot for channel ${ch.channel}`)
+              } catch (e) {
+                config.logger.warn(`[channel-pages] screenshot failed for channel ${ch.channel}: ${(e as Error).message}`)
+              } finally {
+                await page.close().catch(() => {})
+              }
+            }
+          } finally {
+            await browser.close()
+          }
+        }
+      }
+      fs.writeFileSync(path.join(ogDir, 'shots.json'), JSON.stringify(shots))
+
+      for (const ch of channels) {
+        if (fs.existsSync(path.join(ogDir, `${ch.channel}.jpg`))) images.set(ch.channel, `${root}og/${ch.channel}.jpg`)
+        else if (ch.og_image?.startsWith('https://')) images.set(ch.channel, ch.og_image)
+        else if (/^https:\/\//.test(ch.url)) {
+          const own = await stageOgImage(ch.url)
+          if (own) images.set(ch.channel, own)
+        }
+      }
+
       for (let n = FIRST_CHANNEL; n <= last + SPARE_CHANNELS; n++) {
         const ch = channels.find((c) => c.channel === n)
-        let image: string
-        if (ch?.og_image?.startsWith('https://')) image = ch.og_image
-        else if (fs.existsSync(path.join(ogDir, `${n}.jpg`))) image = `${root}og/${n}.jpg`
-        else {
+        let image = images.get(n)
+        if (!image) {
           card(`${n}.png`, channelCard(n, !!ch))
           image = `${root}og/${n}.png`
         }

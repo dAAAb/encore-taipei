@@ -56,7 +56,14 @@ insert into public.encore_admin_keys (key_hash, label)
 values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明');
 ```
 
-上架或改台號後電視會立刻更新；每台的分享頁（`/2027/index.html` 與 `og/2027.png`）在建置時產生，GitHub Actions 每小時自動重建一次。
+上架或改台號後電視會立刻更新。每台的分享頁（`/2027/index.html`）和分享圖在建置時產生：
+GitHub Actions 每 10 分鐘比對一次已上架頻道，有變動才重建，所以新頻道通常 10～20 分鐘內就有分享圖。
+分享圖的來源依序是：`public/og/<台號>.jpg` 手工圖 → 用無頭 Chrome 截下舞台畫面，加上台號和「台北安可電視台」標籤
+（截圖會沿用上一版，網址或名稱改了、或滿 7 天才重拍，紀錄在 `og/shots.json`）→ 舞台網站自己的 og:image → 文字卡。
+本機建置預設不截圖，要測試可加 `ENCORE_OG_SHOTS=1`。
+
+投稿表單貼上網址後，會透過 Supabase Edge Function `encore-meta`（`supabase/functions/encore-meta/`）
+讀取該網站的標題和描述，自動帶入舞台名稱與說明。
 
 ### 給舞台作者：讓遙控器控制你的頁面（選用）
 
