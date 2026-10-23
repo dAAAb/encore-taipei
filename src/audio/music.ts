@@ -10,6 +10,9 @@ let tapped = false
 let outLevel = 1
 
 const UNLOCK_EVENTS = ['click', 'touchend', 'keydown', 'pointerup'] as const
+/** How long the MV may take to load before the built-in beat takes over. */
+const YT_WAIT_MS = 12000
+let waitTimer = 0
 
 /** Resume Web Audio without hanging: Safari leaves resume() pending until the page gets a tap. */
 const resumeAudio = () => Promise.race([engine.resume().catch(() => {}), new Promise<void>((r) => setTimeout(r, 300))])
@@ -44,9 +47,21 @@ function lockSound() {
   UNLOCK_EVENTS.forEach((ev) => document.addEventListener(ev, unlock, true))
 }
 
+/** The official MV is the default; the built-in beat only takes over when YouTube can't play here. */
+function fallBackToSynth() {
+  window.clearTimeout(waitTimer)
+  const s = useClub.getState()
+  const wasYoutube = s.musicMode === 'youtube'
+  s.setYoutubeFailed()
+  if (!s.started || !wasYoutube) return
+  player?.pauseVideo()
+  engine.startMusic()
+  if (engine.ctx?.state !== 'running') lockSound()
+}
+
 /** Create the official-MV player inside `el` ahead of time so the first tap can start it with sound. */
 export function mountYouTube(el: HTMLElement) {
-  const { setYoutubeReady, setYoutubeFailed } = useClub.getState()
+  const { setYoutubeReady } = useClub.getState()
   loadYouTubeApi()
     .then((YT) => {
       new YT.Player(el, {
@@ -65,6 +80,7 @@ export function mountYouTube(el: HTMLElement) {
         events: {
           onReady: (e) => {
             player = e.target
+            window.clearTimeout(waitTimer)
             setYoutubeReady(true)
             const s = useClub.getState()
             if (s.started && s.wantMusic === 'youtube') {
@@ -73,7 +89,7 @@ export function mountYouTube(el: HTMLElement) {
           },
           onError: (e) => {
             console.warn('YouTube player error', e.data)
-            setYoutubeFailed()
+            fallBackToSynth()
           },
           onStateChange: (e) => {
             if (e.data === 0) {
@@ -85,13 +101,22 @@ export function mountYouTube(el: HTMLElement) {
         },
       })
     })
-    .catch(() => setYoutubeFailed())
+    .catch(() => fallBackToSynth())
 }
 
 /** Must run inside a user gesture the first time (autoplay policy). */
 export async function applyMusic(mode: MusicMode) {
   await resumeAudio()
   const ytReady = useClub.getState().youtubeReady && player
+  if (mode === 'youtube' && !ytReady && !useClub.getState().youtubeFailed) {
+    // Still loading: stay on the MV (onReady starts it) rather than flashing the built-in beat first.
+    engine.stopMusic()
+    window.clearTimeout(waitTimer)
+    waitTimer = window.setTimeout(() => {
+      if (!useClub.getState().youtubeReady && useClub.getState().musicMode === 'youtube') fallBackToSynth()
+    }, YT_WAIT_MS)
+    return 'youtube' as const
+  }
   if (mode === 'youtube' && ytReady) {
     engine.stopMusic()
     if (locked) player!.mute()
