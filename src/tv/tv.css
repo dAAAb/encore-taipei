@@ -133,19 +133,6 @@ body,
     opacity: 0.45;
   }
 }
-.credits-roll {
-  animation-name: credits-roll;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-@keyframes credits-roll {
-  from {
-    transform: translateY(100vh);
-  }
-  to {
-    transform: translateY(-100%);
-  }
-}
 .flash-white {
   animation: flash-white 0.9s ease-out forwards;
 }
