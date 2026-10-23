@@ -3,14 +3,53 @@ import { setBeatOrigin } from './beat'
 import { engine } from './synth'
 import { loadYouTubeApi, TAIPEI_ENCORE_VIDEO_ID, type YTPlayer } from './youtube'
 
+/** Set only once the player is ready: before that the YT.Player object has no playback methods. */
 let player: YTPlayer | null = null
+let locked = false
+let tapped = false
+let outLevel = 1
+
+const UNLOCK_EVENTS = ['click', 'touchend', 'keydown', 'pointerup'] as const
+
+/** Resume Web Audio without hanging: Safari leaves resume() pending until the page gets a tap. */
+const resumeAudio = () => Promise.race([engine.resume().catch(() => {}), new Promise<void>((r) => setTimeout(r, 300))])
+
+/**
+ * Safari won't start sound in a frame the user hasn't touched (the TV hub loads this page in an iframe).
+ * Keep the MV rolling muted so the beat and picture run, and turn the sound on at the first tap or key.
+ */
+function lockSound() {
+  if (locked || tapped) return
+  locked = true
+  useClub.getState().setSoundLocked(true)
+  if (useClub.getState().musicMode === 'youtube' && player) {
+    player.mute()
+    player.playVideo()
+  }
+  const unlock = () => {
+    UNLOCK_EVENTS.forEach((ev) => document.removeEventListener(ev, unlock, true))
+    locked = false
+    tapped = true
+    useClub.getState().setSoundLocked(false)
+    engine.resume().catch(() => {})
+    const mode = useClub.getState().musicMode
+    if (mode === 'youtube' && player) {
+      if (outLevel > 0) {
+        player.unMute()
+        player.setVolume(Math.round(85 * outLevel))
+      }
+      player.playVideo()
+    } else if (mode === 'synth') engine.startMusic()
+  }
+  UNLOCK_EVENTS.forEach((ev) => document.addEventListener(ev, unlock, true))
+}
 
 /** Create the official-MV player inside `el` ahead of time so the first tap can start it with sound. */
 export function mountYouTube(el: HTMLElement) {
   const { setYoutubeReady, setYoutubeFailed } = useClub.getState()
   loadYouTubeApi()
     .then((YT) => {
-      player = new YT.Player(el, {
+      new YT.Player(el, {
         videoId: TAIPEI_ENCORE_VIDEO_ID,
         width: '100%',
         height: '100%',
@@ -24,10 +63,11 @@ export function mountYouTube(el: HTMLElement) {
           origin: location.origin,
         },
         events: {
-          onReady: () => {
+          onReady: (e) => {
+            player = e.target
             setYoutubeReady(true)
             const s = useClub.getState()
-            if (s.started && s.wantMusic === 'youtube' && s.musicMode !== 'youtube') {
+            if (s.started && s.wantMusic === 'youtube') {
               applyMusic('youtube').then((m) => useClub.getState().setMusicMode(m))
             }
           },
@@ -50,13 +90,20 @@ export function mountYouTube(el: HTMLElement) {
 
 /** Must run inside a user gesture the first time (autoplay policy). */
 export async function applyMusic(mode: MusicMode) {
-  await engine.resume().catch(() => {})
+  await resumeAudio()
   const ytReady = useClub.getState().youtubeReady && player
   if (mode === 'youtube' && ytReady) {
     engine.stopMusic()
-    player!.unMute()
-    player!.setVolume(85)
+    if (locked) player!.mute()
+    else {
+      player!.unMute()
+      player!.setVolume(Math.round(85 * outLevel))
+    }
     player!.playVideo()
+    setTimeout(() => {
+      const state = player?.getPlayerState()
+      if (useClub.getState().musicMode === 'youtube' && state !== 1 && state !== 3) lockSound()
+    }, 2500)
     return 'youtube' as const
   }
   player?.pauseVideo()
@@ -65,14 +112,16 @@ export async function applyMusic(mode: MusicMode) {
     return 'off' as const
   }
   engine.startMusic()
+  if (engine.ctx?.state !== 'running') lockSound()
   return 'synth' as const
 }
 
 /** Volume from the Encore TV remote (0–1), applied to both the MV and the synth fallback. */
 export function setExternalVolume(volume: number, muted: boolean) {
   const level = muted ? 0 : Math.max(0, Math.min(1, volume))
+  outLevel = level
   engine.setOutput(level)
-  if (!player) return
+  if (!player || locked) return
   if (level === 0) player.mute()
   else {
     player.unMute()

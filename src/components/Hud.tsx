@@ -1,4 +1,4 @@
-import { Disc3, ExternalLink, Music2, PartyPopper, User, VolumeX } from 'lucide-react'
+import { Disc3, ExternalLink, Music2, PartyPopper, User, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { applyMusic, mountYouTube } from '@/audio/music'
 import { TAIPEI_ENCORE_URL } from '@/audio/youtube'
@@ -64,6 +64,21 @@ function YouTubeFallback() {
   )
 }
 
+function SoundUnlock() {
+  const locked = useClub((s) => s.soundLocked)
+  const started = useClub((s) => s.started)
+  if (!started || !locked) return null
+  return (
+    <button
+      type="button"
+      className="ink-btn fixed animate-pulse bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+5rem))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 px-4 py-2 text-sm sm:text-base"
+      data-on="true"
+    >
+      <Volume2 className="size-4" /> 點一下打開〈台北安可〉聲音
+    </button>
+  )
+}
+
 function PolicyCaption() {
   const speech = useClub((s) => s.speech)
   if (!speech) return null
@@ -114,6 +129,7 @@ export function Hud() {
     <>
       <YouTubeCard />
       <YouTubeFallback />
+      <SoundUnlock />
       {started && (
         <>
           <header className="pointer-events-none fixed top-3 left-3 z-20 select-none">

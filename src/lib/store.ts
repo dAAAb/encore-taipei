@@ -14,6 +14,8 @@ interface ClubState {
   wantMusic: MusicMode
   youtubeReady: boolean
   youtubeFailed: boolean
+  /** Autoplay with sound was blocked (Safari inside the TV frame); waiting for one tap on this page. */
+  soundLocked: boolean
   view: ViewMode
   viewNonce: number
   speech: PlatformItem | null
@@ -26,6 +28,7 @@ interface ClubState {
   setWantMusic: (m: MusicMode) => void
   setYoutubeReady: (v: boolean) => void
   setYoutubeFailed: () => void
+  setSoundLocked: (locked: boolean) => void
   setView: (v: ViewMode) => void
   setSpeech: (p: PlatformItem | null) => void
   bumpHype: (amount: number) => void
@@ -42,6 +45,7 @@ export const useClub = create<ClubState>((set) => ({
   wantMusic: 'youtube',
   youtubeReady: false,
   youtubeFailed: false,
+  soundLocked: false,
   view: (new URLSearchParams(location.search).get('view') as ViewMode | null) ?? 'front',
   viewNonce: 0,
   speech: null,
@@ -52,6 +56,7 @@ export const useClub = create<ClubState>((set) => ({
   setMusicMode: (musicMode) => set({ musicMode }),
   setWantMusic: (wantMusic) => set({ wantMusic }),
   setYoutubeReady: (youtubeReady) => set({ youtubeReady }),
+  setSoundLocked: (soundLocked) => set({ soundLocked }),
   setYoutubeFailed: () =>
     set((s) => ({
       youtubeFailed: true,
