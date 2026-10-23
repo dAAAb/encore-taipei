@@ -73,15 +73,6 @@ function channelCard(n: number, live: boolean) {
   return frame(body, live ? '#16306b' : '#101010')
 }
 
-function hubCard() {
-  return frame(
-    `<text x="600" y="300" text-anchor="middle" font-family="Noto Sans TC" font-weight="900" font-size="104" fill="#fff4d6" filter="url(#glow)">台北安可電視台</text>
-     <text x="600" y="378" text-anchor="middle" font-family="Noto Sans TC" font-weight="500" font-size="40" fill="#ffd400">ENCORE.TAIPEI</text>
-     <text x="600" y="470" text-anchor="middle" font-family="Noto Sans TC" font-weight="500" font-size="34" fill="#c9d3ff">轉到每個人做的台北安可舞台 · 第 2026 台現正播放</text>`,
-    '#3b2a0c',
-  )
-}
-
 /** The stage in a 1200×630 frame with the TV's channel number and a station tag, like a still from the broadcast. */
 function shotPage(stage: string, n: number, title: string) {
   return `<!doctype html><html><head><meta charset="utf-8">
@@ -151,7 +142,6 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           .asPng()
         fs.writeFileSync(target, png)
       }
-      card('tv.png', hubCard())
 
       const root = siteUrl ? `${siteUrl}/` : base
       const last = Math.max(FIRST_CHANNEL, ...channels.map((c) => c.channel))
