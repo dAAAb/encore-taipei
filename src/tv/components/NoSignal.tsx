@@ -1,5 +1,6 @@
 import { Sparkles, Upload } from 'lucide-react'
 import { useTv } from '../store'
+import { OnboardAgent } from './OnboardAgent'
 
 const BARS = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0']
 
@@ -43,6 +44,7 @@ export function NoSignal({ number }: { number: number }) {
             <button type="button" className="ink-btn flex items-center justify-center gap-2 px-5 py-2.5 text-base" onClick={() => setGuideOpen(true)}>
               <Sparkles className="size-4" /> 怎麼做？給我 prompt
             </button>
+            <OnboardAgent className="mt-1" />
           </div>
           <p className="mt-4 text-xs text-[#6a6f8e]">按 ← 轉回上一台，或用右下角遙控器</p>
         </div>

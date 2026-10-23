@@ -1,35 +1,10 @@
 import { Check, Copy } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import making from '@/data/making-of.json'
+import { PROTOCOL, STARTER_PROMPT } from '../prompts'
 import { useTv } from '../store'
+import { OnboardAgent } from './OnboardAgent'
 import { useCopy } from './useCopy'
-
-export const STARTER_PROMPT = `幫我做一個 3D 互動網站：我的「台北安可」舞台。
-
-- 主題：〈台北安可〉是蔣萬安 2026 連任競選主題曲，請做一座屬於我的台北安可舞台。
-- 畫風：（寫下你想要的風格，例如 Colorfigures 卡通 3D、賽博龐克、像素風、水彩、黏土動畫…）
-- 地點：（舞台在哪？例如 2033 年的台北 AI 園區、大稻埕碼頭、101 頂樓、捷運車廂、夜市…）
-- 台上：（誰在表演？做什麼動作？）
-- 台下：（觀眾在做什麼？喊什麼？）
-- 內容：上 gov.taipei 查蔣萬安四年施政成績和「黃金十年」政見，做成畫面裡的文字或互動，每一條附上資料來源。
-- 音樂：嵌入 YouTube 上的〈台北安可〉官方 MV（影片 ID uKCiYJdv6Zg）當背景音樂。
-- 要求：手機和電腦都能玩；可以被別的網站用 iframe 嵌入；最後幫我部署成公開的 https 網址。`
-
-const PROTOCOL = `// 選用：讓台北安可電視台的遙控器控制你的舞台
-window.addEventListener('message', (e) => {
-  if (e.data?.type === 'encore:volume') {
-    // e.data.volume：0～1，e.data.muted：true / false
-  }
-  if (e.data?.type === 'encore:color') {
-    // 遙控器彩色鍵：e.data.color 是 'red'、'green'、'yellow' 或 'blue'
-  }
-})
-// 讓觀眾在你的舞台裡也能用 ← → 轉台
-window.addEventListener('keydown', (e) => {
-  if (['ArrowLeft', 'ArrowRight'].includes(e.key) && parent !== window) {
-    parent.postMessage({ type: 'encore:key', key: e.key }, '*')
-  }
-})`
 
 function CopyBlock({ id, text, label }: { id: string; text: string; label: string }) {
   const { copied, copy } = useCopy()
@@ -70,6 +45,13 @@ export function Guide() {
           <DialogTitle className="text-2xl font-black text-[#13204f]">做一座你的台北安可舞台</DialogTitle>
           <DialogDescription className="text-[#4a4f6e]">安可的意義，是大家一起喊。四個步驟，用 AI 做一台自己的頻道。</DialogDescription>
         </DialogHeader>
+
+        <div className="rounded-2xl border-2 border-[#0c0812] bg-[#fff6d6] p-3 shadow-[3px_3px_0_#0c0812]">
+          <OnboardAgent />
+          <p className="mt-2 text-center text-xs leading-relaxed text-[#4a4f6e]">
+            一次複製全部：入門 prompt、遙控器程式碼（選用）、第 2026 台原始 prompt 和上架步驟，直接貼給 Cursor、Claude、Gemini、ChatGPT 等 AI 助手。
+          </p>
+        </div>
 
         <ol className="mt-1 space-y-2.5">
           {STEPS.map(([title, body], i) => (
