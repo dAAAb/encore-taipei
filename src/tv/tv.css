@@ -187,3 +187,16 @@ body,
     opacity: 0;
   }
 }
+
+/* Stepping out of the slit: white light that drains away into the room. */
+.arrive-flash {
+  animation: arrive-flash 1.6s ease-out forwards;
+}
+@keyframes arrive-flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

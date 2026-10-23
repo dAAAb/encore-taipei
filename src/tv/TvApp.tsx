@@ -8,6 +8,7 @@ import { Remote } from './components/Remote'
 import { SubmitForm } from './components/SubmitForm'
 import { loadNarrationDurations } from './montage/narrator'
 import { channelFromPath, syncUrl } from './routing'
+import { pickLayout } from './scene/layouts'
 import { RoomStage } from './scene/RoomStage'
 import { sfx } from './sfx'
 import { useTv } from './store'
@@ -33,6 +34,8 @@ export function TvApp() {
   const [durations, setDurations] = useState<number[] | null>(null)
   const [quick, setQuick] = useState(false)
   const [fading, setFading] = useState(false)
+  const [layout, setLayout] = useState(() => pickLayout())
+  const [arriving, setArriving] = useState(0)
   const [entry, setEntry] = useState('')
   const entryTimer = useRef(0)
   const webgl = useMemo(detectWebGL, [])
@@ -173,8 +176,16 @@ export function TvApp() {
     window.setTimeout(() => setFading(false), 900)
   }, [setPhase])
 
-  const roomVisible = phase === 'gate' || phase === 'intro' || phase === 'room' || fading
-  const roomMode = phase === 'gate' ? 'gate' : phase === 'room' ? 'room' : 'intro'
+  const backFromSpace = useCallback(() => {
+    useTv.setState({ deepLink: null })
+    setLayout((l) => pickLayout(l.id))
+    setQuick(false)
+    setArriving((n) => n + 1)
+    setPhase('gate')
+  }, [setPhase])
+
+  const roomVisible = phase === 'gate' || phase === 'intro' || fading
+  const roomMode = phase === 'gate' ? 'gate' : 'intro'
 
   return (
     <main className="relative h-full w-full overflow-hidden bg-black">
@@ -195,18 +206,19 @@ export function TvApp() {
         <div className={`fixed inset-0 z-20 transition-opacity duration-700 ${phase === 'tv' ? 'pointer-events-none opacity-0' : 'opacity-100'}`}>
           <RoomStage
             mode={roomMode}
+            layout={layout}
             quick={quick}
             durations={durations}
             onDone={introDone}
             lowPower={lowPower}
-            onTvClick={phase === 'room' ? () => powerOn(true) : undefined}
+            onTvClick={phase === 'gate' && durations ? () => powerOn(!!deepLink) : undefined}
           />
         </div>
       )}
 
       {phase === 'off' && (
         <Suspense fallback={<div className="fixed inset-0 bg-black" />}>
-          <Finale onDone={() => setPhase('room')} lowPower={lowPower} />
+          <Finale onDone={backFromSpace} lowPower={lowPower} />
         </Suspense>
       )}
 
@@ -232,8 +244,13 @@ export function TvApp() {
             </button>
           )}
           <p className="tv-caption mt-4 text-xs text-white/55">建議開啟聲音 · 鍵盤 ← → 轉台</p>
+          <p className="tv-caption fixed bottom-[max(0.6rem,env(safe-area-inset-bottom))] left-3 font-mono text-[10px] tracking-widest text-white/35" title={layout.name}>
+            後室 {layout.id}
+          </p>
         </div>
       )}
+
+      {arriving > 0 && <div key={arriving} className="arrive-flash pointer-events-none fixed inset-0 z-50 bg-white" />}
 
       {phase === 'intro' && !fading && (
         <button
@@ -245,14 +262,6 @@ export function TvApp() {
         </button>
       )}
 
-      {phase === 'room' && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[max(2rem,env(safe-area-inset-bottom))] z-30 flex flex-col items-center gap-3 text-center">
-          <p className="tv-caption text-lg font-black text-[#fff4d6] sm:text-2xl">電視掉回來了。</p>
-          <button type="button" className="ink-btn gate-pulse pointer-events-auto px-7 py-2.5 text-lg" data-on="true" onClick={() => powerOn(true)}>
-            ▶ 再打開一次
-          </button>
-        </div>
-      )}
     </main>
   )
 }

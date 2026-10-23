@@ -107,15 +107,12 @@ export function TvSet({
   screen,
   eraRef,
   aspect,
-  fallenRef,
 }: {
   screen: THREE.Material
   eraRef: { current: Era }
   aspect: number
-  fallenRef?: { current: number }
 }) {
   const groups = useRef<Record<Era, THREE.Group | null>>({ film: null, crt: null, hd: null })
-  const root = useRef<THREE.Group>(null)
   const shown = useRef<Era>(eraRef.current)
   const pop = useRef(1)
   const glow = useRef<THREE.PointLight>(null)
@@ -135,21 +132,15 @@ export function TvSet({
       g.visible = e === shown.current
       if (g.visible) g.scale.setScalar(s)
     }
-    const fall = fallenRef?.current ?? 0
-    if (root.current) {
-      root.current.rotation.x = -fall * (Math.PI / 2) * 0.96
-      root.current.rotation.z = fall * 0.35
-      root.current.position.y = fall * 0.32
-    }
     if (glow.current) {
       const m = screen as THREE.ShaderMaterial
-      glow.current.intensity = 2.5 * (m.uniforms?.uPower?.value ?? 0) * (1 - fall)
+      glow.current.intensity = 2.5 * (m.uniforms?.uPower?.value ?? 0)
     }
   })
 
   return (
     <group position={TV_POS}>
-      <group ref={root}>
+      <group>
         {eras.map((e) => (
           <group
             key={e}

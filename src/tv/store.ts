@@ -5,10 +5,9 @@ import { FALLBACK_CHANNELS, FIRST_CHANNEL, type Channel } from './channel-data'
  * gate   dark room, TV off, waiting for the first tap (audio needs a gesture)
  * intro  the newsreel montage while the camera dollies into the screen
  * tv     full-screen channel surfing
- * off    power-off finale: rocket launch, Earth, starry face, credits
- * room   back in the empty room with the TV lying on the floor
+ * off    power-off finale: rocket launch, Earth, starry face, credits; the slit leads back to the gate
  */
-export type Phase = 'gate' | 'intro' | 'tv' | 'off' | 'room'
+export type Phase = 'gate' | 'intro' | 'tv' | 'off'
 
 export interface PendingStage extends Channel {
   submittedAt: string

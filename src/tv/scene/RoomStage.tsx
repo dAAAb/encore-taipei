@@ -8,10 +8,11 @@ import { Narrator } from '../montage/narrator'
 import type { Era } from '../montage/segments'
 import { sfx } from '../sfx'
 import { Backroom, roomLight } from './Backroom'
+import type { Layout } from './layouts'
 import { createScreenMaterial, ERA_LOOK } from './screenMaterial'
 import { LCD_FRONT_Z, lcdSize, SCREEN_Y, TV_POS, TvSet } from './TvSet'
 
-export type RoomMode = 'gate' | 'intro' | 'room'
+export type RoomMode = 'gate' | 'intro'
 
 const FOV = 45
 /** Post effects the director fades out so the last frame matches the flat DOM channel underneath. */
@@ -58,7 +59,6 @@ function Director({
   }
   const screen = useMemo(() => createScreenMaterial(texture.current), [])
   const eraRef = useRef<Era>(quick ? 'hd' : 'film')
-  const fallen = useRef(mode === 'room' ? 1 : 0)
   const clock = useRef<{ start: number | null; done: boolean; flash: number; lastEra: Era }>({ start: null, done: false, flash: 0, lastEra: eraRef.current })
   const look = useRef(new THREE.Vector3(0, 1.1, TV_POS.z))
   const pushFrom = useRef<{ pos: THREE.Vector3; look: THREE.Vector3 } | null>(null)
@@ -90,13 +90,6 @@ function Director({
       cam.position.copy(START)
       roomLight.level = 0.12
       roomLight.flicker = 1
-      fallen.current = 0
-    }
-    if (mode === 'room') {
-      cam.position.set(0.9, 1.7, 3.6)
-      roomLight.level = 1
-      roomLight.flicker = 0
-      fallen.current = 1
       screen.uniforms.uPower.value = 0
       eraRef.current = 'film'
     }
@@ -120,20 +113,8 @@ function Director({
       u.uPower.value = 0
       return
     }
-    if (mode === 'room') {
-      fx.vignette = 0.55
-      if (fog) {
-        fog.near = 8
-        fog.far = 46
-      }
-      cam.position.set(0.9 + Math.sin(now * 0.3) * 0.08, 1.7, 3.6)
-      cam.lookAt(0, 0.35, TV_POS.z + 0.2)
-      return
-    }
-
     const c = clock.current
-    if (c.start === null) c.start = now + (fallen.current > 0 ? 0.8 : 0)
-    if (fallen.current > 0) fallen.current = Math.max(0, fallen.current - dt / 0.7)
+    if (c.start === null) c.start = now
     const t = now - c.start
     if (t < 0) return
 
@@ -184,7 +165,7 @@ function Director({
     if (t < montage.pushAt) {
       fx.vignette = 0.7
       const k = ease(progress)
-      const from = quick ? new THREE.Vector3(0.9, 1.7, 3.6) : START
+      const from = quick ? new THREE.Vector3(0, 1.45, 12) : START
       const dollyEnd = new THREE.Vector3(0, 1.05, TV_POS.z + 3.1)
       cam.position.lerpVectors(from, dollyEnd, k)
       const sway = (1 - progress) * 0.045
@@ -207,7 +188,7 @@ function Director({
     }
   })
 
-  return <TvSet screen={screen} eraRef={eraRef} aspect={aspect} fallenRef={fallen} />
+  return <TvSet screen={screen} eraRef={eraRef} aspect={aspect} />
 }
 
 export function RoomStage({
@@ -217,7 +198,9 @@ export function RoomStage({
   onDone,
   onTvClick,
   lowPower,
+  layout,
 }: {
+  layout: Layout
   mode: RoomMode
   quick: boolean
   durations: number[]
@@ -238,7 +221,7 @@ export function RoomStage({
       onPointerDown={onTvClick}
     >
       <Suspense fallback={null}>
-        <Backroom />
+        <Backroom key={layout.id} layout={layout} />
         <Director mode={mode} quick={quick} durations={durations} onDone={onDone} />
         <EffectComposer multisampling={lowPower ? 0 : 4}>
           <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={0.7} radius={0.6} />
