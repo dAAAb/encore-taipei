@@ -1,12 +1,33 @@
-import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Trash2 } from 'lucide-react'
+import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Settings2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { rpc, RpcError, type AdminChannel } from '@/tv/channel-data'
+import { rpc, RpcError, SUPABASE_KEY, SUPABASE_URL, type AdminChannel } from '@/tv/channel-data'
 import { useCopy } from '@/tv/components/useCopy'
 import { channelPath, stageUrl } from '@/tv/routing'
 
 const KEY = 'encore.adminKey'
 const REBUILD_URL = 'https://github.com/dAAAb/encore-taipei/actions/workflows/deploy-pages.yml'
+const NEW_TOKEN_URL = 'https://github.com/settings/personal-access-tokens/new'
+
+type RebuildResult = { ok: true } | { ok: false; reason: 'not_configured' | 'token' | 'failed'; message?: string }
+
+/** Ask GitHub Actions (through the encore-rebuild edge function) to rebuild share pages and screenshots now. */
+async function requestRebuild(adminKey: string): Promise<RebuildResult> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/encore-rebuild`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: adminKey }),
+    })
+    const d = (await res.json()) as { ok?: boolean; error?: string; status?: number; message?: string }
+    if (d.ok) return { ok: true }
+    if (d.error === 'not_configured') return { ok: false, reason: 'not_configured' }
+    if (d.status === 401 || d.status === 403 || d.status === 404) return { ok: false, reason: 'token', message: d.message }
+    return { ok: false, reason: 'failed', message: d.message ?? d.error }
+  } catch (e) {
+    return { ok: false, reason: 'failed', message: (e as Error).message }
+  }
+}
 type Filter = 'all' | 'pending' | 'live' | 'hidden'
 
 const STATUS: Record<AdminChannel['status'], { label: string; cls: string }> = {
@@ -176,6 +197,116 @@ function Login({ onKey, error }: { onKey: (k: string) => void; error: string | n
   )
 }
 
+function RebuildSetup({
+  open,
+  onOpenChange,
+  adminKey,
+  configuredAt,
+  onSaved,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  adminKey: string
+  configuredAt: string | null
+  onSaved: (at: string | null) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const save = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    const token = String(new FormData(form).get('token') ?? '').trim()
+    if (!token) return
+    setBusy(true)
+    setNote(null)
+    try {
+      await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'github_token', p_value: token })
+      const test = await requestRebuild(adminKey)
+      if (test.ok) {
+        onSaved(new Date().toISOString())
+        form.reset()
+        setNote({ ok: true, text: '設定完成，已經請 GitHub 重建一次。之後上架或改台號都會自動重建。' })
+      } else {
+        await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'github_token', p_value: null })
+        onSaved(null)
+        setNote({ ok: false, text: 'GitHub 不接受這個權杖。請確認只選了 dAAAb/encore-taipei，而且 Actions 權限是 Read and write。' })
+      }
+    } catch (err) {
+      setNote({ ok: false, text: `儲存失敗：${(err as Error).message}` })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const clear = async () => {
+    setBusy(true)
+    try {
+      await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'github_token', p_value: null })
+      onSaved(null)
+      setNote({ ok: true, text: '已清除。分享圖改回等排程或手動重建。' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto border border-white/10 bg-[#18212c] text-[#c7d5e0] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black text-white">上架後自動重建分享圖</DialogTitle>
+          <DialogDescription className="text-[#8fa3b5]">
+            GitHub 的排程常常延遲很久才跑。給後台一把只能「啟動建置」的 GitHub 權杖，上架或改台號後就會立刻重建，大約 3～5 分鐘分享頁和舞台截圖就會更新。
+          </DialogDescription>
+        </DialogHeader>
+        {configuredAt && (
+          <p className="flex items-center gap-2 rounded-md bg-[#75b022]/15 p-3 text-sm text-[#b6ffb0]">
+            <Check className="size-4 shrink-0" /> 已設定（{fmt(configuredAt)}）。要換權杖就在下面貼新的。
+          </p>
+        )}
+        <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-relaxed">
+          <li>
+            打開 GitHub 的
+            <a href={NEW_TOKEN_URL} target="_blank" rel="noreferrer" className="mx-1 font-bold text-[#66c0f4] underline">
+              建立 Fine-grained token
+            </a>
+            頁面。
+          </li>
+          <li>名稱隨意（例如 encore-taipei-rebuild），到期日可選 1 年。</li>
+          <li>
+            Repository access 選 <b className="text-white">Only select repositories</b> → <b className="text-white">dAAAb/encore-taipei</b>。
+          </li>
+          <li>
+            Permissions 只加一項：<b className="text-white">Actions → Read and write</b>，其他都不用。
+          </li>
+          <li>按 Generate token，複製貼到下面。權杖只存在伺服器端，網頁讀不到。</li>
+        </ol>
+        <form onSubmit={save} className="space-y-2">
+          <input name="token" type="password" autoComplete="off" placeholder="github_pat_…" className="steam-input w-full font-mono text-sm" />
+          <div className="flex gap-2">
+            <button type="submit" disabled={busy} className="steam-btn steam-btn--go flex flex-1 items-center justify-center gap-1.5">
+              {busy && <Loader2 className="size-4 animate-spin" />} 儲存並測試
+            </button>
+            {configuredAt && (
+              <button type="button" disabled={busy} className="steam-btn steam-btn--danger" onClick={clear}>
+                清除
+              </button>
+            )}
+          </div>
+        </form>
+        {note && <p className={`rounded-md p-2 text-sm ${note.ok ? 'bg-[#75b022]/15 text-[#b6ffb0]' : 'bg-[#e0304a]/20 text-[#ff8a99]'}`}>{note.text}</p>}
+        <p className="text-xs text-[#8fa3b5]">
+          不想設定也可以：到
+          <a href={REBUILD_URL} target="_blank" rel="noreferrer" className="mx-1 underline">
+            GitHub Actions
+          </a>
+          按 Run workflow 手動重建。
+        </p>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function AdminApp() {
   const [key, setKey] = useState<string | null>(readKey)
   const [rows, setRows] = useState<AdminChannel[] | null>(null)
@@ -185,6 +316,10 @@ export function AdminApp() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [nonce, setNonce] = useState(() => Date.now())
+  const [tokenAt, setTokenAt] = useState<string | null | undefined>(undefined)
+  const [setupOpen, setSetupOpen] = useState(false)
+  const [rebuildNote, setRebuildNote] = useState<{ ok: boolean; text: string } | null>(null)
+  const [rebuilding, setRebuilding] = useState(false)
 
   const load = useCallback(async (k: string) => {
     setLoading(true)
@@ -207,6 +342,36 @@ export function AdminApp() {
     if (key) load(key)
   }, [key, load])
 
+  useEffect(() => {
+    if (!key) return
+    rpc<{ name: string; updated_at: string }[]>('encore_admin_settings', { p_key: key })
+      .then((rows) => setTokenAt(rows.find((r) => r.name === 'github_token')?.updated_at ?? null))
+      .catch(() => setTokenAt(null))
+  }, [key])
+
+  useEffect(() => {
+    if (!rebuildNote) return
+    const t = window.setTimeout(() => setRebuildNote(null), 12000)
+    return () => window.clearTimeout(t)
+  }, [rebuildNote])
+
+  const rebuild = async (auto: boolean) => {
+    if (!key) return
+    if (!tokenAt) {
+      if (!auto) setSetupOpen(true)
+      return
+    }
+    setRebuilding(true)
+    const res = await requestRebuild(key)
+    setRebuilding(false)
+    if (res.ok) setRebuildNote({ ok: true, text: '已請 GitHub 重建，約 3～5 分鐘後分享頁和舞台截圖會更新，按「重新整理」就看得到。' })
+    else if (res.reason === 'not_configured') {
+      setTokenAt(null)
+      if (!auto) setSetupOpen(true)
+    } else if (res.reason === 'token') setRebuildNote({ ok: false, text: 'GitHub 權杖失效或權限不足，請到「自動重建設定」換一把。' })
+    else setRebuildNote({ ok: false, text: `重建請求失敗：${res.message ?? '未知錯誤'}` })
+  }
+
   const counts = useMemo(() => {
     const c = { all: 0, pending: 0, live: 0, hidden: 0 }
     for (const r of rows ?? []) {
@@ -225,6 +390,7 @@ export function AdminApp() {
     try {
       const row = await rpc<AdminChannel>('encore_admin_update', { p_key: key, p_id: id, ...patch })
       setRows((rs) => (rs ?? []).map((r) => (r.id === id ? row : r)))
+      rebuild(true)
     } catch (e) {
       setError(e instanceof RpcError && /duplicate|unique/i.test(e.message) ? '這個台號已經有人用了。' : `更新失敗：${(e as Error).message}`)
     } finally {
@@ -257,9 +423,19 @@ export function AdminApp() {
           <a href={import.meta.env.BASE_URL} className="steam-btn steam-btn--plain flex items-center gap-1.5">
             <ExternalLink className="size-4" /> 打開電視
           </a>
-          <a href={REBUILD_URL} target="_blank" rel="noreferrer" className="steam-btn steam-btn--plain flex items-center gap-1.5" title="到 GitHub Actions 按 Run workflow，分享頁和分享圖會在幾分鐘內更新">
-            <Hammer className="size-4" /> 立即重建分享圖
-          </a>
+          <button
+            type="button"
+            className="steam-btn steam-btn--plain flex items-center gap-1.5"
+            onClick={() => rebuild(false)}
+            disabled={rebuilding}
+            title={tokenAt ? '請 GitHub 立刻重建分享頁和舞台截圖' : '先設定自動重建'}
+          >
+            {rebuilding ? <Loader2 className="size-4 animate-spin" /> : <Hammer className="size-4" />} 立即重建分享圖
+          </button>
+          <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => setSetupOpen(true)}>
+            <Settings2 className="size-4" /> 自動重建設定
+            {tokenAt === null && <span className="size-2 rounded-full bg-[#ffd400]" aria-label="尚未設定" />}
+          </button>
           <RotateKey adminKey={key} onRotated={setKey} />
           <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => load(key)} disabled={loading}>
             <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} /> 重新整理
@@ -299,6 +475,19 @@ export function AdminApp() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {error && <p className="mb-4 rounded-md bg-[#e0304a]/20 p-3 text-sm text-[#ff8a99]">{error}</p>}
+        {rebuildNote && (
+          <p className={`mb-4 rounded-md p-3 text-sm ${rebuildNote.ok ? 'bg-[#75b022]/15 text-[#b6ffb0]' : 'bg-[#e0304a]/20 text-[#ff8a99]'}`} role="status">
+            {rebuildNote.text}
+          </p>
+        )}
+        {tokenAt === null && (
+          <p className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-[#ffd400]/30 bg-[#ffd400]/10 p-3 text-sm text-[#ffe9a8]">
+            新上架的頻道要等 GitHub 排程（常延遲）才會有分享圖。
+            <button type="button" className="font-black underline" onClick={() => setSetupOpen(true)}>
+              設定上架後自動重建
+            </button>
+          </p>
+        )}
         {!rows && loading && (
           <p className="flex items-center gap-2 text-sm">
             <Loader2 className="size-4 animate-spin" /> 讀取投稿中…
@@ -328,6 +517,8 @@ export function AdminApp() {
           ))}
         </div>
       </main>
+
+      <RebuildSetup open={setupOpen} onOpenChange={setSetupOpen} adminKey={key} configuredAt={tokenAt ?? null} onSaved={setTokenAt} />
 
       <Dialog open={!!current} onOpenChange={(o) => !o && setOpenId(null)}>
         {current && (
@@ -432,7 +623,7 @@ export function AdminApp() {
                   )}
                 </dl>
                 <p className="text-xs leading-relaxed text-[#8fa3b5]">
-                  上架或改台號後，電視會立刻顯示；分享頁和分享圖每小時第 17 分自動重建，急的話按上方「立即重建分享圖」，到 GitHub 按 Run workflow。
+                  上架或改台號後，電視會立刻顯示；設定好「自動重建」的話，分享頁和舞台截圖約 3～5 分鐘後更新。
                 </p>
               </div>
             </div>

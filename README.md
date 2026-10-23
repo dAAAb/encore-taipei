@@ -57,7 +57,9 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 ```
 
 上架或改台號後電視會立刻更新。每台的分享頁（`/2027/index.html`）和分享圖在建置時產生：
-GitHub Actions 每 10 分鐘比對一次已上架頻道，有變動才重建，所以新頻道通常 10～20 分鐘內就有分享圖。
+後台設定好「自動重建」（一把只有 Actions: Read and write、只限這個 repo 的 GitHub fine-grained token，
+存在 `encore_settings`，只有 Edge Function `encore-rebuild` 讀得到）後，上架或改台號會立刻觸發 GitHub Actions，
+約 3～5 分鐘更新。另外每 10 分鐘的排程也會比對已上架頻道、有變動才重建，但 GitHub 排程常延遲，只當備援。
 分享圖的來源依序是：`public/og/<台號>.jpg` 手工圖 → 用無頭 Chrome 截下舞台畫面，加上台號和「台北安可電視台」標籤
 （截圖會沿用上一版，網址或名稱改了、或滿 7 天才重拍，紀錄在 `og/shots.json`）→ 舞台網站自己的 og:image → 文字卡。
 本機建置預設不截圖，要測試可加 `ENCORE_OG_SHOTS=1`。
