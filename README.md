@@ -105,3 +105,9 @@ src/
   audio/        節拍時鐘、Web Audio 合成器、YouTube 播放器
   components/   進場畫面、HUD、政績資料側欄
 ```
+
+## 流量分析與 beta 邀請
+
+- Google Analytics 4：在 `.env.production` 設定 `VITE_GA_ID=G-XXXXXXXXXX` 就會啟用，沒設定或本機開發時不送資料。
+  事件：`club_enter`、`music_mode`、`camera_view`、`datasheet_open`、`making_of_open`、`beta_invite_view`、`beta_invite_click`、`beta_invite_dismiss`。
+- 進場 20 秒後會邀請觀眾體驗沈浸式 beta 版「台北安可電視台」（`/beta/`），按「先不要」後 3 天內不再出現；右上角也有「電視台 BETA」按鈕。

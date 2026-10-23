@@ -1,8 +1,10 @@
-import { Disc3, ExternalLink, Music2, VolumeX } from 'lucide-react'
+import { Disc3, ExternalLink, Music2, Tv, VolumeX } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { applyMusic, mountYouTube } from '@/audio/music'
 import { TAIPEI_ENCORE_URL } from '@/audio/youtube'
+import { track } from '@/lib/analytics'
 import { useClub, type MusicMode, type ViewMode } from '@/lib/store'
+import { BETA_URL, BetaInvite } from './BetaInvite'
 import { DataSheet } from './DataSheet'
 
 const MUSIC: { id: MusicMode; label: string; icon: typeof Music2 }[] = [
@@ -147,9 +149,18 @@ export function Hud() {
               ))}
               <DataSheet />
             </div>
+            <a
+              href={BETA_URL}
+              onClick={() => track('beta_invite_click', { place: 'hud' })}
+              className="ink-btn flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm"
+              title="沈浸式 beta 版：台北安可電視台"
+            >
+              <Tv className="size-3.5" /> 電視台 BETA
+            </a>
           </nav>
 
           <PolicyCaption />
+          <BetaInvite />
 
           <p className="pointer-events-none fixed bottom-1.5 left-1/2 z-10 hidden -translate-x-1/2 text-[10px] text-white/45 lg:block">
             粉絲創作 · 非競選團隊官方網站 · 資料出處見「政績資料」

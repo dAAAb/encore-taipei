@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { PixelIcon } from '@/components/PixelIcon'
 import data from '@/data/making-of.json'
+import { track } from '@/lib/analytics'
 
 const nf = new Intl.NumberFormat('zh-TW')
 
@@ -50,7 +51,7 @@ export function MakingOf() {
   }
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={(o) => o && track('making_of_open')}>
       <DialogTrigger
         render={
           <button
