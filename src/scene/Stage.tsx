@@ -118,7 +118,8 @@ function drawLed(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null, be
     text('GOLDEN DECADE · TAIPEI 2033', W / 2, 420, 40, '#bfe3ff', 'center', 500)
   } else {
     text('松山機場遷移 · 台北 AI 園區', W / 2, 110, 44, '#ffffff', 'center')
-    text('870', W / 2 - 40, 320, 210 + k * 10, yellow, 'center')
+    text('約', W / 2 - 270, 320, 70, '#ffffff', 'center')
+    text('300', W / 2 - 40, 320, 210 + k * 10, yellow, 'center')
     text('公頃', W / 2 + 230, 320, 70, '#ffffff', 'center')
     text('100 AI產業聚落 ｜ 110 中央公園 ｜ 90 永續生活', W / 2, 420, 34, '#bfe3ff', 'center', 500)
   }
