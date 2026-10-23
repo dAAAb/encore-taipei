@@ -106,18 +106,9 @@ export function mountYouTube(el: HTMLElement) {
 
 /** Must run inside a user gesture the first time (autoplay policy). */
 export async function applyMusic(mode: MusicMode) {
-  await resumeAudio()
   const ytReady = useClub.getState().youtubeReady && player
-  if (mode === 'youtube' && !ytReady && !useClub.getState().youtubeFailed) {
-    // Still loading: stay on the MV (onReady starts it) rather than flashing the built-in beat first.
-    engine.stopMusic()
-    window.clearTimeout(waitTimer)
-    waitTimer = window.setTimeout(() => {
-      if (!useClub.getState().youtubeReady && useClub.getState().musicMode === 'youtube') fallBackToSynth()
-    }, YT_WAIT_MS)
-    return 'youtube' as const
-  }
   if (mode === 'youtube' && ytReady) {
+    // Before any await: Safari only lets playVideo() start sound while the tap is still being handled.
     engine.stopMusic()
     if (locked) player!.mute()
     else {
@@ -129,6 +120,17 @@ export async function applyMusic(mode: MusicMode) {
       const state = player?.getPlayerState()
       if (useClub.getState().musicMode === 'youtube' && state !== 1 && state !== 3) lockSound()
     }, 2500)
+    await resumeAudio()
+    return 'youtube' as const
+  }
+  await resumeAudio()
+  if (mode === 'youtube' && !useClub.getState().youtubeFailed) {
+    // Still loading: stay on the MV (onReady starts it) rather than flashing the built-in beat first.
+    engine.stopMusic()
+    window.clearTimeout(waitTimer)
+    waitTimer = window.setTimeout(() => {
+      if (!useClub.getState().youtubeReady && useClub.getState().musicMode === 'youtube') fallBackToSynth()
+    }, YT_WAIT_MS)
     return 'youtube' as const
   }
   player?.pauseVideo()
