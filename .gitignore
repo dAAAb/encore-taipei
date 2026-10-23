@@ -4,3 +4,5 @@ dist
 .DS_Store
 *.log
 .vite
+/agent-tools
+/assets
