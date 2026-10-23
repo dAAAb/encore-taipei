@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Volume2 } from 'lucide-react'
 import { fetchLiveChannels, type Channel } from './channel-data'
 import { ChannelScreen } from './components/ChannelScreen'
 import { Guide } from './components/Guide'
@@ -229,9 +230,13 @@ export function TvApp() {
           <p className="tv-caption mt-3 max-w-md text-sm leading-relaxed text-[#f3e6bf]/85 sm:text-base">
             空房間裡有一台電視。每一台，都是一位市民用 AI 做的台北安可舞台。
           </p>
+          <p className="sound-hint mt-5 inline-flex items-center gap-2 rounded-full border-2 border-[#ffd400]/80 bg-black/55 px-4 py-1.5 text-sm font-black text-[#ffd400] sm:text-base">
+            <Volume2 className="sound-hint-icon size-5 shrink-0" aria-hidden />
+            請打開電腦或手機的聲音，效果最好
+          </p>
           <button
             type="button"
-            className="ink-btn gate-pulse mt-6 px-8 py-3 text-xl"
+            className="ink-btn gate-pulse mt-4 px-8 py-3 text-xl"
             data-on="true"
             disabled={!durations}
             onClick={() => powerOn(!!deepLink)}
@@ -243,7 +248,7 @@ export function TvApp() {
               略過開場，直接轉到第 2026 台
             </button>
           )}
-          <p className="tv-caption mt-4 text-xs text-white/55">建議開啟聲音 · 鍵盤 ← → 轉台</p>
+          <p className="tv-caption mt-4 text-xs text-white/55">iPhone 請關掉靜音模式 · 鍵盤 ← → 轉台</p>
           <p className="tv-caption fixed bottom-[max(0.6rem,env(safe-area-inset-bottom))] left-3 font-mono text-[10px] tracking-widest text-white/35" title={layout.name}>
             後室 {layout.id}
           </p>
