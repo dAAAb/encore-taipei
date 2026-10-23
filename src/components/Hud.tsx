@@ -12,6 +12,9 @@ const MUSIC: { id: MusicMode; label: string; icon: typeof Music2 }[] = [
   { id: 'off', label: '靜音', icon: VolumeX },
 ]
 
+/** Channel 2028 is this same club opened with the dancers already on stage. */
+const TROUPE_CHANNEL = new URLSearchParams(location.search).has('troupe')
+
 const VIEWS: { id: ViewMode; label: string }[] = [
   { id: 'front', label: '正面' },
   { id: 'close', label: '特寫' },
@@ -137,9 +140,9 @@ export function Hud() {
               <span className="live-dot" aria-hidden />
               LIVE · 2033<span className="hidden sm:inline"> 台北 AI 園區</span>
             </p>
-            <p className="title-lockup mt-2 text-[22px] leading-none font-black tracking-[0.06em] sm:text-[34px]">台北安可之夜</p>
+            <p className="title-lockup mt-2 text-[22px] leading-none font-black tracking-[0.06em] sm:text-[34px]">{TROUPE_CHANNEL ? '台北安可大舞團' : '台北安可之夜'}</p>
             <p className="mt-2 hidden text-xs font-black tracking-[0.2em] text-[#ffe9a8] [text-shadow:0_1px_0_#0c0812,0_0_10px_rgba(255,42,77,0.65)] sm:block">
-              蔣萬安 · 黃金十年 3D 派對
+              {TROUPE_CHANNEL ? '蔣萬安 × 可愛動物 × 市民朋友' : '蔣萬安 · 黃金十年 3D 派對'}
             </p>
           </header>
 

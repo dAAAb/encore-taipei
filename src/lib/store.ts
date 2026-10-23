@@ -51,7 +51,7 @@ export const useClub = create<ClubState>((set) => ({
   speech: null,
   hype: 0,
   troupeMode: troupeParam && [...TROUPE_CYCLE, 'solo'].includes(troupeParam) ? troupeParam : 'solo',
-  troupeSeed: 1,
+  troupeSeed: troupeParam ? 1 + Math.floor(Math.random() * 10000) : 1,
   start: () => set({ started: true }),
   setMusicMode: (musicMode) => set({ musicMode }),
   setWantMusic: (wantMusic) => set({ wantMusic }),
