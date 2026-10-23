@@ -282,6 +282,12 @@ export function TowerApp() {
             或改看電視模式：台北安可電視台
           </a>
           <p className="tv-caption mt-3 text-xs text-white/55">iPhone 請關掉靜音模式 · 滾輪／上下滑動飛行 · 點樓層飛進去</p>
+          <p className="tv-caption mt-2 text-[11px] text-white/45">
+            粉絲創作之互動藝術作品，非蔣萬安競選團隊官方網站 ·{' '}
+            <a href="https://github.com/dAAAb/encore-taipei" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white">
+              原始碼
+            </a>
+          </p>
         </div>
       )}
 

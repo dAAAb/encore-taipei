@@ -133,34 +133,18 @@ npm run preview
 | `BASE_PATH` | 網站不在網域根目錄時的子路徑 | `/beta/` |
 | `SITE_URL` | 公開網址，用來產生分享預覽圖與 canonical 的絕對網址 | `https://encore.taipei/beta` |
 
-`.github/workflows/deploy-pages.yml` 在推到 `main`、手動執行或每小時整點過 17 分時：先建置 `main` 放在網站根目錄，
+`.github/workflows/deploy-pages.yml` 在推到 `main`、手動執行、管理員上架頻道，或每 10 分鐘偵測到頻道清單變動時：先建置 `main` 放在網站根目錄，
 再把 Beta 分支（`cursor/encore-tv-0d54`）建置到 `/beta/`，並把其中的 `tower/` 複製一份到網站根目錄（`/tower/`）。
 Beta 建置失敗不會影響正式站。
 Beta 測試順利後，把 Beta 分支合併進 `main`，電視台就會變成 `encore.taipei/`，各台網址變成 `encore.taipei/2027/`。
 
-GitHub Pages 與 encore.taipei 的第一次設定：
-
-1. GitHub repo 的 **Settings → Pages**：**Source** 選 **GitHub Actions**；**Custom domain** 填 `encore.taipei` 按 Save。
-   請勿選 **Deploy from a branch → main / (root)**：這是 Vite 專案，原始碼根目錄不是可直接發布的成品。
-2. Gandi 的 **Domain → encore.taipei → DNS Records**：刪掉預設的 `@ A 217.70.184.38` 與 `www CNAME webredir.vip.gandi.net.`，改成：
-
-   | 名稱 | 類型 | 值 |
-   | --- | --- | --- |
-   | `@` | A | `185.199.108.153`、`185.199.109.153`、`185.199.110.153`、`185.199.111.153`（四筆） |
-   | `@` | AAAA | `2606:50c0:8000::153`、`2606:50c0:8001::153`、`2606:50c0:8002::153`、`2606:50c0:8003::153`（四筆） |
-   | `www` | CNAME | `daaab.github.io.` |
-
-   MX、TXT 等郵件相關紀錄不用動。
-3. DNS 生效、GitHub 憑證核發後（通常幾分鐘到一小時），回到 Settings → Pages 勾選 **Enforce HTTPS**。
-4. 到 **Actions → Deploy to GitHub Pages → Run workflow** 重新部署一次。之後每次新增、變更或移除 Custom domain，
-   也要重新執行 workflow，讓建置使用更新後的網址與資源路徑。
 
 ## 素材與資料
 
 - **新聞特輯照片**：Wikimedia Commons 的公共領域與創用 CC 授權影像，作者與授權逐張列在 `public/montage/credits.json`，片尾名單也會顯示。
 - **新聞旁白**：Microsoft Edge 語音合成（zh-TW HsiaoChen），老年代片段加上收音機與雜訊效果（`public/montage/vo-*.mp3`）。
-- **地球夜景**：NASA Earth Observatory「Black Marble」（公共領域）。
-- **星座臉孔**：`scripts/build_face.py` 用 MediaPipe Face Landmarker 從 `public/images/mayor-portrait.jpg` 取 478 個臉部特徵點，挑出約 100 顆星連線。
+- **地球**：NASA「Blue Marble」日景、「Black Marble」夜景與全球雲圖（公有領域）。
+- **星座臉孔**：用 MediaPipe Face Landmarker 取 478 個臉部特徵點，挑出約 100 顆星連線（`src/tv/finale/face.json`）；`scripts/build_face.py` 可從 `public/images/mayor-portrait.jpg` 重新產生。
 - **第 2026 台資料**：`src/data/achievements.json`（四年施政成績，整理自 gov.taipei 新聞稿、中央社、聯合報、公視等，每條附 `source`）、
   `src/data/platform.json`（黃金十年政見）、`src/data/stage3d.json`（舞台喊話與 3D 招牌）。
 
@@ -192,3 +176,8 @@ src/
 scripts/        字型子集、分享頁產生器、星座臉產生器
 supabase/       資料表與函式
 ```
+
+## 授權
+
+程式碼以 [MIT 授權](LICENSE) 釋出；照片、字型、貼圖、旁白等第三方素材依各自授權使用，逐項列在 [CREDITS.md](CREDITS.md)。
+人物姓名、肖像、〈台北安可〉歌曲與相關文宣標誌屬各自權利人。發現資安問題請看 [SECURITY.md](SECURITY.md)。
