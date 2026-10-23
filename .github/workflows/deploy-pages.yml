@@ -22,6 +22,8 @@ env:
   BETA_BRANCH: cursor/encore-tv-0d54
   SUPABASE_URL: https://ogvqrfdgflxhfdqwtrxq.supabase.co
   SUPABASE_KEY: sb_publishable_Fe_h6sRUasUjh3jCuXkgKA_qtCRfwpM
+  # Google Analytics 4 for the whole site; both the main and the beta build read it.
+  VITE_GA_ID: G-7S3BJVE1W8
 
 jobs:
   check:
