@@ -41,16 +41,12 @@ function screenCard() {
   c.width = 640
   c.height = 360
   const g = c.getContext('2d')!
-  const grad = g.createLinearGradient(0, 0, 640, 360)
-  grad.addColorStop(0, '#0b1a4a')
-  grad.addColorStop(1, '#ff2a4d')
+  const grad = g.createRadialGradient(320, 180, 20, 320, 180, 380)
+  grad.addColorStop(0, '#f4f7ff')
+  grad.addColorStop(0.55, '#b9c8f2')
+  grad.addColorStop(1, '#5a6ca8')
   g.fillStyle = grad
   g.fillRect(0, 0, 640, 360)
-  g.fillStyle = '#fff7e6'
-  g.font = `900 72px 'NotoTC', sans-serif`
-  g.textAlign = 'center'
-  g.textBaseline = 'middle'
-  g.fillText('台北安可', 320, 170)
   const tex = new THREE.CanvasTexture(c)
   tex.colorSpace = THREE.SRGBColorSpace
   return tex
