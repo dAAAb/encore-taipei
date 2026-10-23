@@ -3,13 +3,13 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { beatNow, pulse } from '@/audio/beat'
 import { useClub } from '@/lib/store'
-import { cyl, limb, rbox, sphere, torus } from '@/three/geo'
+import { cyl, limb, rbox, repairNormals, sphere, torus } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, toon } from '@/three/toon'
 
 export const MAYOR_POS = new THREE.Vector3(0, 1.2, -8.6)
 export const MAYOR_SCALE = 2.2
-const HIP_H = 0.865
+export const HIP_H = 0.865
 /** World position of the mayor's head, updated every frame. */
 export const mayorHead = new THREE.Vector3()
 
@@ -22,10 +22,10 @@ const HAIR = '#141012'
 const SHIRT = '#f6f4ef'
 const TIE = '#9fcbef'
 
-type Limb3 = [number, number, number]
-type Leg4 = [number, number, number, number]
+export type Limb3 = [number, number, number]
+export type Leg4 = [number, number, number, number]
 
-interface Pose {
+export interface Pose {
   y: number
   pitch: number
   lean: number
@@ -219,7 +219,7 @@ function lerpPose(a: Pose, b: Pose, t: number): Pose {
   }
 }
 
-function poseAt(beat: number): Pose {
+export function poseAt(beat: number): Pose {
   const b = ((beat % ROUTINE_BEATS) + ROUTINE_BEATS) % ROUTINE_BEATS
   let acc = 0
   for (let i = 0; i < ROUTINE.length; i++) {
@@ -288,31 +288,113 @@ function Leg({ side, refs }: { side: 1 | -1; refs: LegRefs }) {
   )
 }
 
+/** Flat extruded panel from a 2D outline (lapels, shirt V, tie), lying in the XY plane at the given depth. */
+function panel(points: [number, number][], depth = 0.012) {
+  const shape = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)))
+  const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false })
+  g.computeVertexNormals()
+  return repairNormals(g)
+}
+
+function Eye({ side }: { side: 1 | -1 }) {
+  return (
+    <group position={[0.047 * side, 0.112, 0.108]}>
+      <mesh geometry={sphere(0.024, 14, 10)} material={toon('#fbfaf6')} scale={[1.25, 0.82, 0.45]} />
+      <mesh geometry={sphere(0.015, 12, 8)} material={toon('#2a1a14')} position={[0.002 * side, -0.002, 0.008]} scale={[1, 1.1, 0.5]} />
+      <mesh geometry={sphere(0.0055, 8, 6)} material={neon('#ffffff', 1.4)} position={[0.006 * side, 0.005, 0.015]} />
+      <mesh geometry={torus(0.027, 0.0035, Math.PI, 16)} material={toon('#1a1214')} position={[0, 0.002, 0.004]} scale={[1.15, 0.75, 1]} />
+    </group>
+  )
+}
+
 function Head({ mouthRef }: { mouthRef: React.RefObject<THREE.Mesh | null> }) {
   const smile = useMemo(() => torus(0.034, 0.008, Math.PI, 16), [])
   return (
     <group>
-      <Part geo={sphere(0.13, 24, 18)} mat={toon(SKIN)} scale={[0.9, 1.1, 0.98]} position={[0, 0.1, 0]} outline={0.016} />
-      <Part geo={sphere(0.03, 10, 8)} mat={toon(SKIN_SHADE)} scale={[0.45, 1, 0.8]} position={[0.116, 0.095, -0.005]} outline={0.008} />
-      <Part geo={sphere(0.03, 10, 8)} mat={toon(SKIN_SHADE)} scale={[0.45, 1, 0.8]} position={[-0.116, 0.095, -0.005]} outline={0.008} />
-      <Part geo={sphere(0.138, 24, 16)} mat={toon(HAIR)} scale={[0.93, 0.78, 1.0]} position={[0, 0.165, -0.02]} outline={0.016} />
-      <Part geo={sphere(0.12, 20, 14)} mat={toon(HAIR)} scale={[0.95, 0.85, 0.7]} position={[0, 0.11, -0.065]} outline={0.012} />
-      <Part geo={rbox(0.215, 0.085, 0.15, 0.04)} mat={toon(HAIR)} position={[0.012, 0.245, 0.04]} rotation={[-0.25, 0, 0.1]} outline={0.014} />
-      <Part geo={rbox(0.12, 0.07, 0.1, 0.035)} mat={toon(HAIR)} position={[0.07, 0.262, 0.07]} rotation={[-0.35, 0.3, -0.25]} outline={0.012} />
+      <Part geo={sphere(0.13, 28, 20)} mat={toon(SKIN)} scale={[0.88, 1.08, 0.96]} position={[0, 0.1, 0]} outline={0.016} />
+      {[1, -1].map((s) => (
+        <Part key={s} geo={sphere(0.03, 12, 8)} mat={toon(SKIN_SHADE)} scale={[0.45, 1, 0.8]} position={[0.114 * s, 0.092, -0.005]} outline={0.008} />
+      ))}
+      <Part geo={sphere(0.136, 28, 18)} mat={toon(HAIR)} scale={[0.92, 0.72, 0.98]} position={[0, 0.17, -0.022]} outline={0.016} />
+      <Part geo={sphere(0.12, 20, 14)} mat={toon(HAIR)} scale={[0.94, 0.86, 0.68]} position={[0, 0.115, -0.066]} outline={0.012} />
+      <Part geo={sphere(0.085, 20, 14)} mat={toon(HAIR)} scale={[1.25, 0.62, 0.95]} position={[0.018, 0.242, 0.045]} rotation={[-0.35, 0, 0.18]} outline={0.014} />
+      <Part geo={sphere(0.055, 16, 12)} mat={toon(HAIR)} scale={[1.3, 0.6, 1]} position={[0.07, 0.232, 0.075]} rotation={[-0.4, 0.4, -0.3]} outline={0.012} />
+      {[1, -1].map((s) => (
+        <mesh key={s} geometry={rbox(0.022, 0.05, 0.03, 0.01)} material={toon(HAIR)} position={[0.107 * s, 0.13, 0.03]} />
+      ))}
+      <Eye side={1} />
+      <Eye side={-1} />
       {[1, -1].map((s) => (
         <group key={s}>
-          <mesh geometry={sphere(0.017, 10, 8)} material={toon('#120c10')} position={[0.044 * s, 0.112, 0.112]} scale={[1.3, 0.62, 0.5]} />
-          <mesh geometry={rbox(0.055, 0.014, 0.014, 0.006)} material={toon(HAIR)} position={[0.046 * s, 0.152, 0.113]} rotation={[0, 0, -0.12 * s]} />
-          <mesh geometry={sphere(0.018, 8, 6)} material={toon('#f2a39a', { opacity: 0.5 })} position={[0.072 * s, 0.065, 0.1]} scale={[1.2, 0.6, 0.4]} />
+          <mesh geometry={rbox(0.058, 0.016, 0.016, 0.007)} material={toon(HAIR)} position={[0.047 * s, 0.153, 0.112]} rotation={[0, 0, -0.1 * s]} />
+          <mesh geometry={sphere(0.018, 8, 6)} material={toon('#f2a39a', { opacity: 0.5 })} position={[0.074 * s, 0.068, 0.1]} scale={[1.2, 0.6, 0.4]} />
         </group>
       ))}
-      <mesh geometry={sphere(0.02, 10, 8)} material={toon(SKIN_SHADE)} position={[0, 0.085, 0.124]} scale={[0.9, 1.1, 0.9]} />
+      <mesh geometry={sphere(0.019, 10, 8)} material={toon(SKIN_SHADE)} position={[0, 0.083, 0.123]} scale={[0.85, 1.05, 0.9]} />
       <mesh geometry={smile} material={toon('#7a2430')} position={[0, 0.05, 0.116]} rotation={[0.15, 0, Math.PI]} />
       <mesh ref={mouthRef} geometry={sphere(0.026, 12, 8)} material={toon('#5a1420')} position={[0, 0.038, 0.112]} scale={[1, 0.05, 0.4]} />
-      <group position={[0.118, 0.09, 0.0]}>
-        <mesh geometry={limb(0.006, 0.12)} material={toon('#222')} rotation={[-1.25, 0, 0.55]} />
-        <mesh geometry={sphere(0.014, 8, 6)} material={toon('#222')} position={[-0.055, -0.04, 0.1]} />
-      </group>
+    </group>
+  )
+}
+
+/** Jacket front: shirt V, collar points, tie, and lapels wide at the shoulders tapering to the button. */
+function SuitFront() {
+  const g = useMemo(
+    () => ({
+      shirt: panel([
+        [-0.075, 0.55],
+        [0.075, 0.55],
+        [0, 0.27],
+      ]),
+      collarL: panel([
+        [-0.012, 0.545],
+        [-0.075, 0.555],
+        [-0.05, 0.49],
+      ]),
+      collarR: panel([
+        [0.012, 0.545],
+        [0.075, 0.555],
+        [0.05, 0.49],
+      ]),
+      knot: panel([
+        [-0.022, 0.535],
+        [0.022, 0.535],
+        [0.015, 0.505],
+        [-0.015, 0.505],
+      ]),
+      blade: panel([
+        [-0.014, 0.505],
+        [0.014, 0.505],
+        [0.026, 0.33],
+        [0, 0.305],
+        [-0.026, 0.33],
+      ]),
+      lapelL: panel([
+        [-0.075, 0.555],
+        [-0.135, 0.52],
+        [-0.105, 0.43],
+        [-0.004, 0.265],
+        [-0.03, 0.4],
+      ]),
+      lapelR: panel([
+        [0.075, 0.555],
+        [0.135, 0.52],
+        [0.105, 0.43],
+        [0.004, 0.265],
+        [0.03, 0.4],
+      ]),
+    }),
+    [],
+  )
+  return (
+    <group position={[0, 0, 0.127]}>
+      <Part geo={g.shirt} mat={toon(SHIRT)} outline={0.006} />
+      <Part geo={g.blade} mat={toon(TIE)} position={[0, 0, 0.012]} outline={0.006} />
+      <Part geo={g.knot} mat={toon(TIE)} position={[0, 0, 0.014]} outline={0.006} />
+      <Part geo={g.collarL} mat={toon(SHIRT)} position={[0, 0, 0.016]} outline={0.005} />
+      <Part geo={g.collarR} mat={toon(SHIRT)} position={[0, 0, 0.016]} outline={0.005} />
+      <Part geo={g.lapelL} mat={toon(SUIT_DARK)} position={[0, 0, 0.01]} outline={0.006} />
+      <Part geo={g.lapelR} mat={toon(SUIT_DARK)} position={[0, 0, 0.01]} outline={0.006} />
     </group>
   )
 }
@@ -371,13 +453,11 @@ export function Mayor() {
           <Leg side={-1} refs={legs.n} />
           <group ref={torso} position={[0, 0.05, 0]}>
             <Part geo={cyl(0.215, 0.18, 0.52, 20)} mat={toon(SUIT)} position={[0, 0.27, 0]} scale={[1, 1, 0.62]} outline={0.02} />
-            <Part geo={rbox(0.14, 0.2, 0.02, 0.008)} mat={toon(SHIRT)} position={[0, 0.43, 0.118]} outline={0.008} />
-            <Part geo={rbox(0.05, 0.22, 0.02, 0.01)} mat={toon(TIE)} position={[0, 0.39, 0.132]} outline={0.008} />
-            <Part geo={rbox(0.058, 0.045, 0.03, 0.012)} mat={toon(TIE)} position={[0, 0.505, 0.13]} outline={0.008} />
-            <Part geo={rbox(0.05, 0.22, 0.02, 0.008)} mat={toon(SUIT_DARK)} position={[0.068, 0.42, 0.124]} rotation={[0, 0, 0.32]} outline={0.008} />
-            <Part geo={rbox(0.05, 0.22, 0.02, 0.008)} mat={toon(SUIT_DARK)} position={[-0.068, 0.42, 0.124]} rotation={[0, 0, -0.32]} outline={0.008} />
-            <Part geo={rbox(0.11, 0.035, 0.06, 0.012)} mat={toon(SHIRT)} position={[0, 0.535, 0.075]} outline={0.008} />
-            <mesh geometry={sphere(0.018, 10, 8)} material={neon('#ffd400', 2.2)} position={[-0.12, 0.42, 0.105]} />
+            <SuitFront />
+            {[1, -1].map((side) => (
+              <Part key={side} geo={sphere(0.085, 16, 12)} mat={toon(SUIT)} scale={[1.15, 0.7, 0.85]} position={[0.2 * side, 0.5, 0]} outline={0.016} />
+            ))}
+            <mesh geometry={sphere(0.016, 10, 8)} material={neon('#ffd400', 2.2)} position={[-0.1, 0.47, 0.118]} />
             <mesh geometry={rbox(0.004, 0.2, 0.004, 0.001)} material={toon(SUIT_DARK)} position={[0, 0.16, 0.13]} />
             {[0.2, 0.12].map((y) => (
               <mesh key={y} geometry={sphere(0.011, 8, 6)} material={toon('#0e1640')} position={[0.012, y, 0.128]} />
