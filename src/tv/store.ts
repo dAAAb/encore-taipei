@@ -22,13 +22,18 @@ export type Slot =
 const PENDING_KEY = 'encore.pending'
 const VOLUME_KEY = 'encore.volume'
 
-function loadPending(): PendingStage | null {
+export function loadPending(): PendingStage | null {
   try {
     const raw = localStorage.getItem(PENDING_KEY)
     return raw ? (JSON.parse(raw) as PendingStage) : null
   } catch {
     return null
   }
+}
+
+export function savePending(pending: PendingStage | null) {
+  if (pending) localStorage.setItem(PENDING_KEY, JSON.stringify(pending))
+  else localStorage.removeItem(PENDING_KEY)
 }
 
 export function buildDial(channels: Channel[], pending: PendingStage | null): Slot[] {
@@ -96,8 +101,7 @@ export const useTv = create<TvState>((set, get) => ({
     set({ channels, channelsLoaded: true, dial, index: keep >= 0 ? keep : Math.min(s.index, dial.length - 1) })
   },
   setPending: (pending) => {
-    if (pending) localStorage.setItem(PENDING_KEY, JSON.stringify(pending))
-    else localStorage.removeItem(PENDING_KEY)
+    savePending(pending)
     const s = get()
     const dial = buildDial(s.channels, pending)
     set({ pending, dial, index: pending ? dial.length - 1 : Math.min(s.index, dial.length - 1) })

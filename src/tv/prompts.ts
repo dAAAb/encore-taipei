@@ -1,4 +1,5 @@
 import making from '@/data/making-of.json'
+import { SUBMIT_PATH } from './routing'
 
 export const STARTER_PROMPT = `幫我做一個 3D 互動網站：我的「台北安可」舞台。
 
@@ -31,6 +32,7 @@ window.addEventListener('keydown', (e) => {
 /** Everything an AI agent needs in one paste: the brief, the optional remote hooks, a worked example, and how to list it. */
 export function agentPrompt() {
   const site = `${location.origin}${import.meta.env.BASE_URL}`
+  const submit = `${location.origin}${SUBMIT_PATH}`
   return `你是我的 AI 寫程式助手。請帶我做一座「台北安可」3D 舞台網站，做好後我要把它上架到「台北安可電視台」（${site}）的一個頻道。
 括號裡的部分請先問我想要什麼；我沒意見的話，就由你決定一個好看的版本。
 
@@ -56,5 +58,5 @@ ${making.prompt}
 
 1. 部署成公開的 https 網址（GitHub Pages、Vercel、Cloudflare Pages 或 Netlify 都有免費方案）。不要用 X-Frame-Options 或 CSP frame-ancestors 擋住 iframe 嵌入。
 2. 給我網址，並幫我寫一段 80 字內的作品介紹和製作工具清單。
-3. 告訴我：打開 ${site}，轉到「訊號徵求中」那一台，按「我做好了，上架這一台」貼上網址，就能馬上預覽；審核通過後正式上架。`
+3. 告訴我：打開上架頁 ${submit} 貼上網址（或在電視台轉到「訊號徵求中」那一台按「上架這一台」），送出後馬上就能在電視台預覽；審核通過後正式上架。`
 }

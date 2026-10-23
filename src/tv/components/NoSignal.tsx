@@ -1,4 +1,5 @@
 import { Sparkles, Upload } from 'lucide-react'
+import { SUBMIT_PATH } from '../routing'
 import { useTv } from '../store'
 import { OnboardAgent } from './OnboardAgent'
 
@@ -47,6 +48,13 @@ export function NoSignal({ number }: { number: number }) {
             <OnboardAgent className="mt-1" />
           </div>
           <p className="mt-4 text-xs text-[#6a6f8e]">按 ← 轉回上一台，或用右下角遙控器</p>
+          <p className="mt-2 text-xs text-[#6a6f8e]">
+            也可以把上架頁分享給朋友：
+            <a href={SUBMIT_PATH} className="font-black text-[#1f4fd1] underline underline-offset-2">
+              {location.host}
+              {SUBMIT_PATH}
+            </a>
+          </p>
         </div>
       </div>
     </div>

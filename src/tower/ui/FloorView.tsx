@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Cloud, CloudOff, LogOut, Sparkles, Upload, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { OnboardAgent } from '@/tv/components/OnboardAgent'
-import { stageUrl } from '@/tv/routing'
+import { stageUrl, SUBMIT_PATH } from '@/tv/routing'
 import { sfx } from '@/tv/sfx'
 import { useTv } from '@/tv/store'
 import { floorTitle, type Floor } from '../layout'
@@ -45,6 +45,13 @@ function Vacant({ floor, next }: { floor: Floor; next: number }) {
           </button>
           <OnboardAgent className="mt-1" />
         </div>
+          <p className="mt-4 text-xs text-[#6a6f8e]">
+            也可以把上架頁分享給朋友：
+            <a href={SUBMIT_PATH} className="font-black text-[#1f4fd1] underline underline-offset-2">
+              {location.host}
+              {SUBMIT_PATH}
+            </a>
+          </p>
       </div>
     </div>
   )

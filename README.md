@@ -12,6 +12,7 @@
 | `/club/` | 第 2026 台〈台北安可之夜〉單獨開啟 |
 | `/admin/` | 頻道管理（需要管理連結） |
 | `/tower/`、`/tower/2027/`… | 台北安可大樓：每台是一層樓，搭無人機逛；同一份頁面也發布在網站根目錄的 `encore.taipei/tower/` |
+| `/submit/` | 上架申請頁：一般網頁，不載入 3D；送出後帶到電視台預覽。同一份頁面也發布在 `encore.taipei/submit/` |
 
 目前 Beta 版部署在 [encore.taipei/beta/](http://encore.taipei/beta/)，正式站 `encore.taipei/` 仍是第 2026 台。
 
@@ -56,6 +57,9 @@
 - `/tower/2027/` 會直接飛進 2027 樓，每層有自己的分享標題與預覽圖。程式在 `src/tower/`。
 
 ## 頻道與後台
+
+投稿有三個入口：電視台「訊號徵求中」那一台、大樓「招租中」的樓層，以及獨立的上架頁 `encore.taipei/submit/`（`src/submit/`）。
+三者共用同一份表單（`SubmitFields`）；送出後預覽存在瀏覽器（`encore.pending`），上架頁送出後會直接帶到電視台那一台。
 
 頻道資料存在 Supabase（`ai2023` 專案中以 `encore_` 開頭的資料表），所有讀寫都經過 `supabase/migrations/` 裡的 SQL 函式：
 
@@ -117,7 +121,7 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 
 ```bash
 npm install
-npm run dev        # http://localhost:4733（電視台）、/club/、/admin/、/2027/、/tower/
+npm run dev        # http://localhost:4733（電視台）、/club/、/admin/、/2027/、/tower/、/submit/
 npm run build      # 產生 dist/（含每台的分享頁與預覽圖）
 npm run preview
 ```
@@ -134,7 +138,7 @@ npm run preview
 | `SITE_URL` | 公開網址，用來產生分享預覽圖與 canonical 的絕對網址 | `https://encore.taipei/beta` |
 
 `.github/workflows/deploy-pages.yml` 在推到 `main`、手動執行、管理員上架頻道，或每 10 分鐘偵測到頻道清單變動時：先建置 `main` 放在網站根目錄，
-再把 Beta 分支（`cursor/encore-tv-0d54`）建置到 `/beta/`，並把其中的 `tower/` 複製一份到網站根目錄（`/tower/`）。
+再把 Beta 分支（`cursor/encore-tv-0d54`）建置到 `/beta/`，並把其中的 `tower/`、`submit/` 複製一份到網站根目錄（`/tower/`、`/submit/`）。
 Beta 建置失敗不會影響正式站。
 Beta 測試順利後，把 Beta 分支合併進 `main`，電視台就會變成 `encore.taipei/`，各台網址變成 `encore.taipei/2027/`。
 

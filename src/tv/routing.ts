@@ -7,6 +7,9 @@ export function channelFromPath(pathname = location.pathname): number | null {
   return m ? Number(m[1]) : null
 }
 
+/** The submit page is built with the station but published at the site root (/submit/), next to /tower/. */
+export const SUBMIT_PATH = `${BASE.replace(/beta\/$/, '')}submit/`
+
 export function channelPath(n: number) {
   return `${BASE}${n}/`
 }

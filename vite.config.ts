@@ -15,8 +15,8 @@ function shareUrls(): Plugin {
     name: 'share-urls',
     transformIndexHtml(html, ctx) {
       const page = ctx.path.replace(/^\//, '').replace(/index\.html$/, '')
-      // the tower is also published at the site root (/tower/), which is its canonical home
-      const url = page.startsWith('tower/') && siteUrl ? `${siteUrl.replace(/\/beta$/, '')}/${page}` : `${root}${page}`
+      // the tower and the submit page are also published at the site root (/tower/, /submit/), their canonical homes
+      const url = /^(tower|submit)\//.test(page) && siteUrl ? `${siteUrl.replace(/\/beta$/, '')}/${page}` : `${root}${page}`
       return {
         html: html.replaceAll('%SITE_ROOT%', root).replaceAll('%PAGE_URL%', url),
         tags: siteUrl
@@ -57,6 +57,7 @@ export default defineConfig({
         club: path.resolve(import.meta.dirname, 'club/index.html'),
         admin: path.resolve(import.meta.dirname, 'admin/index.html'),
         tower: path.resolve(import.meta.dirname, 'tower/index.html'),
+        submit: path.resolve(import.meta.dirname, 'submit/index.html'),
       },
     },
   },
