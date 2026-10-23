@@ -144,7 +144,7 @@ python3 scripts/build_font.py /tmp/NotoSansTC.ttf
 ## 隱私
 
 - 不需要註冊或登入。頂樓聊天的暱稱與留言會公開顯示；投稿時填的 Email 只給管理員通知審核結果用，不會公開。
-- 只有在建置時設定 `VITE_GA_ID` 才會啟用 Google Analytics 4，用來統計瀏覽次數與按了哪些按鈕，不收集姓名或聯絡方式。
+- 使用 Google Analytics 4（評估 ID 設在 `.github/workflows/deploy-pages.yml` 的 `VITE_GA_ID`）統計瀏覽次數與按了哪些按鈕，不收集姓名或聯絡方式；管理後台不裝 GA。
 
 ## 授權
 
