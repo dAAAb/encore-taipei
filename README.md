@@ -99,7 +99,7 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 
 ## 流量分析（Google Analytics 4）
 
-在 `.env.production` 設定 `VITE_GA_ID=G-XXXXXXXXXX` 就會啟用；沒設定或本機開發時完全不送資料。
+評估 ID `G-7S3BJVE1W8` 設在部署設定（`main` 分支 `.github/workflows/deploy-pages.yml` 的 `VITE_GA_ID`），舞台、電視台、大樓、上架頁共用；本機開發時完全不送資料。
 電視台每轉到一台記一次虛擬瀏覽（`/2027/` 這種路徑），嵌在電視裡的第 2026、2028 台只送事件、不重複算瀏覽。
 
 | 事件 | 時機 |
