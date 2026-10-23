@@ -1,5 +1,6 @@
 import { Info, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { track } from '@/lib/analytics'
 import { channelUrl } from '../routing'
 import { sfx } from '../sfx'
 import { useTv } from '../store'
@@ -65,6 +66,7 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
   const share = async () => {
     if (!slot) return
     const url = channelUrl(slot.number)
+    track('share', { method: 'share' in navigator ? 'native' : 'copy', content_type: 'channel', item_id: String(slot.number), place: 'remote' })
     if (navigator.share) await navigator.share({ title: `第 ${slot.number} 台｜台北安可電視台`, url }).catch(() => {})
     else await navigator.clipboard?.writeText(url).catch(() => {})
   }
@@ -156,7 +158,10 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
               ['blue', '#2f7bff', '藍色鍵'],
             ] as const
           ).map(([color, hex, label]) => (
-            <Key key={color} label={label} onPress={() => window.dispatchEvent(new CustomEvent('encore:color', { detail: color }))} className="h-3.5 rounded-sm">
+            <Key key={color} label={label} onPress={() => {
+                window.dispatchEvent(new CustomEvent('encore:color', { detail: color }))
+                track('remote_color_key', { color })
+              }} className="h-3.5 rounded-sm">
               <span className="block h-1.5 w-full rounded-[2px]" style={{ background: hex }} />
             </Key>
           ))}

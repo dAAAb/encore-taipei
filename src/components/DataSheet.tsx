@@ -6,6 +6,7 @@ import { MakingOf } from '@/components/MakingOf'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { track } from '@/lib/analytics'
 
 function host(url: string) {
   try {
@@ -26,7 +27,7 @@ function Source({ url }: { url: string | null }) {
 
 export function DataSheet() {
   return (
-    <Sheet>
+    <Sheet onOpenChange={(o) => o && track('datasheet_open')}>
       <SheetTrigger render={<button type="button" className="ink-btn flex items-center gap-1.5 px-3 py-1.5 text-sm" />}>
         <ScrollText className="size-4" /> 政績資料
       </SheetTrigger>

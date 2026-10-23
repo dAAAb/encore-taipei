@@ -74,7 +74,23 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 按下彩色鍵時傳 `{ type: 'encore:color', color: 'red' | 'green' | 'yellow' | 'blue' }`；
 你的頁面也可以把方向鍵傳回來：`parent.postMessage({ type: 'encore:key', key: 'ArrowRight' }, '*')`。
 
-## 本機執行
+## 流量分析（Google Analytics 4）
+
+在 `.env.production` 設定 `VITE_GA_ID=G-XXXXXXXXXX` 就會啟用；沒設定或本機開發時完全不送資料。
+電視台每轉到一台記一次虛擬瀏覽（`/2027/` 這種路徑），嵌在電視裡的第 2026、2028 台只送事件、不重複算瀏覽。
+
+| 事件 | 時機 |
+| --- | --- |
+| `tv_power_on`、`intro_complete` | 打開電視、新聞特輯播完 |
+| `channel_view` | 轉到某一台（帶台號與名稱） |
+| `remote_color_key`、`share` | 按彩色鍵、分享頻道 |
+| `guide_open`、`agent_prompt_copy`、`submit_open`、`stage_submit` | 投稿流程 |
+| `channel_info_open` | 打開頻道資訊 |
+| `tv_power_off`、`finale_complete` | 關機彩蛋開始、穿過裂縫回到後室 |
+| `club_enter`、`troupe_switch`、`music_mode`、`camera_view`、`sound_unlock` | 夜店頁互動（`embedded` 表示在電視裡） |
+| `datasheet_open`、`making_of_open` | 政績資料、製作花絮 |
+
+
 
 需要 Node.js 20 以上。
 

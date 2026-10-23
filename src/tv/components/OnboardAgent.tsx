@@ -1,4 +1,5 @@
 import { Check, Copy } from 'lucide-react'
+import { track } from '@/lib/analytics'
 import { agentPrompt } from '../prompts'
 import { AGENT_LOGOS } from './agent-logos'
 import { useCopy } from './useCopy'
@@ -11,7 +12,10 @@ export function OnboardAgent({ className = '' }: { className?: string }) {
     <>
       <button
         type="button"
-        onClick={() => copy(agentPrompt(), 'agent')}
+        onClick={() => {
+          copy(agentPrompt(), 'agent')
+          track('agent_prompt_copy')
+        }}
         className={`group flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-[#0c0812] bg-white py-1.5 pr-4 pl-1.5 text-[15px] font-black text-[#0c0812] shadow-[2px_2px_0_#0c0812] transition-[transform,box-shadow,background] hover:-translate-y-px hover:bg-[#fffbea] hover:shadow-[3px_3px_0_#0c0812] active:translate-y-px active:shadow-[1px_1px_0_#0c0812] ${className}`}
       >
         <span aria-hidden className="relative inline-flex h-8 w-[68px] shrink-0">

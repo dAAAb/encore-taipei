@@ -1,6 +1,7 @@
 import { Check, Copy, ExternalLink, Share2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import making from '@/data/making-of.json'
+import { track } from '@/lib/analytics'
 import { channelUrl, stageUrl } from '../routing'
 import { useTv } from '../store'
 import { useCopy } from './useCopy'
@@ -18,6 +19,7 @@ export function InfoSheet() {
   const link = channelUrl(slot.number)
   const share = async () => {
     const data = { title: `第 ${slot.number} 台｜${ch?.title ?? '訊號徵求中'}｜台北安可電視台`, url: link }
+    track('share', { method: 'share' in navigator ? 'native' : 'copy', content_type: 'channel', item_id: String(slot.number), place: 'info' })
     if (navigator.share) await navigator.share(data).catch(() => {})
     else copy(link, 'link')
   }
