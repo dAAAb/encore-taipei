@@ -13,6 +13,7 @@ import { Lights } from './Lights'
 import { Mayor } from './Mayor'
 import { MayorSpeech } from './MayorSpeech'
 import { Stage } from './Stage'
+import { Troupe } from './Troupe'
 
 const CA_OFFSET = new THREE.Vector2(0.0007, 0.0005)
 
@@ -36,6 +37,7 @@ export function ClubScene({ lowPower }: { lowPower: boolean }) {
         <City />
         <Stage />
         <Mayor />
+        <Troupe />
         <Crowd />
         <MayorSpeech />
         <CameraRig />

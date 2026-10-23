@@ -27,6 +27,14 @@ export default function App() {
   const lowPower = useMemo(() => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.hardwareConcurrency ?? 8) <= 4, [])
 
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'd' || e.key === 'D') && !e.metaKey && !e.ctrlKey && !(e.target instanceof HTMLInputElement)) useClub.getState().nextTroupe()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  useEffect(() => {
     if (new URLSearchParams(location.search).has('autostart')) start()
     if (import.meta.env.DEV) Object.assign(window, { __club: useClub })
   }, [start])
@@ -45,8 +53,10 @@ export default function App() {
     const retry = () => applyMusic(useClub.getState().wantMusic).then(setMode)
     window.addEventListener('pointerdown', retry, { once: true })
     const onMessage = (e: MessageEvent) => {
-      const d = e.data as { type?: string; volume?: number; muted?: boolean } | null
+      const d = e.data as { type?: string; volume?: number; muted?: boolean; color?: string } | null
       if (d?.type === 'encore:volume') setExternalVolume(d.volume ?? 1, !!d.muted)
+      if (d?.type === 'encore:color' && d.color === 'green') useClub.getState().nextTroupe()
+      if (d?.type === 'encore:color' && d.color === 'red') useClub.getState().setTroupe('solo')
     }
     const onKey = (e: KeyboardEvent) => {
       if (REMOTE_KEYS.has(e.key) || /^[0-9]$/.test(e.key)) window.parent.postMessage({ type: 'encore:key', key: e.key }, '*')

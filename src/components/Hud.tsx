@@ -1,8 +1,9 @@
-import { Disc3, ExternalLink, Music2, VolumeX } from 'lucide-react'
+import { Disc3, ExternalLink, Music2, PartyPopper, User, VolumeX } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { applyMusic, mountYouTube } from '@/audio/music'
 import { TAIPEI_ENCORE_URL } from '@/audio/youtube'
 import { useClub, type MusicMode, type ViewMode } from '@/lib/store'
+import { TROUPE_LABEL } from '@/scene/troupe-looks'
 import { DataSheet } from './DataSheet'
 
 const MUSIC: { id: MusicMode; label: string; icon: typeof Music2 }[] = [
@@ -99,6 +100,9 @@ export function Hud() {
   const ytFailed = useClub((s) => s.youtubeFailed)
 
   const setWant = useClub((s) => s.setWantMusic)
+  const troupe = useClub((s) => s.troupeMode)
+  const nextTroupe = useClub((s) => s.nextTroupe)
+  const setTroupe = useClub((s) => s.setTroupe)
 
   const pickMusic = async (m: MusicMode) => {
     setWant(m)
@@ -146,6 +150,22 @@ export function Hud() {
                 </button>
               ))}
               <DataSheet />
+            </div>
+            <div className="flex flex-wrap justify-end gap-1.5">
+              <button
+                type="button"
+                className="ink-btn flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm"
+                data-on={troupe !== 'solo'}
+                onClick={nextTroupe}
+                title="換一批上台伴舞（鍵盤 D，或電視遙控器綠色鍵）"
+              >
+                <PartyPopper className="size-3.5" /> {troupe === 'solo' ? '叫伴舞上台' : `換一批 · ${TROUPE_LABEL[troupe]}`}
+              </button>
+              {troupe !== 'solo' && (
+                <button type="button" className="ink-btn flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm" onClick={() => setTroupe('solo')} title="只留市長獨舞（遙控器紅色鍵）">
+                  <User className="size-3.5" /> 獨舞
+                </button>
+              )}
             </div>
           </nav>
 

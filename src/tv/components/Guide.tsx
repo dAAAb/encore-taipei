@@ -20,6 +20,9 @@ window.addEventListener('message', (e) => {
   if (e.data?.type === 'encore:volume') {
     // e.data.volume：0～1，e.data.muted：true / false
   }
+  if (e.data?.type === 'encore:color') {
+    // 遙控器彩色鍵：e.data.color 是 'red'、'green'、'yellow' 或 'blue'
+  }
 })
 // 讓觀眾在你的舞台裡也能用 ← → 轉台
 window.addEventListener('keydown', (e) => {
@@ -95,7 +98,7 @@ export function Guide() {
 
         <details className="mt-3 rounded-xl border-2 border-[#0c0812]/20 bg-white/40 p-3">
           <summary className="cursor-pointer text-sm font-black text-[#13204f]">進階：讓遙控器控制你的舞台（選用）</summary>
-          <p className="mt-2 text-xs leading-relaxed text-[#2a2f52]">電視會把音量傳給你的網頁；你的網頁也可以把 ← → 傳回來，讓觀眾在你的舞台裡也能轉台。</p>
+          <p className="mt-2 text-xs leading-relaxed text-[#2a2f52]">電視會把音量和遙控器的紅綠黃藍彩色鍵傳給你的網頁；你的網頁也可以把 ← → 傳回來，讓觀眾在你的舞台裡也能轉台。</p>
           <CopyBlock id="protocol" text={PROTOCOL} label="遙控器程式碼" />
         </details>
 

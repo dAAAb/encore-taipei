@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import platform from '@/data/platform.json'
+import type { TroupeMode } from '@/scene/troupe-looks'
 
 export type MusicMode = 'youtube' | 'synth' | 'off'
 export type ViewMode = 'front' | 'close' | 'iso' | 'orbit'
@@ -17,6 +18,9 @@ interface ClubState {
   viewNonce: number
   speech: PlatformItem | null
   hype: number
+  /** Backup dancers beside the mayor; the seed reshuffles who goes up and in what order. */
+  troupeMode: TroupeMode
+  troupeSeed: number
   start: () => void
   setMusicMode: (m: MusicMode) => void
   setWantMusic: (m: MusicMode) => void
@@ -25,7 +29,12 @@ interface ClubState {
   setView: (v: ViewMode) => void
   setSpeech: (p: PlatformItem | null) => void
   bumpHype: (amount: number) => void
+  nextTroupe: () => void
+  setTroupe: (mode: TroupeMode) => void
 }
+
+const TROUPE_CYCLE: TroupeMode[] = ['animals', 'citizens', 'mix']
+const troupeParam = new URLSearchParams(location.search).get('troupe') as TroupeMode | null
 
 export const useClub = create<ClubState>((set) => ({
   started: false,
@@ -37,6 +46,8 @@ export const useClub = create<ClubState>((set) => ({
   viewNonce: 0,
   speech: null,
   hype: 0,
+  troupeMode: troupeParam && [...TROUPE_CYCLE, 'solo'].includes(troupeParam) ? troupeParam : 'solo',
+  troupeSeed: 1,
   start: () => set({ started: true }),
   setMusicMode: (musicMode) => set({ musicMode }),
   setWantMusic: (wantMusic) => set({ wantMusic }),
@@ -49,6 +60,12 @@ export const useClub = create<ClubState>((set) => ({
   setView: (view) => set((s) => ({ view, viewNonce: s.viewNonce + 1 })),
   setSpeech: (speech) => set({ speech }),
   bumpHype: (amount) => set((s) => ({ hype: Math.min(1, s.hype + amount) })),
+  nextTroupe: () =>
+    set((s) => {
+      const i = TROUPE_CYCLE.indexOf(s.troupeMode)
+      return { troupeMode: TROUPE_CYCLE[(i + 1) % TROUPE_CYCLE.length], troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) }
+    }),
+  setTroupe: (troupeMode) => set((s) => ({ troupeMode, troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) })),
 }))
 
 /** Per-frame excitement level, read imperatively by the scene (no React re-render). */

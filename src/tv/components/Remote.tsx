@@ -147,6 +147,21 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
           </Key>
         </div>
 
+        <div className="mt-3 grid grid-cols-4 gap-1.5" aria-label="彩色鍵">
+          {(
+            [
+              ['red', '#e2363f', '紅色鍵（第 2026 台：市長獨舞）'],
+              ['green', '#2fbf55', '綠色鍵（第 2026 台：換一批伴舞）'],
+              ['yellow', '#f2c21b', '黃色鍵'],
+              ['blue', '#2f7bff', '藍色鍵'],
+            ] as const
+          ).map(([color, hex, label]) => (
+            <Key key={color} label={label} onPress={() => window.dispatchEvent(new CustomEvent('encore:color', { detail: color }))} className="h-3.5 rounded-sm">
+              <span className="block h-1.5 w-full rounded-[2px]" style={{ background: hex }} />
+            </Key>
+          ))}
+        </div>
+
         <p className="mt-4 text-center text-[11px] font-black tracking-[0.35em] text-white/35">ENCORE</p>
         <p className="mt-1 hidden text-center text-[10px] leading-snug text-white/35 sm:block">鍵盤 ← → 轉台 · + − 音量 · M 靜音 · I 資訊</p>
       </div>

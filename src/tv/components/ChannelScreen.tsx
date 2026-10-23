@@ -41,6 +41,12 @@ export function ChannelScreen() {
     frame.current?.contentWindow?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
   }, [volume, muted, shown])
 
+  useEffect(() => {
+    const forward = (e: Event) => frame.current?.contentWindow?.postMessage({ type: 'encore:color', color: (e as CustomEvent<string>).detail }, '*')
+    window.addEventListener('encore:color', forward)
+    return () => window.removeEventListener('encore:color', forward)
+  }, [])
+
   const onLoad = () => {
     frame.current?.contentWindow?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
     window.setTimeout(() => setSnow(false), 180)
