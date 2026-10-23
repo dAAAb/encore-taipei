@@ -47,6 +47,7 @@ jobs:
     needs: check
     if: needs.check.outputs.build == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Read GitHub Pages configuration
@@ -71,14 +72,22 @@ jobs:
         with:
           ref: ${{ env.BETA_BRANCH }}
           path: beta-src
-      # Stage screenshots for share images need CJK fonts on the runner.
+      # Stage screenshots for share images need CJK fonts on the runner (direct download: apt can stall).
       - name: Install CJK fonts
         if: steps.beta-src.outcome == 'success'
         continue-on-error: true
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+        timeout-minutes: 3
+        run: |
+          mkdir -p ~/.local/share/fonts
+          for w in Regular Bold Black; do
+            curl -fsSL --retry 3 -o ~/.local/share/fonts/NotoSansCJKtc-$w.otf \
+              "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-$w.otf"
+          done
+          fc-cache -f ~/.local/share/fonts
       - name: Build beta into /beta/
         if: steps.beta-src.outcome == 'success'
         continue-on-error: true
+        timeout-minutes: 12
         working-directory: beta-src
         run: |
           npm ci
