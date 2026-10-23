@@ -68,6 +68,20 @@ export const FALLBACK_CHANNELS: Channel[] = [
   },
 ]
 
+export interface SiteMeta {
+  title: string | null
+  description: string | null
+  image: string | null
+}
+
+/** A stage's own title, description and share image, read server-side (browsers can't fetch other sites' HTML). */
+export async function fetchSiteMeta(url: string, signal?: AbortSignal): Promise<SiteMeta | null> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/encore-meta?url=${encodeURIComponent(url)}`, { headers: { apikey: SUPABASE_KEY }, signal })
+  if (!res.ok) return null
+  const d = (await res.json()) as Partial<SiteMeta>
+  return { title: d.title ?? null, description: d.description ?? null, image: d.image ?? null }
+}
+
 export class RpcError extends Error {
   readonly status: number
 

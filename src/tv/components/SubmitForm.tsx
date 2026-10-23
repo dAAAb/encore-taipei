@@ -1,7 +1,7 @@
-import { Loader2 } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { Loader2, Sparkles } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { RpcError, rpc } from '../channel-data'
+import { fetchSiteMeta, RpcError, rpc, type SiteMeta } from '../channel-data'
 import { useTv } from '../store'
 
 const ERRORS: Record<string, string> = {
@@ -12,21 +12,7 @@ const ERRORS: Record<string, string> = {
   rate_limited: '現在送件的人太多了，請過幾分鐘再試一次。',
 }
 
-/** Best effort: a stage's own og:image makes a better share card than the generated one. */
-async function findOgImage(url: string) {
-  try {
-    const ctrl = new AbortController()
-    const t = window.setTimeout(() => ctrl.abort(), 4000)
-    const html = await fetch(url, { signal: ctrl.signal }).then((r) => r.text())
-    window.clearTimeout(t)
-    const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-    return m ? new URL(m[1], url).toString() : null
-  } catch {
-    return null
-  }
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className="block">
       <span className="text-sm font-black text-[#13204f]">{label}</span>
@@ -46,6 +32,54 @@ export function SubmitForm() {
   const nextNumber = useTv((s) => s.dial[s.dial.length - 1]?.number)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [url, setUrl] = useState('')
+  const [title, setTitle] = useState('')
+  const [message, setMessage] = useState('')
+  const [site, setSite] = useState<SiteMeta | null>(null)
+  const [reading, setReading] = useState(false)
+  const auto = useRef({ title: '', message: '' })
+
+  // Fill the name (and the note, if the site has a description) from the stage itself; never overwrite what the user typed.
+  useEffect(() => {
+    setSite(null)
+    if (!/^https:\/\/[^/\s]+\.[^/\s]+/.test(url)) return
+    const ctrl = new AbortController()
+    const t = window.setTimeout(async () => {
+      setReading(true)
+      try {
+        const meta = await fetchSiteMeta(url, ctrl.signal)
+        if (!meta) return
+        setSite(meta)
+        if (meta.title) {
+          const next = meta.title.slice(0, 80)
+          setTitle((cur) => (cur === '' || cur === auto.current.title ? ((auto.current.title = next), next) : cur))
+        }
+        if (meta.description) {
+          const next = meta.description.slice(0, 1000)
+          setMessage((cur) => (cur === '' || cur === auto.current.message ? ((auto.current.message = next), next) : cur))
+        }
+      } catch {
+        // Unreachable or slow sites just leave the fields for the user.
+      } finally {
+        if (!ctrl.signal.aborted) setReading(false)
+      }
+    }, 500)
+    return () => {
+      ctrl.abort()
+      window.clearTimeout(t)
+      setReading(false)
+    }
+  }, [url])
+
+  const titleHint = reading ? (
+    <span className="inline-flex items-center gap-1">
+      <Loader2 className="size-3 animate-spin" /> 正在讀取網站名稱…
+    </span>
+  ) : title && title === auto.current.title ? (
+    <span className="inline-flex items-center gap-1 text-[#1a7f3c]">
+      <Sparkles className="size-3" /> 已從你的網站抓到，可以修改
+    </span>
+  ) : undefined
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -55,7 +89,7 @@ export function SubmitForm() {
     setBusy(true)
     setError(null)
     try {
-      const og = await findOgImage(url)
+      const og = site?.image ?? null
       const res = await rpc<{ id: string }>('encore_submit', {
         p_title: get('title'),
         p_url: url,
@@ -80,6 +114,10 @@ export function SubmitForm() {
         og_image: og,
         submittedAt: new Date().toISOString(),
       })
+      setUrl('')
+      setTitle('')
+      setMessage('')
+      auto.current = { title: '', message: '' }
       setOpen(false)
     } catch (err) {
       const msg = err instanceof RpcError ? (ERRORS[err.message] ?? `送出失敗：${err.message}`) : '連不上伺服器，請檢查網路後再試一次。'
@@ -101,16 +139,33 @@ export function SubmitForm() {
 
         <form className="mt-1 space-y-3.5" onSubmit={submit}>
           <Field label="作品網址 *" hint="公開的 https 網址">
-            <input name="url" type="url" required pattern="https://.+" placeholder="https://你的帳號.github.io/my-encore/" className={input} />
+            <input
+              name="url"
+              type="url"
+              required
+              pattern="https://.+"
+              placeholder="https://你的帳號.github.io/my-encore/"
+              className={input}
+              value={url}
+              onChange={(e) => setUrl(e.target.value.trim())}
+            />
           </Field>
-          <Field label="舞台名稱 *">
-            <input name="title" required maxLength={80} placeholder="例如：大稻埕煙火安可夜" className={input} />
+          <Field label="舞台名稱 *" hint={titleHint}>
+            <input name="title" required maxLength={80} placeholder="貼上網址後會自動帶入，例如：大稻埕煙火安可夜" className={input} value={title} onChange={(e) => setTitle(e.target.value)} />
           </Field>
           <Field label="你的名字或暱稱 *">
             <input name="author" required maxLength={60} placeholder="會顯示在頻道資訊和片尾名單" className={input} />
           </Field>
           <Field label="想說的話／製作說明" hint="選填">
-            <textarea name="message" maxLength={1000} rows={3} placeholder="這座舞台的故事、想對大家說的話" className={input} />
+            <textarea
+              name="message"
+              maxLength={1000}
+              rows={3}
+              placeholder="這座舞台的故事、想對大家說的話"
+              className={input}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
           </Field>
           <Field label="你用的 prompt" hint="選填，會公開讓大家改做">
             <textarea name="prompt" maxLength={12000} rows={3} placeholder="把你給 AI 的 prompt 貼在這裡" className={input} />
