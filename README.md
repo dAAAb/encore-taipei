@@ -9,6 +9,7 @@
 [![立即體驗 encore.taipei](https://img.shields.io/badge/立即體驗-encore.taipei-ffd400?style=for-the-badge&labelColor=0c0812)](https://encore.taipei)
 [![台北安可電視台](https://img.shields.io/badge/電視台-BETA-c8234a?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/beta/)
 [![台北安可大樓](https://img.shields.io/badge/大樓-BETA-2ef2ff?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/tower/)
+[![換你上台](https://img.shields.io/badge/換你上台-上架你的舞台-b6ffb0?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/submit/)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![three.js](https://img.shields.io/badge/three.js-r186-000?logo=threedotjs)
@@ -89,9 +90,9 @@
 
 任何人都可以用 AI 做一座自己的台北安可舞台，上架成電視台的一台、大樓的一層：
 
-1. 打開[電視台](https://encore.taipei/beta/)轉到最後一台，或到[大樓](https://encore.taipei/tower/)點「招租中」那一層。
+1. 打開上架頁 **[encore.taipei/submit](https://encore.taipei/submit/)**（或在[電視台](https://encore.taipei/beta/)轉到最後一台、到[大樓](https://encore.taipei/tower/)點「招租中」那一層）。
 2. 按「一鍵交給你的 AI Agent」，把 prompt 貼給你的 AI 助手，做好後部署成公開的 `https://` 網址（要允許被 iframe 嵌入）。
-3. 按「上架」貼上網址，馬上就能預覽；管理員審核通過後所有人都看得到，還會自動產生分享預覽圖。
+3. 貼上網址送出，馬上帶你到電視台預覽；管理員審核通過後所有人都看得到，還會自動產生分享預覽圖。
 
 **上架規範**：內容友善正向，不攻擊、不抹黑任何人或政黨；照片、音樂、字型只用自己做的、公有領域或有授權的素材並標示來源；
 頁面上註明「粉絲創作，非官方網站」。不符合規範的作品不會上架。
