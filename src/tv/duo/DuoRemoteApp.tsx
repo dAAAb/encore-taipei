@@ -11,7 +11,7 @@ import { RemotePad, type PadActions, type PadNote, type PadState } from './Remot
 import { shareChannel } from './tvControl'
 
 const BASE = import.meta.env.BASE_URL
-const TV_LINK = `${location.host}${BASE}?duo=tv`
+const TV_LINK = `${location.host}${BASE}?tv`
 
 function useLandscape() {
   const [land, setLand] = useState(() => window.innerWidth > window.innerHeight)
@@ -248,7 +248,7 @@ function ConnectedRemote({ room, viaLink, onUnpair }: { room: string; viaLink: b
   )
 }
 
-/** ?duo=remote: this phone is only the remote for a TV opened with ?duo=tv. */
+/** ?remote: this phone is only the remote for a TV opened with ?tv. */
 export default function DuoRemoteApp() {
   const [initial] = useState(takeRemoteRoom)
   const [room, setRoom] = useState<string | null>(initial.room)

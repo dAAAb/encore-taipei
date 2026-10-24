@@ -48,7 +48,7 @@ export async function shareChannel(n: number | null, place: string) {
   else await navigator.clipboard?.writeText(url).catch(() => {})
 }
 
-/** The on-device remote (?duo=true) reads the TV store directly. */
+/** The on-device remote (?duo) reads the TV store directly. */
 export function useLocalPadState(entry: string): PadState {
   const phase = useTv((s) => s.phase)
   const dial = useTv((s) => s.dial)

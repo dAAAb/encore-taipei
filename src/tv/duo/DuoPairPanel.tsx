@@ -60,7 +60,7 @@ function usePairCode(room: string, active: boolean, joins: number) {
   return state
 }
 
-/** ?duo=tv: the pairing card, then a small status pill once a remote is connected. */
+/** ?tv: the pairing card, then a small status pill once a remote is connected. */
 export function DuoPairPanel({ room, status, remotes, joins }: { room: string; status: LinkStatus; remotes: number; joins: number }) {
   const [open, setOpen] = useState(true)
   const [quietAt, setQuietAt] = useState(-1)

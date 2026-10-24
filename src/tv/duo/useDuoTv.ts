@@ -8,7 +8,7 @@ import { snapshot } from './tvControl'
 const REMOTE_TIMEOUT = 12000
 
 /**
- * The TV end of ?duo=tv: listens for commands from paired remotes in its room and tells them what
+ * The TV end of ?tv: listens for commands from paired remotes in its room and tells them what
  * is on screen. Commands are parsed and rate-limited before they touch anything.
  */
 export function useDuoTv(room: string | null, entry: string, onCommand: (c: Command) => void) {

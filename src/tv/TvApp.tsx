@@ -38,7 +38,7 @@ function detectWebGL() {
 
 /** How much the gate's vignette darkens the bottom of the room (measured on an iPhone screenshot). */
 const GATE_SHADE = 0.57
-/** Bottom of the full-size remote (.duo-pad), so Safari's bar continues it in ?duo=true. */
+/** Bottom of the full-size remote (.duo-pad), so Safari's bar continues it in ?duo. */
 const PAD_BOTTOM = '#121116'
 const SAMPLE_EDGE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 

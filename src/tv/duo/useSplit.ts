@@ -39,7 +39,7 @@ function findFold(h: number): { top: number; bottom: number } | null {
   return { top: hinge - 8, bottom: hinge + 8 }
 }
 
-/** ?duo=true: how tall the TV is above the remote, for a screen held upright. */
+/** ?duo: how tall the TV is above the remote, for a screen held upright. */
 export function useSplit(enabled: boolean) {
   const [vp, setVp] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
   const [ratio, setRatio] = useState<number | null>(savedRatio)
