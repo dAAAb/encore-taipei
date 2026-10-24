@@ -155,6 +155,6 @@ python3 scripts/build_font.py /tmp/NotoSansTC.ttf
 
 <div align="center">
 
-用 Cursor 與 AI 一起做的。台北，安可！
+用 Cursor 與 AI 一起做的（[製作紀錄](docs/MAKING-OF.md)：需求全文、時間軸、算力與費用估算）。台北，安可！
 
 </div>
