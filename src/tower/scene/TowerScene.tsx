@@ -3,6 +3,8 @@ import { Bloom, EffectComposer, Noise, Vignette } from '@react-three/postprocess
 import { BlendFunction } from 'postprocessing'
 import { Suspense } from 'react'
 import * as THREE from 'three'
+import type { Rgb } from '@/lib/page-edge'
+import { EdgeSampler } from '@/three/EdgeSampler'
 import type { ChatMessage } from '../chat'
 import { roofY, type Floor } from '../layout'
 import { useTower } from '../store'
@@ -20,9 +22,10 @@ interface Props {
   onPick: (f: Floor) => void
   onEntered: () => void
   onLeft: () => void
+  onEdgeColor?: (rgb: Rgb) => void
 }
 
-export function TowerScene({ floors, messages, nearRoof, lowPower, onPick, onEntered, onLeft }: Props) {
+export function TowerScene({ floors, messages, nearRoof, lowPower, onPick, onEntered, onLeft, onEdgeColor }: Props) {
   const inside = useTower((s) => s.mode === 'floor')
   return (
     <Canvas
@@ -51,6 +54,7 @@ export function TowerScene({ floors, messages, nearRoof, lowPower, onPick, onEnt
           <Noise premultiply blendFunction={BlendFunction.SCREEN} opacity={0.12} />
           <Vignette eskil={false} offset={0.3} darkness={0.7} />
         </EffectComposer>
+        {onEdgeColor && <EdgeSampler onColor={onEdgeColor} />}
       </Suspense>
     </Canvas>
   )

@@ -3,6 +3,8 @@ import { Bloom, EffectComposer, Noise, Vignette } from '@react-three/postprocess
 import { BlendFunction, type VignetteEffect } from 'postprocessing'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import type { Rgb } from '@/lib/page-edge'
+import { EdgeSampler } from '@/three/EdgeSampler'
 import { Montage } from '../montage/Montage'
 import { Narrator } from '../montage/narrator'
 import type { Era } from '../montage/segments'
@@ -199,6 +201,7 @@ export function RoomStage({
   onTvClick,
   lowPower,
   layout,
+  onEdgeColor,
 }: {
   layout: Layout
   mode: RoomMode
@@ -207,6 +210,7 @@ export function RoomStage({
   onDone: () => void
   onTvClick?: () => void
   lowPower: boolean
+  onEdgeColor?: (rgb: Rgb) => void
 }) {
   return (
     <Canvas
@@ -228,6 +232,7 @@ export function RoomStage({
           <Noise premultiply blendFunction={BlendFunction.SCREEN} opacity={0.12} />
           <VignetteDriver />
         </EffectComposer>
+        {onEdgeColor && <EdgeSampler onColor={onEdgeColor} />}
       </Suspense>
     </Canvas>
   )

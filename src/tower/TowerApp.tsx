@@ -1,6 +1,7 @@
 import { Tv, Volume2, VolumeX } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { initAnalytics, track, trackPage } from '@/lib/analytics'
+import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
 import { fetchLiveChannels, type Channel } from '@/tv/channel-data'
 import { Guide } from '@/tv/components/Guide'
 import { SubmitForm } from '@/tv/components/SubmitForm'
@@ -18,6 +19,10 @@ import { FloorView } from './ui/FloorView'
 import { HoverTag } from './ui/HoverTag'
 import { RoofChat } from './ui/RoofChat'
 
+/** How much the gate's vignette darkens the bottom of the scene, behind Safari's floating tab bar. */
+const GATE_SHADE = 0.55
+const SAMPLE_EDGE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+
 const BASE = import.meta.env.BASE_URL
 const TITLE = '台北安可大樓 ENCORE TOWER｜每一層都是一場台北安可派對'
 
@@ -34,6 +39,25 @@ const typing = (el: EventTarget | null) => el instanceof HTMLElement && (el.isCo
 
 export function TowerApp() {
   const mode = useTower((s) => s.mode)
+
+  const edge = useRef({ color: null as Rgb | null, smooth: edgeSmoother(), mode })
+  const paintEdge = useCallback(() => {
+    const e = edge.current
+    if (e.color && e.mode !== 'floor') setPageEdgeColor(rgbHex(e.color, e.mode === 'gate' ? GATE_SHADE : 1))
+    else setPageEdgeColor(null)
+  }, [])
+  const onEdgeColor = useCallback(
+    (rgb: Rgb) => {
+      edge.current.color = edge.current.smooth(rgb)
+      paintEdge()
+    },
+    [paintEdge],
+  )
+  useEffect(() => {
+    edge.current.mode = mode
+    paintEdge()
+  }, [mode, paintEdge])
+  useEffect(() => () => setPageEdgeColor(null), [])
   const target = useTower((s) => s.target)
   const dial = useTv((s) => s.dial)
   const muted = useTv((s) => s.muted)
@@ -232,7 +256,16 @@ export function TowerApp() {
 
       {webgl ? (
         <div className={`absolute inset-0 transition-opacity duration-500 ${inside ? 'opacity-0' : 'opacity-100'}`}>
-          <TowerScene floors={floors} messages={messages} nearRoof={nearRoof} lowPower={lowPower} onPick={enter} onEntered={entered} onLeft={left} />
+          <TowerScene
+            floors={floors}
+            messages={messages}
+            nearRoof={nearRoof}
+            lowPower={lowPower}
+            onPick={enter}
+            onEntered={entered}
+            onLeft={left}
+            onEdgeColor={SAMPLE_EDGE ? onEdgeColor : undefined}
+          />
         </div>
       ) : (
         <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-white">這個瀏覽器不支援 3D，請改用電腦或新版手機瀏覽器開啟。</p>

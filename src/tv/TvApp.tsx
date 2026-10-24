@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Volume2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
+import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
 import { fetchLiveChannels, type Channel } from './channel-data'
 import { ChannelScreen } from './components/ChannelScreen'
 import { DuoPairPanel } from './duo/DuoPairPanel'
@@ -34,6 +35,12 @@ function detectWebGL() {
     return false
   }
 }
+
+/** How much the gate's vignette darkens the bottom of the room (measured on an iPhone screenshot). */
+const GATE_SHADE = 0.57
+/** Bottom of the full-size remote (.duo-pad), so Safari's bar continues it in ?duo=true. */
+const PAD_BOTTOM = '#121116'
+const SAMPLE_EDGE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 
 const typing = (el: EventTarget | null) => el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
 
@@ -224,6 +231,27 @@ export function TvApp() {
   }, [])
 
   const split = useSplit(DUO_MODE === 'split' && phase === 'tv')
+
+  const edge = useRef({ room: null as Rgb | null, smooth: edgeSmoother(), phase, split: false })
+  const paintEdge = useCallback(() => {
+    const e = edge.current
+    if ((e.phase === 'gate' || e.phase === 'intro') && e.room) setPageEdgeColor(rgbHex(e.room, e.phase === 'gate' ? GATE_SHADE : 1))
+    else if (e.phase === 'tv' && e.split) setPageEdgeColor(PAD_BOTTOM)
+    else setPageEdgeColor(null)
+  }, [])
+  const onEdgeColor = useCallback(
+    (rgb: Rgb) => {
+      edge.current.room = edge.current.smooth(rgb)
+      paintEdge()
+    },
+    [paintEdge],
+  )
+  useEffect(() => {
+    edge.current.phase = phase
+    edge.current.split = split.active
+    paintEdge()
+  }, [phase, split.active, paintEdge])
+  useEffect(() => () => setPageEdgeColor(null), [])
   const padState = useLocalPadState(entry)
   const padActions: PadActions = {
     step: (d) => useTv.getState().step(d),
@@ -284,6 +312,7 @@ export function TvApp() {
             onDone={introDone}
             lowPower={lowPower}
             onTvClick={phase === 'gate' && durations ? () => powerOn(!!deepLink) : undefined}
+            onEdgeColor={SAMPLE_EDGE || DUO_MODE ? onEdgeColor : undefined}
           />
         </div>
       )}

@@ -202,6 +202,17 @@ python3 scripts/build_font.py /tmp/NotoSansTC.ttf
 Vite（多頁：電視台、第 2026 台、後台）· React 19 · TypeScript · three.js · @react-three/fiber · drei · postprocessing · zustand ·
 Tailwind CSS v4 · shadcn/ui · Supabase · resvg
 
+**iPhone Safari 底部工具列**：iOS 26 之後，Safari 的分頁列浮在畫面上，後面那塊會顯示網頁底色。滿版的 3D 畫面只畫到工具列上緣，
+所以原本會露出一條黑邊。現在後室和大樓的 3D 畫面每秒會讀幾次最底下一排像素的平均顏色（`src/three/EdgeSampler.tsx`），
+把網頁底色和 `theme-color` 設成同一個顏色（`src/lib/page-edge.ts`），工具列看起來就接著地毯或街景。
+開機畫面疊了一層暗角，所以顏色會乘上實測的壓暗係數。這個做法只改顏色、不動排版：
+- 只在觸控裝置上執行；
+- 頁面在背景時暫停；
+- 讀取失敗一次就永久停用；
+- 數值會先檢查、再平滑，避免閃爍。
+
+進到電視台、片尾或樓層裡的舞台時，會恢復原本的黑色，像電視的黑框；`?duo=true` 時則是遙控器的深灰色。
+
 ```
 src/
   tv/           電視台：狀態、轉台、遙控器、OSD、上架表單
