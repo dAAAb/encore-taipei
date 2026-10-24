@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin, ResolvedConfig } from 'vite'
@@ -203,6 +204,10 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
       const root = siteUrl ? `${siteUrl}/` : base
       const last = Math.max(FIRST_CHANNEL, ...channels.map((c) => c.channel))
       const images = new Map<number, string>()
+      // LINE and Facebook cache images by URL, and og/<n>.jpg keeps its name when a channel changes hands,
+      // so the URL carries a hash of the picture.
+      const versioned = (file: string) =>
+        `${root}og/${file}?v=${createHash('sha1').update(fs.readFileSync(path.join(ogDir, file))).digest('hex').slice(0, 10)}`
 
       // Live channels without a hand-made og/<n>.jpg get a screenshot of their stage. Only deploy builds
       // (SITE_URL set) shoot, since they can reuse last build's images from the live site.
@@ -308,7 +313,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
       fs.writeFileSync(path.join(ogDir, 'shots.json'), JSON.stringify(shots))
 
       for (const ch of channels) {
-        if (fs.existsSync(path.join(ogDir, `${ch.channel}.jpg`))) images.set(ch.channel, `${root}og/${ch.channel}.jpg`)
+        if (fs.existsSync(path.join(ogDir, `${ch.channel}.jpg`))) images.set(ch.channel, versioned(`${ch.channel}.jpg`))
         else if (ch.og_image?.startsWith('https://')) images.set(ch.channel, ch.og_image)
         else if (/^https:\/\//.test(ch.url)) {
           const own = await stageOgImage(ch.url)
@@ -321,7 +326,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         let image = images.get(n)
         if (!image) {
           card(`${n}.png`, channelCard(n, !!ch))
-          image = `${root}og/${n}.png`
+          image = versioned(`${n}.png`)
         }
         const html = setMeta(template, {
           title: ch ? `第 ${n} 台｜${ch.title}｜台北安可電視台` : `第 ${n} 台｜訊號徵求中｜台北安可電視台`,
@@ -344,7 +349,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           const html = setMeta(towerTemplate, {
             title: `${n} 樓｜${ch.title}｜台北安可大樓`,
             description: `${ch.author} 做的台北安可派對，在台北安可大樓 ${n} 樓。${ch.message ?? ''}`.slice(0, 160),
-            image: images.get(n) ?? `${root}og/${n}.png`,
+            image: images.get(n) ?? versioned(`${n}.png`),
             url: `${towerRoot}${n}/`,
           })
           fs.mkdirSync(path.join(out, 'tower', String(n)), { recursive: true })

@@ -77,7 +77,7 @@ function useShareCard(ch: AdminChannel, nonce: number): ShareCard | null {
         const doc = new DOMParser().parseFromString(html, 'text/html')
         const meta = (p: string) => doc.querySelector(`meta[property="og:${p}"]`)?.getAttribute('content') ?? ''
         const image = meta('image')
-        if (alive) setCard({ image: image ? `${image}${image.includes('?') ? '&' : '?'}v=${nonce}` : null, fresh: meta('title').includes(ch.title) })
+        if (alive) setCard({ image: image ? `${image}${image.includes('?') ? '&' : '?'}t=${nonce}` : null, fresh: meta('title').includes(ch.title) })
       })
       .catch(() => alive && setCard(null))
     return () => {
@@ -368,6 +368,86 @@ function RebuildSetup({
   )
 }
 
+/** Smallest free channel number, treating `ignore` as free (it is about to be vacated). */
+function firstFree(rows: AdminChannel[], ignore: string[], skip: number[]) {
+  const used = new Set(rows.filter((r) => r.channel != null && !ignore.includes(r.id)).map((r) => r.channel!))
+  for (const n of skip) used.add(n)
+  let n = 2026
+  while (used.has(n)) n++
+  return n
+}
+
+/** Shown when the new number is already used: decide where the current occupant goes before anything changes. */
+function MoveConflict({
+  rows,
+  mover,
+  to,
+  busy,
+  onMove,
+  onCancel,
+}: {
+  rows: AdminChannel[]
+  mover: AdminChannel
+  to: number
+  busy: boolean
+  onMove: (occupantTo: number) => void
+  onCancel: () => void
+}) {
+  const occupant = rows.find((r) => r.channel === to && r.id !== mover.id)
+  const gap = firstFree(rows, [mover.id, occupant?.id ?? ''], [to, ...(mover.channel != null ? [mover.channel] : [])])
+  const [custom, setCustom] = useState('')
+  if (!occupant) return null
+  const n = Number(custom)
+  const takenBy = rows.find((r) => r.channel === n && r.id !== mover.id && r.id !== occupant.id)
+  const customError = !custom ? null : !Number.isInteger(n) || n < 2026 ? '台號要是 2026 以上的整數' : n === to ? `第 ${to} 台要給「${mover.title}」` : takenBy ? `第 ${n} 台已經是「${takenBy.title}」` : null
+
+  const Choice = ({ target, label }: { target: number; label: string }) => (
+    <button type="button" disabled={busy} onClick={() => onMove(target)} className="steam-btn steam-btn--plain flex w-full flex-col items-start gap-0.5 text-left">
+      <span className="font-black text-white">{label}</span>
+      <span className="text-xs font-normal text-[#8fa3b5]">
+        第 {to} 台 → {mover.title}；第 {target} 台 → {occupant.title}
+      </span>
+    </button>
+  )
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onCancel()}>
+      <DialogContent className="border border-white/10 bg-[#18212c] text-[#c7d5e0] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black text-white">第 {to} 台已經有內容了</DialogTitle>
+          <DialogDescription className="text-[#8fa3b5]">
+            現在是 {occupant.author} 的「{occupant.title}」（{STATUS[occupant.status].label}
+            {occupant.status === 'hidden' ? '，但仍佔著台號' : ''}）。要把它改到哪一台？
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          {mover.channel != null && <Choice target={mover.channel} label={`互換：原內容改到第 ${mover.channel} 台`} />}
+          {gap !== mover.channel && <Choice target={gap} label={`原內容改到空的第 ${gap} 台`} />}
+          <form
+            className="flex items-start gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (custom && !customError) onMove(n)
+            }}
+          >
+            <label className="flex-1 text-xs font-bold">
+              或指定台號
+              <input value={custom} onChange={(e) => setCustom(e.target.value)} type="number" min={2026} className="steam-input mt-1 w-full font-mono" />
+              {customError && <span className="mt-1 block font-normal text-[#ff8a99]">{customError}</span>}
+            </label>
+            <button type="submit" disabled={busy || !custom || !!customError} className="steam-btn steam-btn--plain mt-5">
+              改過去
+            </button>
+          </form>
+        </div>
+        <button type="button" onClick={onCancel} className="steam-btn steam-btn--plain w-full">
+          取消，不改台號
+        </button>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function AdminApp() {
   const [key, setKey] = useState<string | null>(readKey)
   const [rows, setRows] = useState<AdminChannel[] | null>(null)
@@ -454,6 +534,27 @@ export function AdminApp() {
       rebuild(true)
     } catch (e) {
       setError(e instanceof RpcError && /duplicate|unique/i.test(e.message) ? '這個台號已經有人用了。' : `更新失敗：${(e as Error).message}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const [conflict, setConflict] = useState<{ id: string; to: number } | null>(null)
+
+  const move = async (id: string, to: number, occupantTo: number | null = null) => {
+    if (!key || !rows) return
+    if (occupantTo == null && rows.some((r) => r.channel === to && r.id !== id)) return setConflict({ id, to })
+    setBusy(true)
+    try {
+      const changed = await rpc<AdminChannel[]>('encore_admin_move', { p_key: key, p_id: id, p_channel: to, p_occupant_to: occupantTo })
+      setRows((rs) => (rs ?? []).map((r) => changed.find((c) => c.id === r.id) ?? r))
+      setConflict(null)
+      rebuild(true)
+    } catch (e) {
+      if (e instanceof RpcError && e.message === 'channel_taken') {
+        await load(key)
+        setConflict({ id, to })
+      } else setError(e instanceof RpcError && e.message === 'occupant_channel_taken' ? '要移過去的台號剛被別的頻道用掉了，請重新整理後再試。' : `改台號失敗：${(e as Error).message}`)
     } finally {
       setBusy(false)
     }
@@ -581,6 +682,17 @@ export function AdminApp() {
         </div>
       </main>
 
+      {conflict && rows && rows.find((r) => r.id === conflict.id) && (
+        <MoveConflict
+          rows={rows}
+          mover={rows.find((r) => r.id === conflict.id)!}
+          to={conflict.to}
+          busy={busy}
+          onMove={(occupantTo) => move(conflict.id, conflict.to, occupantTo)}
+          onCancel={() => setConflict(null)}
+        />
+      )}
+
       <RebuildSetup open={setupOpen} onOpenChange={setSetupOpen} adminKey={key} configuredAt={tokenAt ?? null} onSaved={setTokenAt} />
 
       <Dialog open={!!current} onOpenChange={(o) => !o && setOpenId(null)}>
@@ -633,7 +745,7 @@ export function AdminApp() {
                   onSubmit={(e) => {
                     e.preventDefault()
                     const n = Number(new FormData(e.currentTarget).get('channel'))
-                    if (Number.isInteger(n) && n >= 2026) update(current.id, { p_channel: n })
+                    if (Number.isInteger(n) && n >= 2026 && n !== current.channel) move(current.id, n)
                   }}
                 >
                   <label className="flex-1 text-xs font-bold">
