@@ -73,8 +73,36 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
 
   const body = useRef<HTMLDivElement>(null)
   const end = useRef(onEnd)
-  const started = useRef(0)
-  end.current = onEnd
+  /** How far the roll has travelled, in px. It runs on its own and the viewer can drag, fling or wheel it. */
+  const pos = useRef(0)
+  const fling = useRef(0)
+  const drag = useRef<{ id: number; y: number; t: number; v: number } | null>(null)
+  const [hint, setHint] = useState(true)
+  useEffect(() => {
+    end.current = onEnd
+  })
+
+  const nudge = (px: number) => {
+    if (Number.isFinite(px)) pos.current += Math.max(-4000, Math.min(4000, px))
+    fling.current = 0
+    setHint(false)
+  }
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setHint(false), 4500)
+    const onKey = (e: KeyboardEvent) => {
+      const step = window.innerHeight * 0.4
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') nudge(step)
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp') nudge(-step)
+      else return
+      e.preventDefault()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.clearTimeout(t)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [])
 
   // Each line moves and fades on its own: Safari drops parts of one tall transformed layer under a mask.
   useEffect(() => {
@@ -82,12 +110,22 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
     const lines = [...root.querySelectorAll<HTMLElement>('[data-line]')]
     let raf = 0
     let done = false
+    let last = 0
     const tick = (now: number) => {
-      if (!started.current) started.current = now
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0
+      last = now
       const vh = window.innerHeight
       const total = root.scrollHeight
-      const k = Math.min(1, (now - started.current) / 1000 / duration)
-      const offset = vh - k * (vh + total)
+      const travel = vh + total
+      if (!drag.current) {
+        pos.current += (travel / duration + fling.current) * dt
+        fling.current *= Math.pow(0.05, dt)
+        if (Math.abs(fling.current) < 4) fling.current = 0
+      }
+      if (!Number.isFinite(pos.current)) pos.current = 0
+      pos.current = Math.max(0, Math.min(travel, pos.current))
+      const k = pos.current / travel
+      const offset = vh - pos.current
       for (const el of lines) {
         const y = el.offsetTop + offset
         const h = el.offsetHeight
@@ -113,7 +151,40 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
   }, [duration, blocks])
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
+    <div
+      className="fixed inset-0 z-40 cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing"
+      onWheel={(e) => nudge(e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1))}
+      onPointerDown={(e) => {
+        if (drag.current) return
+        e.currentTarget.setPointerCapture(e.pointerId)
+        drag.current = { id: e.pointerId, y: e.clientY, t: performance.now(), v: 0 }
+        fling.current = 0
+        setHint(false)
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current
+        if (!d || d.id !== e.pointerId) return
+        const now = performance.now()
+        const dy = e.clientY - d.y
+        pos.current -= dy
+        const dt = Math.max(1, now - d.t) / 1000
+        d.v = d.v * 0.6 + (-dy / dt) * 0.4
+        d.y = e.clientY
+        d.t = now
+      }}
+      onPointerUp={(e) => {
+        const d = drag.current
+        if (!d || d.id !== e.pointerId) return
+        drag.current = null
+        fling.current = performance.now() - d.t < 120 ? Math.max(-4000, Math.min(4000, d.v)) : 0
+      }}
+      onPointerCancel={() => (drag.current = null)}
+    >
+      <p
+        className={`tv-caption pointer-events-none fixed inset-x-0 top-[max(1rem,env(safe-area-inset-top))] text-center text-xs tracking-[0.3em] text-white/60 transition-opacity duration-1000 ${hint ? 'opacity-100' : 'opacity-0'}`}
+      >
+        ↕ 可以上下滑動
+      </p>
       <div ref={body} className="relative mx-auto w-[min(92vw,640px)] pb-[40vh] text-center">
         {blocks.map((b, i) =>
           'big' in b ? (

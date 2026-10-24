@@ -211,12 +211,26 @@ export function TvApp() {
     window.setTimeout(() => setFading(false), 900)
   }, [setPhase])
 
+  // Through the slit the show carries straight on: back in the room, the set switches itself on.
+  const [resuming, setResuming] = useState(false)
+  const powerOnRef = useRef(powerOn)
+  useEffect(() => {
+    powerOnRef.current = powerOn
+  })
+  const resumeTimer = useRef(0)
+  useEffect(() => () => window.clearTimeout(resumeTimer.current), [])
   const backFromSpace = useCallback(() => {
     useTv.setState({ deepLink: null })
     setLayout((l) => pickLayout(l.id))
     setQuick(false)
     setArriving((n) => n + 1)
+    setResuming(true)
     setPhase('gate')
+    window.clearTimeout(resumeTimer.current)
+    resumeTimer.current = window.setTimeout(() => {
+      setResuming(false)
+      if (useTv.getState().phase === 'gate') void powerOnRef.current(false)
+    }, 1500)
   }, [setPhase])
 
   const roomVisible = phase === 'gate' || phase === 'intro' || fading
@@ -341,7 +355,7 @@ export function TvApp() {
         </Suspense>
       )}
 
-      {phase === 'gate' && (
+      {phase === 'gate' && !resuming && (
         <div className="fixed inset-0 z-30 flex flex-col items-center justify-end bg-[radial-gradient(ellipse_at_50%_35%,transparent_30%,rgba(0,0,0,0.65))] p-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-center">
           <p className="tv-caption text-xs font-black tracking-[0.5em] text-[#ffd400]/90">ENCORE.TAIPEI</p>
           <h2 className="tv-caption mt-2 text-[34px] leading-none font-black tracking-[0.08em] text-[#fff4d6] sm:text-[52px]">台北安可電視台</h2>

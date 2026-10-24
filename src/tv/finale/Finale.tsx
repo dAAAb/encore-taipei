@@ -73,8 +73,10 @@ export default function Finale({ onDone, lowPower }: { onDone: () => void; lowPo
     }
   }
 
+  const gone = useRef(false)
   const through = () => {
-    if (stage !== 'slit') return
+    if (stage !== 'slit' || gone.current) return
+    gone.current = true
     setStage('through')
     sfx.whoosh(1.1, true, 0.8)
     sfx.ting()
