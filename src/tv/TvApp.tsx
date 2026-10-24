@@ -1,7 +1,16 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Volume2 } from 'lucide-react'
+import { track } from '@/lib/analytics'
 import { fetchLiveChannels, type Channel } from './channel-data'
 import { ChannelScreen } from './components/ChannelScreen'
+import { DuoPairPanel } from './duo/DuoPairPanel'
+import { useWakeLock } from './duo/link'
+import { DUO_MODE, tvRoom } from './duo/mode'
+import type { Command } from './duo/protocol'
+import { RemotePad, type PadActions } from './duo/RemotePad'
+import { colorKey, shareChannel, stageCommand, toLastSlot, useLocalPadState } from './duo/tvControl'
+import { useDuoTv } from './duo/useDuoTv'
+import { useSplit } from './duo/useSplit'
 import { Guide } from './components/Guide'
 import { InfoSheet } from './components/InfoSheet'
 import { Osd } from './components/Osd'
@@ -162,7 +171,8 @@ export function TvApp() {
   }, [phase, digit])
 
   const powerOn = async (fast: boolean) => {
-    await sfx.unlock()
+    // A paired remote can switch the TV on without a tap here; Safari then never resumes audio, so do not wait on it.
+    await Promise.race([sfx.unlock(), new Promise((r) => window.setTimeout(r, 400))])
     sfx.powerOn()
     const s = useTv.getState()
     if (s.deepLink) s.tuneNumber(s.deepLink)
@@ -188,15 +198,76 @@ export function TvApp() {
   const roomVisible = phase === 'gate' || phase === 'intro' || fading
   const roomMode = phase === 'gate' ? 'gate' : 'intro'
 
+  const [duoRoom] = useState(() => (DUO_MODE === 'tv' ? tvRoom() : null))
+  const applyCommand = (c: Command) => {
+    const s = useTv.getState()
+    if (c.k === 'power') {
+      if (s.phase === 'gate' && durations) powerOn(true)
+      else if (s.phase === 'intro') introDone()
+      else if (s.phase === 'tv') powerOff()
+      return
+    }
+    if (s.phase !== 'tv') return
+    if (c.k === 'step') s.step(c.d)
+    else if (c.k === 'tune') s.tuneNumber(c.n)
+    else if (c.k === 'digit') digit(c.d)
+    else if (c.k === 'vol') s.setVolume(s.volume + c.d)
+    else if (c.k === 'mute') s.toggleMute()
+    else if (c.k === 'info') s.setInfoOpen(!s.infoOpen)
+    else if (c.k === 'color') colorKey(c.c)
+    else if (c.k === 'stage') stageCommand(c)
+  }
+  const duo = useDuoTv(duoRoom, entry, applyCommand)
+  useWakeLock(DUO_MODE === 'tv' || DUO_MODE === 'split')
+  useEffect(() => {
+    if (DUO_MODE) track('duo_open', { mode: DUO_MODE })
+  }, [])
+
+  const split = useSplit(DUO_MODE === 'split' && phase === 'tv')
+  const padState = useLocalPadState(entry)
+  const padActions: PadActions = {
+    step: (d) => useTv.getState().step(d),
+    tune: (n) => useTv.getState().tuneNumber(n),
+    digit,
+    vol: (d) => useTv.getState().setVolume(useTv.getState().volume + d),
+    mute: () => useTv.getState().toggleMute(),
+    info: () => useTv.getState().setInfoOpen(!useTv.getState().infoOpen),
+    upload: toLastSlot,
+    color: colorKey,
+    stage: stageCommand,
+    power: powerOff,
+    share: () => void shareChannel(padState.n, 'duo_split'),
+  }
+
   return (
     <main className="relative h-full w-full overflow-hidden bg-black">
       <h1 className="sr-only">台北安可電視台 ENCORE.TAIPEI：轉台看每個人做的台北安可舞台</h1>
 
       {phase === 'tv' && (
         <>
-          <ChannelScreen />
-          <Osd />
-          <Remote onPowerOff={powerOff} entry={entry} onDigit={digit} />
+          <div className="fixed inset-x-0 top-0" style={split.active ? { height: split.tv } : { bottom: 0 }}>
+            <ChannelScreen />
+            <Osd />
+          </div>
+          {split.active ? (
+            <>
+              <div
+                className="duo-gutter fixed inset-x-0 z-10 cursor-row-resize"
+                style={{ top: split.tv, height: split.gutter }}
+                onPointerDown={split.onGutterDown}
+                onDoubleClick={split.reset}
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="拖曳調整電視和遙控器的大小，點兩下恢復"
+              />
+              <div className="fixed inset-x-0 bottom-0 z-10" style={{ top: split.tv + split.gutter }}>
+                <RemotePad state={padState} actions={padActions} insetTop={false} />
+              </div>
+            </>
+          ) : (
+            DUO_MODE !== 'tv' && <Remote onPowerOff={powerOff} entry={entry} onDigit={digit} />
+          )}
+          {duoRoom && <DuoPairPanel room={duoRoom} status={duo.status} remotes={duo.remotes} joins={duo.joins} />}
           <InfoSheet />
           <SubmitForm />
           <Guide />
@@ -251,6 +322,9 @@ export function TvApp() {
           <a href={`${BASE}tower/`} className="tv-caption mt-3 text-sm font-bold text-[#ffd400]/90 underline underline-offset-4 hover:text-[#ffd400]">
             新玩法：搭無人機逛「台北安可大樓」→
           </a>
+          {DUO_MODE === 'tv' && (
+            <p className="tv-caption mt-3 max-w-sm text-sm font-bold text-[#b6ffb0]">電視模式：打開後，用另一支手機掃畫面上的 QR code 當遙控器。</p>
+          )}
           <p className="tv-caption mt-4 text-xs text-white/55">iPhone 請關掉靜音模式 · 鍵盤 ← → 轉台</p>
           <p className="tv-caption mt-2 text-[11px] text-white/45">
             粉絲創作之互動藝術作品，非蔣萬安競選團隊官方網站 ·{' '}

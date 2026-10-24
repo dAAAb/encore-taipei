@@ -118,6 +118,53 @@ body,
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
+/* Duo: the full-size remote and the pairing card */
+.duo-pad {
+  background:
+    radial-gradient(120% 50% at 30% 0%, rgba(255, 255, 255, 0.1), transparent 60%),
+    linear-gradient(180deg, #2e2d35 0%, #1b1a20 55%, #121116 100%);
+  -webkit-tap-highlight-color: transparent;
+}
+.duo-key[data-on] {
+  color: #0c0812;
+  background: linear-gradient(180deg, #ffe14d, #e0b800);
+}
+.duo-led {
+  background: #ff3b4a;
+  box-shadow: 0 0 8px #ff3b4a;
+}
+.duo-strip {
+  scrollbar-width: none;
+}
+.duo-strip::-webkit-scrollbar {
+  display: none;
+}
+.duo-thumb {
+  border: 2px solid #0c0812;
+  -webkit-touch-callout: none;
+}
+.duo-thumb--on {
+  border-color: #2ef2ff;
+  box-shadow:
+    0 0 0 2px #2ef2ff,
+    0 0 14px rgba(46, 242, 255, 0.6);
+}
+.duo-gutter {
+  background: linear-gradient(180deg, #050407, #0b0a0e);
+  touch-action: none;
+}
+.duo-gutter::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 4px;
+  margin: -2px 0 0 -22px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* Intro / finale overlays */
 .tv-caption {
   font-family: 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;

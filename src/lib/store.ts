@@ -23,6 +23,8 @@ interface ClubState {
   /** Backup dancers beside the mayor; the seed reshuffles who goes up and in what order. */
   troupeMode: TroupeMode
   troupeSeed: number
+  /** The TV's remote carries the scene buttons (Duo layouts), so the on-screen ones step aside. */
+  remoteControls: boolean
   start: () => void
   setMusicMode: (m: MusicMode) => void
   setWantMusic: (m: MusicMode) => void
@@ -34,6 +36,7 @@ interface ClubState {
   bumpHype: (amount: number) => void
   nextTroupe: () => void
   setTroupe: (mode: TroupeMode) => void
+  setRemoteControls: (v: boolean) => void
 }
 
 const TROUPE_CYCLE: TroupeMode[] = ['animals', 'citizens', 'mix']
@@ -52,6 +55,7 @@ export const useClub = create<ClubState>((set) => ({
   hype: 0,
   troupeMode: troupeParam && [...TROUPE_CYCLE, 'solo'].includes(troupeParam) ? troupeParam : 'solo',
   troupeSeed: troupeParam ? 1 + Math.floor(Math.random() * 10000) : 1,
+  remoteControls: false,
   start: () => set({ started: true }),
   setMusicMode: (musicMode) => set({ musicMode }),
   setWantMusic: (wantMusic) => set({ wantMusic }),
@@ -71,6 +75,7 @@ export const useClub = create<ClubState>((set) => ({
       return { troupeMode: TROUPE_CYCLE[(i + 1) % TROUPE_CYCLE.length], troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) }
     }),
   setTroupe: (troupeMode) => set((s) => ({ troupeMode, troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) })),
+  setRemoteControls: (remoteControls) => set({ remoteControls }),
 }))
 
 /** Per-frame excitement level, read imperatively by the scene (no React re-render). */

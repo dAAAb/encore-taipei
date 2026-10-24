@@ -5,6 +5,7 @@ import { Hud } from '@/components/Hud'
 import { StartGate } from '@/components/StartGate'
 import { useClub } from '@/lib/store'
 import { ClubScene } from '@/scene/ClubScene'
+import { parseStageCommand } from '@/tv/duo/protocol'
 
 /** Running as channel 2026 inside the Encore TV hub. */
 const embedded = window.self !== window.top
@@ -52,18 +53,42 @@ export default function App() {
     enter()
     const retry = () => applyMusic(useClub.getState().wantMusic).then(setMode)
     window.addEventListener('pointerdown', retry, { once: true })
+    const report = () => {
+      const s = useClub.getState()
+      window.parent.postMessage({ type: 'encore:stage-state', view: s.view, music: s.musicMode, troupe: s.troupeMode, ytFailed: s.youtubeFailed }, '*')
+    }
     const onMessage = (e: MessageEvent) => {
-      const d = e.data as { type?: string; volume?: number; muted?: boolean; color?: string } | null
+      if (e.source !== window.parent) return
+      const d = e.data as { type?: string; volume?: number; muted?: boolean; color?: string; remote?: boolean } | null
       if (d?.type === 'encore:volume') setExternalVolume(d.volume ?? 1, !!d.muted)
       if (d?.type === 'encore:color' && d.color === 'green') useClub.getState().nextTroupe()
       if (d?.type === 'encore:color' && d.color === 'red') useClub.getState().setTroupe('solo')
+      if (d?.type === 'encore:chrome') useClub.getState().setRemoteControls(d.remote === true)
+      if (d?.type === 'encore:hello') report()
+      if (d?.type === 'encore:stage') {
+        const cmd = parseStageCommand(d)
+        const club = useClub.getState()
+        if (cmd?.a === 'view') club.setView(cmd.v)
+        else if (cmd?.a === 'troupe') {
+          if (cmd.v === 'next') club.nextTroupe()
+          else club.setTroupe('solo')
+        } else if (cmd?.a === 'music') {
+          club.setWantMusic(cmd.v)
+          applyMusic(cmd.v).then(setMode)
+        }
+      }
     }
     const onKey = (e: KeyboardEvent) => {
       if (REMOTE_KEYS.has(e.key) || /^[0-9]$/.test(e.key)) window.parent.postMessage({ type: 'encore:key', key: e.key }, '*')
     }
+    const unsub = useClub.subscribe((s, prev) => {
+      if (s.view !== prev.view || s.musicMode !== prev.musicMode || s.troupeMode !== prev.troupeMode || s.youtubeFailed !== prev.youtubeFailed) report()
+    })
     window.addEventListener('message', onMessage)
     window.addEventListener('keydown', onKey)
+    report()
     return () => {
+      unsub()
       window.removeEventListener('pointerdown', retry)
       window.removeEventListener('message', onMessage)
       window.removeEventListener('keydown', onKey)

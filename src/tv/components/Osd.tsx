@@ -21,7 +21,7 @@ export function Osd() {
   const author = slot.kind === 'empty' ? '這一台還空著' : slot.channel.author
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-30 select-none" aria-live="polite">
+    <div className="pointer-events-none absolute inset-0 z-30 select-none" aria-live="polite">
       <div
         className={`osd-fade absolute top-[max(1rem,env(safe-area-inset-top))] right-4 text-right sm:top-6 sm:right-8 ${visible && kind === 'channel' ? 'opacity-100' : 'opacity-0'}`}
       >

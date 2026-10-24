@@ -121,6 +121,7 @@ export function Hud() {
   const troupe = useClub((s) => s.troupeMode)
   const nextTroupe = useClub((s) => s.nextTroupe)
   const setTroupe = useClub((s) => s.setTroupe)
+  const remoteControls = useClub((s) => s.remoteControls)
 
   const pickMusic = async (m: MusicMode) => {
     setWant(m)
@@ -146,7 +147,10 @@ export function Hud() {
             </p>
           </header>
 
-          <nav className="fixed top-3 right-3 z-20 flex max-w-[calc(100vw-150px)] flex-col items-end gap-2 sm:max-w-[calc(100vw-120px)]" aria-label="場景控制">
+          <nav
+            className={`fixed top-3 right-3 z-20 flex max-w-[calc(100vw-150px)] flex-col items-end gap-2 sm:max-w-[calc(100vw-120px)] ${remoteControls ? 'hidden' : ''}`}
+            aria-label="場景控制"
+          >
             <div className="flex flex-wrap justify-end gap-1.5">
               {MUSIC.map(({ id, label, icon: Icon }) => (
                 <button

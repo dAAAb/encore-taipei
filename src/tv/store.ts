@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { FALLBACK_CHANNELS, FIRST_CHANNEL, type Channel } from './channel-data'
+import type { StageState } from './duo/protocol'
 
 /**
  * gate   dark room, TV off, waiting for the first tap (audio needs a gesture)
@@ -61,6 +62,8 @@ interface TvState {
   guideOpen: boolean
   /** The channel the visitor deep-linked to; the intro is shortened for them. */
   deepLink: number | null
+  /** Camera, music and dancers of the built-in stage on screen, as it reports them; null for other stages. */
+  stage: StageState | null
   setPhase: (p: Phase) => void
   setChannels: (c: Channel[]) => void
   setPending: (p: PendingStage | null) => void
@@ -92,6 +95,7 @@ export const useTv = create<TvState>((set, get) => ({
   submitOpen: false,
   guideOpen: false,
   deepLink: null,
+  stage: null,
   setPhase: (phase) => set({ phase }),
   setChannels: (channels) => {
     const s = get()

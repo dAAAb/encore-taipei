@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { DUO_MODE } from '../duo/mode'
+import { parseStageCommand, parseStageState } from '../duo/protocol'
 import { stageUrl } from '../routing'
 import { sfx } from '../sfx'
 import { useTv, type Slot } from '../store'
@@ -11,7 +13,10 @@ const ALLOW = 'autoplay; fullscreen; clipboard-write; encrypted-media; gyroscope
 
 const slotKey = (s: Slot | undefined) => (s ? `${s.kind}:${s.number}:${s.kind === 'empty' ? '' : s.channel.url}` : '')
 
-/** What the TV is showing: a creator's stage in an iframe, or the empty "signal wanted" slot. */
+/** In the Duo layouts the remote carries the stage's own buttons, so built-in stages hide theirs. */
+const REMOTE_HAS_STAGE_CONTROLS = DUO_MODE === 'split' || DUO_MODE === 'tv'
+
+/** What the TV is showing: a creator's stage in an iframe, or the empty "signal wanted" slot. Fills its parent. */
 export function ChannelScreen() {
   const slot = useTv((s) => s.dial[s.index])
   const volume = useTv((s) => s.volume)
@@ -43,17 +48,45 @@ export function ChannelScreen() {
 
   useEffect(() => {
     const forward = (e: Event) => frame.current?.contentWindow?.postMessage({ type: 'encore:color', color: (e as CustomEvent<string>).detail }, '*')
+    const forwardStage = (e: Event) => {
+      const cmd = parseStageCommand((e as CustomEvent<unknown>).detail)
+      if (cmd) frame.current?.contentWindow?.postMessage({ type: 'encore:stage', ...cmd }, '*')
+    }
+    // Only the stage on screen may report its state; anything else posting messages is ignored.
+    const onMessage = (e: MessageEvent) => {
+      if (!frame.current || e.source !== frame.current.contentWindow) return
+      const d = e.data as { type?: string } | null
+      if (d?.type !== 'encore:stage-state') return
+      const stage = parseStageState(d)
+      if (!stage) return
+      useTv.setState({ stage })
+      // The stage may have missed the message sent at iframe load (its listener attaches later), so answer here too.
+      frame.current.contentWindow?.postMessage({ type: 'encore:chrome', remote: REMOTE_HAS_STAGE_CONTROLS }, '*')
+    }
     window.addEventListener('encore:color', forward)
-    return () => window.removeEventListener('encore:color', forward)
+    window.addEventListener('encore:stage', forwardStage)
+    window.addEventListener('message', onMessage)
+    return () => {
+      window.removeEventListener('encore:color', forward)
+      window.removeEventListener('encore:stage', forwardStage)
+      window.removeEventListener('message', onMessage)
+    }
   }, [])
 
+  useEffect(() => {
+    useTv.setState({ stage: null })
+  }, [shown])
+
   const onLoad = () => {
-    frame.current?.contentWindow?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
+    const win = frame.current?.contentWindow
+    win?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
+    win?.postMessage({ type: 'encore:chrome', remote: REMOTE_HAS_STAGE_CONTROLS }, '*')
+    win?.postMessage({ type: 'encore:hello' }, '*')
     window.setTimeout(() => setSnow(false), 180)
   }
 
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="absolute inset-0 bg-black">
       {shown && shown.kind !== 'empty' && (
         <iframe
           key={slotKey(shown)}
