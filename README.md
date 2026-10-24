@@ -83,8 +83,12 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 後台設定好「自動重建」（一把只有 Actions: Read and write、只限這個 repo 的 GitHub fine-grained token，
 存在 `encore_settings`，只有 Edge Function `encore-rebuild` 讀得到）後，上架或改台號會立刻觸發 GitHub Actions，
 約 3～5 分鐘更新。另外每 10 分鐘的排程也會比對已上架頻道、有變動才重建，但 GitHub 排程常延遲，只當備援。
-分享圖的來源依序是：`public/og/<台號>.jpg` 手工圖 → 用無頭 Chrome 截下舞台畫面，加上台號和「台北安可電視台」標籤
-（截圖會沿用上一版，網址或名稱改了、或滿 7 天才重拍，紀錄在 `og/shots.json`）→ 舞台網站自己的 og:image → 文字卡。
+分享圖的來源依序是：
+1. 內建舞台的手工圖（`public/og/stage-club.jpg`、`stage-troupe.jpg`，依舞台網址對應，改台號也不會錯）。
+2. 用無頭 Chrome 直接開啟舞台網站截圖（不放在 iframe 裡，所以只允許 encore.taipei 嵌入的網站也拍得到），加上台號和「台北安可電視台」標籤。
+   截圖會沿用上一版，網址或名稱改了、或滿 7 天才重拍，紀錄在 `og/shots.json`。
+3. 截圖打不開或幾乎是一片純色（錯誤頁、空白頁）時，改用舞台網站自己的 og:image → 投稿時存下的 og:image → 作者 GitHub repo 的預覽圖，一樣加上台號和標籤。
+4. 都沒有就用文字卡。
 本機建置預設不截圖，要測試可加 `ENCORE_OG_SHOTS=1`。
 電視台首頁的分享圖是 `public/og/tv.jpg`，由 `scripts/og/tv-card.html` 用無頭 Chrome 截成 1200×630。
 

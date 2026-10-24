@@ -9,11 +9,17 @@ const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.m
 
 /** Screenshots are reused from the live site until the stage's URL or title changes, or they get this old. */
 const SHOT_MAX_AGE_DAYS = 7
+/** Bump to re-shoot every channel once (e.g. after changing how shots are taken). */
+const SHOT_VERSION = 2
+/** Hand-made share images for the built-in stages, keyed by stage URL so renumbering channels can't mix them up. */
+const HANDMADE: Record<string, string> = { 'club/': 'stage-club.jpg', 'club/?troupe=animals': 'stage-troupe.jpg' }
 const CHROME_PATHS = ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/local/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser']
 
 interface ShotEntry {
   key: string
   at: string
+  /** `stage`: a screenshot of the stage itself; `preview`: its own og:image or GitHub preview, because the shot came out blank. */
+  from?: 'stage' | 'preview'
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -73,13 +79,13 @@ function channelCard(n: number, live: boolean) {
   return frame(body, live ? '#16306b' : '#101010')
 }
 
-/** The stage in a 1200×630 frame with the TV's channel number and a station tag, like a still from the broadcast. */
-function shotPage(stage: string, n: number, title: string) {
+/** A still of the stage (or its preview image) in a 1200×630 frame with the TV's channel number and a station tag. */
+function shotPage(src: string, n: number, title: string) {
   return `<!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=block">
 <style>
-  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: 'Noto Sans TC', sans-serif; }
-  iframe { position: absolute; inset: 0; width: 1200px; height: 630px; border: 0; }
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: 'Noto Sans TC', 'Noto Sans CJK TC', sans-serif; }
+  img { position: absolute; inset: 0; width: 1200px; height: 630px; object-fit: cover; }
   .osd { position: absolute; top: 20px; right: 30px; font: 900 66px/1 ui-monospace, 'DejaVu Sans Mono', monospace; color: #b6ffb0;
     text-shadow: 0 0 14px rgba(90, 255, 130, 0.75), 3px 3px 0 #000; letter-spacing: 2px; }
   .tag { position: absolute; left: 24px; bottom: 22px; max-width: 1060px; display: flex; gap: 12px; align-items: center; padding: 9px 18px;
@@ -87,10 +93,61 @@ function shotPage(stage: string, n: number, title: string) {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 4px 4px 0 #0c0812; }
   .tag b { color: #ffd400; }
 </style></head><body>
-<iframe src="${esc(stage)}" allow="autoplay; fullscreen"></iframe>
+<img src="${esc(src)}" alt="">
 <div class="osd">${n}</div>
 <div class="tag"><b>台北安可電視台</b><span>第 ${n} 台・${esc(title)}</span></div>
 </body></html>`
+}
+
+/**
+ * `blank` when the still is (nearly) one flat colour: an error page, a site that refused to load, or a stage still black.
+ */
+const INSPECT_STILL = `(async () => {
+  const img = document.querySelector('img')
+  try {
+    await img.decode()
+  } catch {
+    return 'error'
+  }
+  const c = document.createElement('canvas')
+  c.width = 60
+  c.height = 32
+  const g = c.getContext('2d')
+  g.drawImage(img, 0, 0, c.width, c.height)
+  let d
+  try {
+    d = g.getImageData(0, 0, c.width, c.height).data
+  } catch {
+    return 'ok'
+  }
+  let sum = 0
+  let sq = 0
+  for (let i = 0; i < d.length; i += 4) {
+    const l = 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]
+    sum += l
+    sq += l * l
+  }
+  const n = d.length / 4
+  const mean = sum / n
+  return Math.sqrt(Math.max(0, sq / n - mean * mean)) < 6 ? 'blank' : 'ok'
+})()`
+
+/** Download a preview image so the still check can measure it (canvases can't read cross-origin pixels). */
+async function asDataUrl(url: string) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { 'user-agent': 'encore.taipei share-image builder' } })
+    const type = res.headers.get('content-type') ?? ''
+    if (!res.ok || !type.startsWith('image/')) return null
+    return `data:${type.split(';')[0]};base64,${Buffer.from(await res.arrayBuffer()).toString('base64')}`
+  } catch {
+    return null
+  }
+}
+
+/** GitHub's social preview for a repo link like https://github.com/owner/repo. */
+function githubPreview(url: string | null) {
+  const m = url?.match(/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?(?:[#?].*)?$/)
+  return m ? `https://opengraph.githubassets.com/1/${m[1]}/${m[2]}` : null
 }
 
 async function stageOgImage(stage: string) {
@@ -149,7 +206,14 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
 
       // Live channels without a hand-made og/<n>.jpg get a screenshot of their stage. Only deploy builds
       // (SITE_URL set) shoot, since they can reuse last build's images from the live site.
-      const handmade = new Set(channels.filter((c) => fs.existsSync(path.join(ogDir, `${c.channel}.jpg`))).map((c) => c.channel))
+      const handmade = new Set<number>()
+      for (const ch of channels) {
+        const file = HANDMADE[ch.url] && path.join(ogDir, HANDMADE[ch.url])
+        if (file && fs.existsSync(file)) {
+          fs.copyFileSync(file, path.join(ogDir, `${ch.channel}.jpg`))
+          handmade.add(ch.channel)
+        }
+      }
       const shots: Record<string, ShotEntry> = {}
       const chrome = process.env.CHROME_PATH ?? CHROME_PATHS.find((p) => fs.existsSync(p))
       const wantShots = (!!siteUrl || process.env.ENCORE_OG_SHOTS === '1') && process.env.ENCORE_OG_SHOTS !== '0'
@@ -160,7 +224,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         const todo: Channel[] = []
         for (const ch of channels) {
           if (handmade.has(ch.channel)) continue
-          const key = `${ch.url}|${ch.title}`
+          const key = `${SHOT_VERSION}|${ch.url}|${ch.title}`
           const old = prev[ch.channel]
           const fresh = old && old.key === key && Date.now() - Date.parse(old.at) < SHOT_MAX_AGE_DAYS * 864e5
           if (fresh) {
@@ -185,19 +249,55 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           try {
             for (const ch of todo) {
               const stage = /^https?:\/\//.test(ch.url) ? ch.url : `${root}${ch.url.replace(/^\//, '')}`
+              // Open the stage as a page of its own: stages may only allow framing by encore.taipei (CSP frame-ancestors).
+              let still: string | null = null
               const page = await browser.newPage()
               try {
                 await page.setViewport({ width: 1200, height: 630 })
-                await page.setContent(shotPage(stage, ch.channel, ch.title), { waitUntil: 'load', timeout: 40000 })
+                const res = await page.goto(stage, { waitUntil: 'load', timeout: 40000 })
+                if (res && res.status() >= 400) throw new Error(`HTTP ${res.status()}`)
                 await new Promise((r) => setTimeout(r, 9000))
-                const jpg = await page.screenshot({ type: 'jpeg', quality: 86 })
-                fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
-                shots[ch.channel] = { key: `${ch.url}|${ch.title}`, at: new Date().toISOString() }
-                config.logger.info(`[channel-pages] screenshot for channel ${ch.channel}`)
+                still = `data:image/jpeg;base64,${await page.screenshot({ type: 'jpeg', quality: 90, encoding: 'base64' })}`
               } catch (e) {
-                config.logger.warn(`[channel-pages] screenshot failed for channel ${ch.channel}: ${(e as Error).message}`)
+                config.logger.warn(`[channel-pages] could not open channel ${ch.channel}: ${(e as Error).message}`)
               } finally {
                 await page.close().catch(() => {})
+              }
+
+              // Fallbacks, fetched only if the screenshot is unusable: the stage's own og:image, the one saved at
+              // submission, then the GitHub preview of the author's repo.
+              async function* candidates(): AsyncGenerator<[string, ShotEntry['from']]> {
+                if (still) yield [still, 'stage']
+                const own = /^https:\/\//.test(ch.url) ? await stageOgImage(ch.url) : null
+                const saved = ch.og_image?.startsWith('https://') ? ch.og_image : null
+                for (const u of new Set([own, saved, githubPreview(ch.author_url)].filter((u): u is string => !!u))) {
+                  const data = await asDataUrl(u)
+                  if (data) yield [data, 'preview']
+                }
+              }
+              const card = await browser.newPage()
+              try {
+                await card.setViewport({ width: 1200, height: 630 })
+                for await (const [src, from] of candidates()) {
+                  try {
+                    await card.setContent(shotPage(src, ch.channel, ch.title), { waitUntil: 'load', timeout: 20000 })
+                    await card.evaluate('document.fonts.ready.then(() => true)')
+                    const verdict = (await card.evaluate(INSPECT_STILL)) as string
+                    if (verdict !== 'ok') {
+                      config.logger.warn(`[channel-pages] channel ${ch.channel}: ${from} image is ${verdict}, trying the next one`)
+                      continue
+                    }
+                    const jpg = await card.screenshot({ type: 'jpeg', quality: 86 })
+                    fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
+                    shots[ch.channel] = { key: `${SHOT_VERSION}|${ch.url}|${ch.title}`, at: new Date().toISOString(), from }
+                    config.logger.info(`[channel-pages] share image for channel ${ch.channel} (${from})`)
+                    break
+                  } catch (e) {
+                    config.logger.warn(`[channel-pages] channel ${ch.channel}: ${from} image failed: ${(e as Error).message}`)
+                  }
+                }
+              } finally {
+                await card.close().catch(() => {})
               }
             }
           } finally {
