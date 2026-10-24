@@ -98,7 +98,9 @@ function Director({ onCloud, onCredits, lowPower }: { onCloud: () => void; onCre
     m.uniforms.uScan.value = 0
     m.uniforms.uMono.value = 0
     m.uniforms.uSepia.value = 0
-    m.uniforms.uPower.value = 1
+    // The station already played the switch-off on the live picture; the set arrives dark.
+    m.uniforms.uPower.value = 0
+    m.uniforms.uBright.value = 0
     return m
   }, [])
   const once = (key: string, fn: () => void) => {
@@ -121,9 +123,6 @@ function Director({ onCloud, onCredits, lowPower }: { onCloud: () => void; onCre
     if (spaceGroup.current) spaceGroup.current.visible = inSpace
     scene.background = inSpace ? SPACE_SKY : PARK_SKY
     const tvg = tv.current!
-
-    screen.uniforms.uPower.value = 1 - seg(t, 0.05, T.collapse - 0.1)
-    screen.uniforms.uBright.value = 1.1 * (1 - seg(t, T.collapse - 0.1, T.collapse + 0.15))
 
     const { h } = lcdSize(aspect)
     const screenCenter = new THREE.Vector3(TV_AT.x, TV_AT.y + SCREEN_Y * TV_SCALE, TV_AT.z + LCD_FRONT_Z * TV_SCALE)

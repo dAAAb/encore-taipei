@@ -114,12 +114,29 @@ export function TvApp() {
     })
   }, [])
 
+  // The tube switches off on the picture that is on screen, so it shows however long the finale takes to load.
+  const [crtOff, setCrtOff] = useState(false)
+  const offTimer = useRef(0)
   const powerOff = useCallback(() => {
+    if (offTimer.current) return
     sfx.powerOff()
     useTv.setState({ infoOpen: false, submitOpen: false, guideOpen: false })
-    setPhase('off')
-    syncUrl(null)
+    void import('./finale/Finale').catch(() => {})
+    setCrtOff(true)
+    offTimer.current = window.setTimeout(() => {
+      offTimer.current = 0
+      setCrtOff(false)
+      setPhase('off')
+      syncUrl(null)
+    }, 600)
   }, [setPhase])
+  useEffect(() => () => window.clearTimeout(offTimer.current), [])
+
+  useEffect(() => {
+    if (phase !== 'tv') return
+    const t = window.setTimeout(() => void import('./finale/Finale').catch(() => {}), 8000)
+    return () => window.clearTimeout(t)
+  }, [phase])
 
   useEffect(() => {
     if (phase !== 'tv') return
@@ -273,10 +290,11 @@ export function TvApp() {
 
       {phase === 'tv' && (
         <>
-          <div className="fixed inset-x-0 top-0" style={split.active ? { height: split.tv } : { bottom: 0 }}>
+          <div className={`fixed inset-x-0 top-0 ${crtOff ? 'crt-off' : ''}`} style={split.active ? { height: split.tv } : { bottom: 0 }}>
             <ChannelScreen />
             <Osd />
           </div>
+          {crtOff && <div className="crt-line pointer-events-none fixed inset-x-0 top-0 z-40" style={split.active ? { height: split.tv } : { bottom: 0 }} aria-hidden />}
           {split.active ? (
             <>
               <div
