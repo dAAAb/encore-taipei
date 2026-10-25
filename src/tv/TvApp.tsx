@@ -41,6 +41,7 @@ const GATE_SHADE = 0.57
 /** Bottom of the full-size remote (.duo-pad), so Safari's bar continues it in ?duo. */
 const PAD_BOTTOM = '#121116'
 const SAMPLE_EDGE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+const SHOW_DEBUG = new URLSearchParams(location.search).has('debug')
 
 const typing = (el: EventTarget | null) => el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
 
@@ -320,6 +321,9 @@ export function TvApp() {
                 aria-orientation="horizontal"
                 aria-label="拖曳調整電視和遙控器的大小，點兩下恢復"
               />
+              {SHOW_DEBUG && (
+                <p className="pointer-events-none fixed top-1 left-1 z-50 rounded bg-black/75 px-1.5 py-0.5 font-mono text-[10px] text-[#b6ffb0]">{split.debug}</p>
+              )}
               <div className="fixed inset-x-0 bottom-0 z-10" style={{ top: split.tv + split.gutter }}>
                 <RemotePad state={padState} actions={padActions} insetTop={false} />
               </div>
