@@ -1,0 +1,305 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'NotoTC', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: #fbf3e2;
+    --popover-foreground: #13204f;
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: #efe3c9;
+    --muted-foreground: #4a4f6e;
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+@font-face {
+  font-family: 'NotoTC';
+  src: url('/fonts/noto-tc-500.woff2') format('woff2');
+  font-weight: 100 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NotoTC';
+  src: url('/fonts/noto-tc-900.woff2') format('woff2');
+  font-weight: 700 900;
+  font-display: swap;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #07040c;
+  overscroll-behavior: none;
+}
+
+/* Colorfigures paper card: warm paper, heavy ink edge, flat indigo cast shadow. */
+.ink-card {
+  background: #fbf3e2;
+  color: #13204f;
+  border: 2.5px solid #0c0812;
+  border-radius: 16px;
+  box-shadow: 5px 6px 0 #2b2f9e;
+}
+
+.ink-btn {
+  background: #fbf3e2;
+  color: #13204f;
+  border: 2px solid #0c0812;
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 #2b2f9e;
+  font-weight: 900;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s;
+}
+.ink-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #2b2f9e;
+}
+.ink-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #2b2f9e;
+}
+.ink-btn[data-on='true'] {
+  background: #ffd400;
+}
+.ink-btn:focus-visible {
+  outline: 3px solid #2ef2ff;
+  outline-offset: 2px;
+}
+
+/* Colorfigures sticker type: cream fill, ink outline, flat crimson drop, faint neon halo. */
+.title-lockup {
+  color: #fff7e6;
+  text-shadow:
+    2px 0 0 #0c0812,
+    -2px 0 0 #0c0812,
+    0 2px 0 #0c0812,
+    0 -2px 0 #0c0812,
+    1.5px 1.5px 0 #0c0812,
+    -1.5px 1.5px 0 #0c0812,
+    1.5px -1.5px 0 #0c0812,
+    -1.5px -1.5px 0 #0c0812,
+    4px 4px 0 #ff2a4d,
+    5.5px 5.5px 0 #0c0812,
+    0 0 22px rgba(255, 42, 77, 0.55);
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #ff2a4d;
+  box-shadow: 0 0 0 1.5px #0c0812;
+  animation: live-pulse 1.2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+.crowd-bubble {
+  position: relative;
+  white-space: nowrap;
+  padding: 5px 12px 6px;
+  font-family: 'NotoTC', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  line-height: 1.25;
+  color: #13204f;
+  background: #fbf3e2;
+  border: 2.5px solid #0c0812;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 #2b2f9e;
+  animation: bubble-pop 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  transform-origin: 50% 120%;
+}
+.crowd-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 14px;
+  height: 14px;
+  background: #fbf3e2;
+  border-right: 2.5px solid #0c0812;
+  border-bottom: 2.5px solid #0c0812;
+  transform: translateX(-50%) rotate(45deg) skew(10deg, 10deg);
+}
+.crowd-bubble--shout {
+  background: #ffd400;
+  font-size: 17px;
+  rotate: -4deg;
+}
+.crowd-bubble--shout::after {
+  background: #ffd400;
+}
+@keyframes bubble-pop {
+  0% {
+    transform: scale(0.2) translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 640px) {
+  .crowd-bubble {
+    font-size: 11px;
+    padding: 3px 8px 4px;
+    border-width: 2px;
+    box-shadow: 3px 3px 0 #2b2f9e;
+  }
+  .crowd-bubble--shout {
+    font-size: 12px;
+  }
+}
+
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.4  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, 0.12) 2px 3px);
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.slide-up {
+  animation: slide-up 0.45s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
