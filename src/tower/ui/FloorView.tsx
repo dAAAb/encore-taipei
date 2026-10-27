@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Cloud, CloudOff, LogOut, Sparkles, Upload, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { OnboardAgent } from '@/tv/components/OnboardAgent'
-import { stageUrl, SUBMIT_PATH } from '@/tv/routing'
+import { postStageVolume, stageFrameUrl, SUBMIT_PATH } from '@/tv/routing'
 import { sfx } from '@/tv/sfx'
 import { useTv } from '@/tv/store'
 import { floorTitle, type Floor } from '../layout'
@@ -95,7 +95,8 @@ export function FloorView({ floors, next, onLeave, onStep }: { floors: Floor[]; 
   }, [key])
 
   useEffect(() => {
-    frame.current?.contentWindow?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
+    const url = shown?.kind === 'slot' && 'channel' in shown.slot ? shown.slot.channel.url : null
+    if (url) postStageVolume(frame.current?.contentWindow, url, volume / 100, muted)
   }, [volume, muted, shown])
 
   const slot = shown?.kind === 'slot' ? shown.slot : null
@@ -108,13 +109,13 @@ export function FloorView({ floors, next, onLeave, onStep }: { floors: Floor[]; 
         <iframe
           key={floorKey(shown)}
           ref={frame}
-          src={stageUrl(stage.channel.url)}
+          src={stageFrameUrl(stage.channel.url)}
           title={`${shown!.number} 樓：${stage.channel.title}`}
           className="absolute inset-0 h-full w-full border-0"
           allow={ALLOW}
           allowFullScreen
           sandbox={SANDBOX}
-          onLoad={() => frame.current?.contentWindow?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')}
+          onLoad={() => postStageVolume(frame.current?.contentWindow, stage.channel.url, volume / 100, muted)}
         />
       ) : (
         shown && <Vacant floor={shown} next={next} />

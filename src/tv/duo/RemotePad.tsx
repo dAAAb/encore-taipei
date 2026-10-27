@@ -1,5 +1,6 @@
 import { Info, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { TROUPE_CALL, troupeAfter } from '@/scene/troupe-looks'
 import { sfx } from '../sfx'
 import type { Color, DialEntry, StageCommand, StageState, TvPhase } from './protocol'
 
@@ -258,8 +259,8 @@ function StageRow({ stage, actions, wrap }: { stage: StageState; actions: PadAct
         節拍
       </Key>
       <span className="h-4 w-px shrink-0 bg-white/15" />
-      <Key label={stage.troupe === 'solo' ? '叫伴舞上台' : '換一批伴舞'} active={stage.troupe !== 'solo'} onPress={() => actions.stage({ a: 'troupe', v: 'next' })} className={chip}>
-        {stage.troupe === 'solo' ? '叫伴舞' : '換一批'}
+      <Key label={TROUPE_CALL[troupeAfter(stage.troupe)].full} active={stage.troupe !== 'solo'} onPress={() => actions.stage({ a: 'troupe', v: 'next' })} className={chip}>
+        {TROUPE_CALL[troupeAfter(stage.troupe)].short}
       </Key>
       <Key label="市長獨舞" active={stage.troupe === 'solo'} onPress={() => actions.stage({ a: 'troupe', v: 'solo' })} className={chip}>
         獨舞

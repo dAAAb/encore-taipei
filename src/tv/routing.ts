@@ -1,3 +1,5 @@
+import { youtubeEmbedUrl, youtubeId, youtubeVolumeCommands } from './youtube'
+
 const BASE = import.meta.env.BASE_URL
 
 /** The channel number in /2027/ (relative to the deploy base), if any. */
@@ -21,6 +23,19 @@ export function channelUrl(n: number) {
 /** Resolve a channel's stored URL; built-in stages are stored relative to the site root. */
 export function stageUrl(url: string) {
   return /^https?:\/\//.test(url) ? url : `${BASE}${url.replace(/^\//, '')}`
+}
+
+/** What a screen's iframe loads: the stage itself, or the embedded player for a YouTube link. */
+export function stageFrameUrl(url: string) {
+  const yt = youtubeId(url)
+  return yt ? youtubeEmbedUrl(yt) : stageUrl(url)
+}
+
+/** Send the TV volume to a stage frame, in the stage protocol and, for YouTube, as player commands. */
+export function postStageVolume(win: Window | null | undefined, url: string, volume: number, muted: boolean) {
+  if (!win) return
+  win.postMessage({ type: 'encore:volume', volume, muted }, '*')
+  if (youtubeId(url)) for (const cmd of youtubeVolumeCommands(volume, muted)) win.postMessage(cmd, '*')
 }
 
 export function syncUrl(n: number | null, title?: string) {

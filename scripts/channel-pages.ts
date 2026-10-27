@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { FALLBACK_CHANNELS, fetchLiveChannels, FIRST_CHANNEL, type Channel } from '../src/tv/channel-data.ts'
+import { youtubeId, youtubeThumbnails } from '../src/tv/youtube.ts'
 
 /** Empty "signal wanted" channels pre-rendered past the last live one, so fresh share links still unfurl. */
 const SPARE_CHANNELS = 16
@@ -12,6 +13,8 @@ const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.m
 const SHOT_MAX_AGE_DAYS = 7
 /** Bump to re-shoot every channel once (e.g. after changing how shots are taken). */
 const SHOT_VERSION = 2
+/** YouTube channels get their own key, so a screenshot taken of the YouTube page before they were embedded is retaken. */
+const shotKey = (ch: Channel) => `${SHOT_VERSION}|${youtubeId(ch.url) ? 'youtube|' : ''}${ch.url}|${ch.title}`
 /** Hand-made share images for the built-in stages, keyed by stage URL so renumbering channels can't mix them up. */
 const HANDMADE: Record<string, string> = { 'club/': 'stage-club.jpg', 'club/?troupe=animals': 'stage-troupe.jpg' }
 const CHROME_PATHS = ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/local/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser']
@@ -229,7 +232,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         const todo: Channel[] = []
         for (const ch of channels) {
           if (handmade.has(ch.channel)) continue
-          const key = `${SHOT_VERSION}|${ch.url}|${ch.title}`
+          const key = shotKey(ch)
           const old = prev[ch.channel]
           const fresh = old && old.key === key && Date.now() - Date.parse(old.at) < SHOT_MAX_AGE_DAYS * 864e5
           if (fresh) {
@@ -255,24 +258,32 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
             for (const ch of todo) {
               const stage = /^https?:\/\//.test(ch.url) ? ch.url : `${root}${ch.url.replace(/^\//, '')}`
               // Open the stage as a page of its own: stages may only allow framing by encore.taipei (CSP frame-ancestors).
+              // A YouTube link plays in the embedded player on the TV, so its share image is the video's thumbnail.
               let still: string | null = null
-              const page = await browser.newPage()
-              try {
-                await page.setViewport({ width: 1200, height: 630 })
-                const res = await page.goto(stage, { waitUntil: 'load', timeout: 40000 })
-                if (res && res.status() >= 400) throw new Error(`HTTP ${res.status()}`)
-                await new Promise((r) => setTimeout(r, 9000))
-                still = `data:image/jpeg;base64,${await page.screenshot({ type: 'jpeg', quality: 90, encoding: 'base64' })}`
-              } catch (e) {
-                config.logger.warn(`[channel-pages] could not open channel ${ch.channel}: ${(e as Error).message}`)
-              } finally {
-                await page.close().catch(() => {})
+              const yt = youtubeId(ch.url)
+              if (!yt) {
+                const page = await browser.newPage()
+                try {
+                  await page.setViewport({ width: 1200, height: 630 })
+                  const res = await page.goto(stage, { waitUntil: 'load', timeout: 40000 })
+                  if (res && res.status() >= 400) throw new Error(`HTTP ${res.status()}`)
+                  await new Promise((r) => setTimeout(r, 9000))
+                  still = `data:image/jpeg;base64,${await page.screenshot({ type: 'jpeg', quality: 90, encoding: 'base64' })}`
+                } catch (e) {
+                  config.logger.warn(`[channel-pages] could not open channel ${ch.channel}: ${(e as Error).message}`)
+                } finally {
+                  await page.close().catch(() => {})
+                }
               }
 
               // Fallbacks, fetched only if the screenshot is unusable: the stage's own og:image, the one saved at
               // submission, then the GitHub preview of the author's repo.
               async function* candidates(): AsyncGenerator<[string, ShotEntry['from']]> {
                 if (still) yield [still, 'stage']
+                for (const u of yt ? youtubeThumbnails(yt) : []) {
+                  const data = await asDataUrl(u)
+                  if (data) yield [data, 'stage']
+                }
                 const own = /^https:\/\//.test(ch.url) ? await stageOgImage(ch.url) : null
                 const saved = ch.og_image?.startsWith('https://') ? ch.og_image : null
                 for (const u of new Set([own, saved, githubPreview(ch.author_url)].filter((u): u is string => !!u))) {
@@ -294,7 +305,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                     }
                     const jpg = await card.screenshot({ type: 'jpeg', quality: 86 })
                     fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
-                    shots[ch.channel] = { key: `${SHOT_VERSION}|${ch.url}|${ch.title}`, at: new Date().toISOString(), from }
+                    shots[ch.channel] = { key: shotKey(ch), at: new Date().toISOString(), from }
                     config.logger.info(`[channel-pages] share image for channel ${ch.channel} (${from})`)
                     break
                   } catch (e) {
@@ -315,6 +326,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
       for (const ch of channels) {
         if (fs.existsSync(path.join(ogDir, `${ch.channel}.jpg`))) images.set(ch.channel, versioned(`${ch.channel}.jpg`))
         else if (ch.og_image?.startsWith('https://')) images.set(ch.channel, ch.og_image)
+        else if (youtubeId(ch.url)) images.set(ch.channel, youtubeThumbnails(youtubeId(ch.url)!)[1])
         else if (/^https:\/\//.test(ch.url)) {
           const own = await stageOgImage(ch.url)
           if (own) images.set(ch.channel, own)

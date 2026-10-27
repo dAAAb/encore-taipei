@@ -19,7 +19,7 @@ window.addEventListener('message', (e) => {
     // e.data.volume：0～1，e.data.muted：true / false
   }
   if (e.data?.type === 'encore:color') {
-    // 遙控器彩色鍵：e.data.color 是 'red'、'green'、'yellow' 或 'blue'
+    // Duo 遙控器的彩色鍵：e.data.color 是 'red'、'green'、'yellow' 或 'blue'
   }
 })
 // 讓觀眾在你的舞台裡也能用 ← → 轉台
@@ -42,7 +42,7 @@ ${STARTER_PROMPT}
 
 ## 二、選用：讓電視遙控器控制舞台
 
-你的網站會被台北安可電視台用 iframe 嵌入。加上下面這段，遙控器的音量和紅綠黃藍彩色鍵就能控制舞台（例如綠色鍵換一批表演者），觀眾在舞台裡按 ← → 也能轉台：
+你的網站會被台北安可電視台用 iframe 嵌入。加上下面這段，遙控器的音量就能控制舞台，Duo 手機遙控器的紅綠黃藍彩色鍵也會傳給你（例如綠色鍵換一批表演者），觀眾在舞台裡按 ← → 也能轉台：
 
 \`\`\`js
 ${PROTOCOL}

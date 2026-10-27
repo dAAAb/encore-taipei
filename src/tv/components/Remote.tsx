@@ -32,6 +32,24 @@ function Key({
   )
 }
 
+/** The bottom row: a sound on red, then the three Duo layouts (each reloads this channel with its flag). */
+const COLOR_KEYS = [
+  { color: 'red', hex: '#e2363f', emoji: '5️⃣', caption: '音效', action: 'five', label: '5️⃣ 播放音效' },
+  { color: 'green', hex: '#2fbf55', emoji: '📱', caption: 'Duo', action: 'duo', label: '📱 Duo 模式：一支手機，上半電視、下半遙控器' },
+  { color: 'yellow', hex: '#f2c21b', emoji: '📺', caption: '電視', action: 'tv', label: '📺 電視模式：讓另一支手機配對成遙控器' },
+  { color: 'blue', hex: '#2f7bff', emoji: '🕹️', caption: '遙控器', action: 'remote', label: '🕹️ 遙控器模式：配對另一台電視' },
+] as const
+
+const FIVE_SOUND = `${import.meta.env.BASE_URL}remote/five.wav`
+let five: HTMLAudioElement | null = null
+
+function playFive(volume: number) {
+  five ??= new Audio(FIVE_SOUND)
+  five.volume = Math.max(0, Math.min(1, volume))
+  five.currentTime = 0
+  five.play().catch(() => {})
+}
+
 /** Floating TV remote, GTA-phone style: peeks from the corner, slides up when you reach for it. */
 export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void; entry: string; onDigit: (d: number) => void }) {
   const [open, setOpen] = useState(true)
@@ -150,20 +168,27 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
         </div>
 
         <div className="mt-3 grid grid-cols-4 gap-1.5" aria-label="彩色鍵">
-          {(
-            [
-              ['red', '#e2363f', '紅色鍵（第 2026 台：市長獨舞）'],
-              ['green', '#2fbf55', '綠色鍵（第 2026 台：換一批伴舞）'],
-              ['yellow', '#f2c21b', '黃色鍵'],
-              ['blue', '#2f7bff', '藍色鍵'],
-            ] as const
-          ).map(([color, hex, label]) => (
-            <Key key={color} label={label} onPress={() => {
-                window.dispatchEvent(new CustomEvent('encore:color', { detail: color }))
-                track('remote_color_key', { color })
-              }} className="h-3.5 rounded-sm">
-              <span className="block h-1.5 w-full rounded-[2px]" style={{ background: hex }} />
+          {COLOR_KEYS.map(({ color, hex, emoji, label, action }) => (
+            <Key
+              key={color}
+              label={label}
+              onPress={() => {
+                track('remote_color_key', { color, action })
+                if (action === 'five') playFive(muted ? 0 : volume / 100)
+                else location.assign(`${location.pathname}?${action}`)
+              }}
+              className="h-9 flex-col gap-1 rounded-md pt-1"
+            >
+              <span className="text-[15px] leading-none" aria-hidden>
+                {emoji}
+              </span>
+              <span className="block h-1 w-full rounded-[2px]" style={{ background: hex }} />
             </Key>
+          ))}
+        </div>
+        <div className="mt-1 grid grid-cols-4 gap-1.5 text-center text-[9px] font-bold text-white/45" aria-hidden>
+          {COLOR_KEYS.map(({ color, caption }) => (
+            <span key={color}>{caption}</span>
           ))}
         </div>
 

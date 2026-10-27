@@ -125,11 +125,18 @@ export const CITIZENS: CitizenLook[] = [
 
 export type TroupeMode = 'solo' | 'animals' | 'citizens' | 'mix'
 
-export const TROUPE_LABEL: Record<TroupeMode, string> = {
-  solo: '獨舞',
-  animals: '可愛動物',
-  citizens: '市民朋友',
-  mix: '大家一起',
+/** The order the "call up" button walks through; from solo it starts with everyone. */
+export const TROUPE_CYCLE: Exclude<TroupeMode, 'solo'>[] = ['mix', 'animals', 'citizens']
+
+export function troupeAfter(mode: TroupeMode): Exclude<TroupeMode, 'solo'> {
+  return TROUPE_CYCLE[(TROUPE_CYCLE.indexOf(mode as Exclude<TroupeMode, 'solo'>) + 1) % TROUPE_CYCLE.length]
+}
+
+/** Button copy names who comes up next, so the label always matches what appears on stage. */
+export const TROUPE_CALL: Record<Exclude<TroupeMode, 'solo'>, { full: string; short: string }> = {
+  mix: { full: '大家一起上台', short: '大家上台' },
+  animals: { full: '換可愛動物上台', short: '換動物' },
+  citizens: { full: '換市民朋友上台', short: '換市民' },
 }
 
 function shuffle<T>(list: T[], seed: number) {

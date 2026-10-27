@@ -61,7 +61,7 @@ export const FALLBACK_CHANNELS: Channel[] = [
     author: '台北安可市民',
     author_url: 'https://github.com/dAAAb/encore-taipei',
     message:
-      '橘貓、柴犬、臺灣黑熊、熊貓、梅花鹿、浣熊、石虎、兔兔，還有阿嬤、外送員、夜市主廚這些市民朋友，輪流上台跟市長跳同一支舞。按遙控器綠色鍵換一批，紅色鍵讓市長獨舞。',
+      '橘貓、柴犬、臺灣黑熊、熊貓、梅花鹿、浣熊、石虎、兔兔，還有阿嬤、外送員、夜市主廚這些市民朋友，輪流上台跟市長跳同一支舞。按舞台上的按鈕換一批上台，或讓市長獨舞。',
     prompt: null,
     tools: 'Cursor · Claude Opus 5.5 · three.js',
     og_image: null,

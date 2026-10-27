@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { rpc, RpcError, SUPABASE_KEY, SUPABASE_URL, type AdminChannel } from '@/tv/channel-data'
 import { useCopy } from '@/tv/components/useCopy'
-import { channelPath, stageUrl } from '@/tv/routing'
+import { channelPath, stageFrameUrl, stageUrl } from '@/tv/routing'
 
 const KEY = 'encore.adminKey'
 const REBUILD_URL = 'https://github.com/dAAAb/encore-taipei/actions/workflows/deploy-pages.yml'
@@ -702,7 +702,7 @@ export function AdminApp() {
               <div className="relative aspect-video w-full bg-black lg:aspect-auto lg:min-h-[480px]">
                 <iframe
                   key={current.id}
-                  src={stageUrl(current.url)}
+                  src={stageFrameUrl(current.url)}
                   title={`預覽：${current.title}`}
                   className="absolute inset-0 h-full w-full border-0"
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"

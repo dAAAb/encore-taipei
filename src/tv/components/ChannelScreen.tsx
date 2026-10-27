@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { DUO_MODE } from '../duo/mode'
 import { parseStageCommand, parseStageState } from '../duo/protocol'
-import { stageUrl } from '../routing'
+import { postStageVolume, stageFrameUrl } from '../routing'
 import { sfx } from '../sfx'
 import { useTv, type Slot } from '../store'
 import { NoSignal } from './NoSignal'
@@ -43,7 +43,7 @@ export function ChannelScreen() {
   }, [shown])
 
   useEffect(() => {
-    frame.current?.contentWindow?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
+    if (shown && shown.kind !== 'empty') postStageVolume(frame.current?.contentWindow, shown.channel.url, volume / 100, muted)
   }, [volume, muted, shown])
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export function ChannelScreen() {
 
   const onLoad = () => {
     const win = frame.current?.contentWindow
-    win?.postMessage({ type: 'encore:volume', volume: volume / 100, muted }, '*')
+    if (shown && shown.kind !== 'empty') postStageVolume(win, shown.channel.url, volume / 100, muted)
     win?.postMessage({ type: 'encore:chrome', remote: REMOTE_HAS_STAGE_CONTROLS }, '*')
     win?.postMessage({ type: 'encore:hello' }, '*')
     window.setTimeout(() => setSnow(false), 180)
@@ -91,7 +91,7 @@ export function ChannelScreen() {
         <iframe
           key={slotKey(shown)}
           ref={frame}
-          src={stageUrl(shown.channel.url)}
+          src={stageFrameUrl(shown.channel.url)}
           title={`第 ${shown.number} 台：${shown.channel.title}`}
           className="absolute inset-0 h-full w-full border-0"
           allow={ALLOW}

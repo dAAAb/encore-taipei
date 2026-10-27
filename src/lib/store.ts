@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import platform from '@/data/platform.json'
-import type { TroupeMode } from '@/scene/troupe-looks'
+import { TROUPE_CYCLE, troupeAfter, type TroupeMode } from '@/scene/troupe-looks'
 
 export type MusicMode = 'youtube' | 'synth' | 'off'
 export type ViewMode = 'front' | 'close' | 'iso' | 'orbit'
@@ -39,7 +39,6 @@ interface ClubState {
   setRemoteControls: (v: boolean) => void
 }
 
-const TROUPE_CYCLE: TroupeMode[] = ['animals', 'citizens', 'mix']
 const troupeParam = new URLSearchParams(location.search).get('troupe') as TroupeMode | null
 
 export const useClub = create<ClubState>((set) => ({
@@ -69,11 +68,7 @@ export const useClub = create<ClubState>((set) => ({
   setView: (view) => set((s) => ({ view, viewNonce: s.viewNonce + 1 })),
   setSpeech: (speech) => set({ speech }),
   bumpHype: (amount) => set((s) => ({ hype: Math.min(1, s.hype + amount) })),
-  nextTroupe: () =>
-    set((s) => {
-      const i = TROUPE_CYCLE.indexOf(s.troupeMode)
-      return { troupeMode: TROUPE_CYCLE[(i + 1) % TROUPE_CYCLE.length], troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) }
-    }),
+  nextTroupe: () => set((s) => ({ troupeMode: troupeAfter(s.troupeMode), troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) })),
   setTroupe: (troupeMode) => set((s) => ({ troupeMode, troupeSeed: s.troupeSeed + 1 + Math.floor(Math.random() * 1000) })),
   setRemoteControls: (remoteControls) => set({ remoteControls }),
 }))
