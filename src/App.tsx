@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react'
 import { applyMusic, setExternalVolume } from '@/audio/music'
 import { engine } from '@/audio/synth'
 import { Hud } from '@/components/Hud'
+import { EncoreLayer } from '@/components/MotionEncore'
+import { encoreCommand } from '@/lib/encore'
 import { StartGate } from '@/components/StartGate'
 import { useClub } from '@/lib/store'
 import { ClubScene } from '@/scene/ClubScene'
@@ -75,7 +77,7 @@ export default function App() {
         } else if (cmd?.a === 'music') {
           club.setWantMusic(cmd.v)
           applyMusic(cmd.v).then(setMode)
-        }
+        } else if (cmd?.a === 'encore') encoreCommand(cmd)
       }
     }
     const onKey = (e: KeyboardEvent) => {
@@ -100,6 +102,7 @@ export default function App() {
     <main className="relative h-full w-full">
       <h1 className="sr-only">台北安可之夜｜蔣萬安黃金十年政見 3D 互動派對 · 2033 台北 AI 園區</h1>
       {webgl && <ClubScene lowPower={lowPower} />}
+      {started && <EncoreLayer />}
       <div className="scanlines" />
       <div className="grain" />
       <Hud />

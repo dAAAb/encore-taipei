@@ -5,6 +5,7 @@ import { TAIPEI_ENCORE_URL } from '@/audio/youtube'
 import { useClub, type MusicMode, type ViewMode } from '@/lib/store'
 import { TROUPE_CALL, troupeAfter } from '@/scene/troupe-looks'
 import { DataSheet } from './DataSheet'
+import { EncoreButton, EncoreHint } from './MotionEncore'
 
 const MUSIC: { id: MusicMode; label: string; icon: typeof Music2 }[] = [
   { id: 'youtube', label: '官方 MV', icon: Music2 },
@@ -175,6 +176,7 @@ export function Hud() {
               <DataSheet />
             </div>
             <div className="flex flex-wrap justify-end gap-1.5">
+              <EncoreButton />
               <button
                 type="button"
                 className="ink-btn flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm"
@@ -190,6 +192,7 @@ export function Hud() {
                 </button>
               )}
             </div>
+            <EncoreHint />
           </nav>
 
           <PolicyCaption />

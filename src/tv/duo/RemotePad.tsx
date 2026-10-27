@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { TROUPE_CALL, troupeAfter } from '@/scene/troupe-looks'
 import { sfx } from '../sfx'
 import type { Color, DialEntry, StageCommand, StageState, TvPhase } from './protocol'
+import { useRemoteEncore } from './useRemoteEncore'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -244,28 +245,39 @@ const VIEWS: [StageState['view'], string][] = [
 ]
 
 function StageRow({ stage, actions, wrap }: { stage: StageState; actions: PadActions; wrap: boolean }) {
-  const chip = wrap ? 'h-8 shrink-0 rounded-full px-3 text-xs font-bold' : 'h-8 min-w-0 flex-1 rounded-full px-1 text-xs font-bold whitespace-nowrap'
+  const encore = useRemoteEncore(actions.stage)
+  const chip = wrap ? 'h-8 shrink-0 rounded-full px-3 text-xs font-bold' : 'h-8 min-w-0 flex-1 rounded-full px-0.5 text-[11px] font-bold whitespace-nowrap'
+  const gap = wrap ? <span className="h-4 w-px shrink-0 bg-white/15" /> : null
   return (
-    <div className={`flex shrink-0 items-center gap-1.5 ${wrap ? 'flex-wrap' : ''}`} aria-label="舞台控制">
+    <div className={`flex shrink-0 items-center ${wrap ? 'flex-wrap gap-1.5' : 'gap-1'}`} aria-label="舞台控制">
       {wrap && <span className="shrink-0 rounded-full bg-[#ffd400] px-2 py-0.5 text-[11px] font-black text-[#0c0812]">舞台</span>}
       {VIEWS.map(([v, label]) => (
         <Key key={v} label={`鏡頭：${label}`} active={stage.view === v} onPress={() => actions.stage({ a: 'view', v })} className={chip}>
           {label}
         </Key>
       ))}
-      <span className="h-4 w-px shrink-0 bg-white/15" />
+      {gap}
       <Key label="官方 MV" active={stage.music === 'youtube'} disabled={stage.ytFailed} onPress={() => actions.stage({ a: 'music', v: 'youtube' })} className={chip}>
         MV
       </Key>
       <Key label="內建節拍" active={stage.music === 'synth'} onPress={() => actions.stage({ a: 'music', v: 'synth' })} className={chip}>
         節拍
       </Key>
-      <span className="h-4 w-px shrink-0 bg-white/15" />
-      <Key label={TROUPE_CALL[troupeAfter(stage.troupe)].full} active={stage.troupe !== 'solo'} onPress={() => actions.stage({ a: 'troupe', v: 'next' })} className={chip}>
+      {gap}
+      <Key label={TROUPE_CALL[troupeAfter(stage.troupe)].full} active={stage.troupe !== 'solo'} onPress={() => actions.stage({ a: 'troupe', v: 'next' })} className={`${chip} ${wrap ? '' : 'flex-[1.7]'}`}>
         {TROUPE_CALL[troupeAfter(stage.troupe)].short}
       </Key>
       <Key label="市長獨舞" active={stage.troupe === 'solo'} onPress={() => actions.stage({ a: 'troupe', v: 'solo' })} className={chip}>
         獨舞
+      </Key>
+      {gap}
+      <Key
+        label={encore.armed ? '體感安可：再放一輪彩帶（搖手機甩彩帶、傾斜手機改變飄落方向）' : '體感安可：放彩帶，搖手機甩彩帶、傾斜手機改變飄落方向'}
+        active={encore.armed}
+        onPress={encore.press}
+        className={`${chip} duo-encore ${wrap ? '' : 'flex-[1.2]'}`}
+      >
+        {wrap ? '✨體感安可' : '✨體感'}
       </Key>
     </div>
   )
