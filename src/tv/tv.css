@@ -265,6 +265,31 @@ body,
 .gate-pulse {
   animation: gate-pulse 2.2s ease-in-out infinite;
 }
+/* Secondary choices under the power button: glass pills, quieter than the yellow ink button. */
+.gate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid rgba(255, 244, 214, 0.32);
+  border-radius: 999px;
+  background: rgba(10, 8, 18, 0.55);
+  padding: 0.4rem 0.95rem;
+  font-family: 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(255, 244, 214, 0.88);
+  backdrop-filter: blur(6px);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.gate-chip:hover,
+.gate-chip:focus-visible {
+  border-color: rgba(255, 212, 0, 0.75);
+  background: rgba(10, 8, 18, 0.78);
+  color: #fff4d6;
+}
 @keyframes gate-pulse {
   50% {
     opacity: 0.45;

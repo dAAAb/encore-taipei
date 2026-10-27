@@ -200,7 +200,7 @@ export function SubmitFields({ number, unit = '台', onDone }: { number?: number
       <label className="flex items-start gap-2 text-sm text-[#2a2f52]">
         <input name="agree" type="checkbox" required className="mt-1 size-4 accent-[#1f4fd1]" />
         <span>
-          我同意作品名稱、網址、名字、說明與 prompt 公開展示在台北安可電視台。作品內容友善正向、不攻擊或抹黑任何人與政黨，
+          我同意作品名稱、網址、名字、說明與 prompt 公開展示在台北安可大舞台。作品內容友善正向、不攻擊或抹黑任何人與政黨，
           使用的照片、音樂與字型都有授權；不符合的作品不會上架。
         </span>
       </label>

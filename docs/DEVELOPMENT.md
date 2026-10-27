@@ -7,12 +7,12 @@
 
 | 網址 | 內容 |
 | --- | --- |
-| `/` | 電視台（後室、新聞特輯開場、轉台、片尾） |
+| `/` | 大舞台（後室、新聞特輯開場、轉台、片尾） |
 | `/2026/`、`/2027/`… | 直接轉到某一台，每台有自己的分享預覽圖與標題 |
 | `/club/` | 第 2026 台〈台北安可之夜〉單獨開啟 |
 | `/admin/` | 頻道管理（需要管理連結） |
 | `/tower/`、`/tower/2027/`… | 台北安可大樓：每台是一層樓，搭無人機逛；同一份頁面也發布在網站根目錄的 `encore.taipei/tower/` |
-| `/submit/` | 上架申請頁：一般網頁，不載入 3D；送出後帶到電視台預覽。同一份頁面也發布在 `encore.taipei/submit/` |
+| `/submit/` | 上架申請頁：一般網頁，不載入 3D；送出後帶到大舞台預覽。同一份頁面也發布在 `encore.taipei/submit/` |
 
 正式站 [encore.taipei](https://encore.taipei/) 的首頁就是這台電視，打開直接轉到第 2026 台；Beta 分支部署在 [encore.taipei/beta/](https://encore.taipei/beta/) 當下一版的預覽。
 
@@ -97,8 +97,8 @@
 
 ## 頻道與後台
 
-投稿有三個入口：電視台「訊號徵求中」那一台、大樓「招租中」的樓層，以及獨立的上架頁 `encore.taipei/submit/`（`src/submit/`）。
-三者共用同一份表單（`SubmitFields`）；送出後預覽存在瀏覽器（`encore.pending`），上架頁送出後會直接帶到電視台那一台。
+投稿有三個入口：大舞台「訊號徵求中」那一台、大樓「招租中」的樓層，以及獨立的上架頁 `encore.taipei/submit/`（`src/submit/`）。
+三者共用同一份表單（`SubmitFields`）；送出後預覽存在瀏覽器（`encore.pending`），上架頁送出後會直接帶到大舞台那一台。
 
 頻道資料存在 Supabase（`ai2023` 專案中以 `encore_` 開頭的資料表），所有讀寫都經過 `supabase/migrations/` 裡的 SQL 函式：
 
@@ -124,12 +124,12 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 約 3～5 分鐘更新。另外每 10 分鐘的排程也會比對已上架頻道、有變動才重建，但 GitHub 排程常延遲，只當備援。
 分享圖的來源依序是：
 1. 內建舞台的手工圖（`public/og/stage-club.jpg`、`stage-troupe.jpg`，依舞台網址對應，改台號也不會錯）。
-2. 用無頭 Chrome 直接開啟舞台網站截圖（不放在 iframe 裡，所以只允許 encore.taipei 嵌入的網站也拍得到），加上台號和「台北安可電視台」標籤。
+2. 用無頭 Chrome 直接開啟舞台網站截圖（不放在 iframe 裡，所以只允許 encore.taipei 嵌入的網站也拍得到），加上台號和「台北安可大舞台」標籤。
    截圖會沿用上一版，網址或名稱改了、或滿 7 天才重拍，紀錄在 `og/shots.json`。
 3. 截圖打不開或幾乎是一片純色（錯誤頁、空白頁）時，改用舞台網站自己的 og:image → 投稿時存下的 og:image → 作者 GitHub repo 的預覽圖，一樣加上台號和標籤。
 4. 都沒有就用文字卡。
 本機建置預設不截圖，要測試可加 `ENCORE_OG_SHOTS=1`。
-電視台首頁的分享圖是 `public/og/tv.jpg`，由 `scripts/og/tv-card.html` 用無頭 Chrome 截成 1200×630。
+首頁的分享圖是 `public/og/home.jpg`（第 2026 台舞台全景）。README 裡的大舞台卡片 `docs/media/tv-card.jpg` 由 `scripts/og/tv-card.html` 用無頭 Chrome 截成 1200×630。
 
 投稿表單貼上網址後，會透過 Supabase Edge Function `encore-meta`（`supabase/functions/encore-meta/`）
 讀取該網站的標題和描述，自動帶入舞台名稱與說明。
@@ -142,8 +142,8 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 
 ## 流量分析（Google Analytics 4）
 
-評估 ID `G-7S3BJVE1W8` 設在部署設定（`main` 分支 `.github/workflows/deploy-pages.yml` 的 `VITE_GA_ID`），舞台、電視台、大樓、上架頁共用；本機開發時完全不送資料。
-電視台每轉到一台記一次虛擬瀏覽（`/2027/` 這種路徑），嵌在電視裡的第 2026、2028 台只送事件、不重複算瀏覽。
+評估 ID `G-7S3BJVE1W8` 設在部署設定（`main` 分支 `.github/workflows/deploy-pages.yml` 的 `VITE_GA_ID`），舞台、大舞台、大樓、上架頁共用；本機開發時完全不送資料。
+大舞台每轉到一台記一次虛擬瀏覽（`/2027/` 這種路徑），嵌在電視裡的第 2026、2028 台只送事件、不重複算瀏覽。
 
 | 事件 | 時機 |
 | --- | --- |
@@ -164,7 +164,7 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 
 ```bash
 npm install
-npm run dev        # http://localhost:4733（電視台）、/club/、/admin/、/2027/、/tower/、/submit/
+npm run dev        # http://localhost:4733（大舞台）、/club/、/admin/、/2027/、/tower/、/submit/
 npm run build      # 產生 dist/（含每台的分享頁與預覽圖）
 npm run preview
 ```
@@ -206,7 +206,7 @@ python3 scripts/build_font.py /tmp/NotoSansTC.ttf
 
 ## 技術
 
-Vite（多頁：電視台、第 2026 台、後台）· React 19 · TypeScript · three.js · @react-three/fiber · drei · postprocessing · zustand ·
+Vite（多頁：大舞台、第 2026 台、後台）· React 19 · TypeScript · three.js · @react-three/fiber · drei · postprocessing · zustand ·
 Tailwind CSS v4 · shadcn/ui · Supabase · resvg
 
 **iPhone Safari 底部工具列**：iOS 26 之後，Safari 的分頁列浮在畫面上，後面那塊會顯示網頁底色。滿版的 3D 畫面只畫到工具列上緣，
@@ -218,11 +218,11 @@ Tailwind CSS v4 · shadcn/ui · Supabase · resvg
 - 讀取失敗一次就永久停用；
 - 數值會先檢查、再平滑，避免閃爍。
 
-進到電視台、片尾或樓層裡的舞台時，會恢復原本的黑色，像電視的黑框；`?duo` 時則是遙控器的深灰色。
+進到大舞台、片尾或樓層裡的舞台時，會恢復原本的黑色，像電視的黑框；`?duo` 時則是遙控器的深灰色。
 
 ```
 src/
-  tv/           電視台：狀態、轉台、遙控器、OSD、上架表單
+  tv/           大舞台：狀態、轉台、遙控器、OSD、上架表單
     scene/      後室、三代電視機、螢幕 shader、開場導演
     montage/    新聞特輯（2D canvas 逐格繪製）與旁白
     finale/     關機彩蛋：大安森林公園、火箭、地球、星座臉、片尾名單

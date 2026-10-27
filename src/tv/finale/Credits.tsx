@@ -25,7 +25,7 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
   }, [])
   const blocks = useMemo<Block[]>(
     () => [
-      { big: '台北安可電視台', sub: 'ENCORE.TAIPEI' },
+      { big: '台北安可大舞台', sub: 'ENCORE.TAIPEI' },
       {
         title: '頻道',
         rows: [...channels.map((c) => [`第 ${c.channel} 台`, `${c.title}｜${c.author}`] as [string, string]), [`第 ${Math.max(2026, ...channels.map((c) => c.channel)) + 1} 台`, '等你來做']],
@@ -61,7 +61,7 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
         title: '製作數字（估算）',
         rows: [
           ['第 2026 台', `${wan(making.tokens.total)} tokens・約 US$${making.usd}（NT$${nf.format(making.twd)}）`],
-          ['電視台本身', `${wan(tvMaking.tokens.total)} tokens・約 US$${tvMaking.usd}（NT$${nf.format(tvMaking.twd)}）`],
+          ['大舞台本身', `${wan(tvMaking.tokens.total)} tokens・約 US$${tvMaking.usd}（NT$${nf.format(tvMaking.twd)}）`],
           ['模型', `${making.model}・依官方牌價與央行匯率 ${making.fx.rate} 估算`],
         ],
       },

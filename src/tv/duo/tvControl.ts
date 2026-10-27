@@ -44,7 +44,7 @@ export async function shareChannel(n: number | null, place: string) {
   if (n == null) return
   const url = channelUrl(n)
   track('share', { method: 'share' in navigator ? 'native' : 'copy', content_type: 'channel', item_id: String(n), place })
-  if (navigator.share) await navigator.share({ title: `第 ${n} 台｜台北安可電視台`, url }).catch(() => {})
+  if (navigator.share) await navigator.share({ title: `第 ${n} 台｜台北安可大舞台`, url }).catch(() => {})
   else await navigator.clipboard?.writeText(url).catch(() => {})
 }
 

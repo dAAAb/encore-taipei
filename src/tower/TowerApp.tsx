@@ -312,7 +312,7 @@ export function TowerApp() {
             ▶ 起飛{deepLink ? `，飛進 ${deepLink} 樓` : ''}
           </button>
           <a href={BASE} className="tv-caption mt-4 text-sm text-white/70 underline underline-offset-4 hover:text-white">
-            或改看電視模式：台北安可電視台
+            或改看電視模式：台北安可大舞台
           </a>
           <p className="tv-caption mt-3 text-xs text-white/55">iPhone 請關掉靜音模式 · 滾輪／上下滑動飛行 · 點樓層飛進去</p>
           <p className="tv-caption mt-2 text-[11px] text-white/45">

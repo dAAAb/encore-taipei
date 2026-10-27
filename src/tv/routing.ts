@@ -41,5 +41,5 @@ export function postStageVolume(win: Window | null | undefined, url: string, vol
 export function syncUrl(n: number | null, title?: string) {
   const path = n == null ? BASE : channelPath(n)
   if (location.pathname !== path) history.replaceState(null, '', path + location.search)
-  document.title = title ?? '台北安可大舞台 ENCORE.TAIPEI｜每一台都是市民用 AI 做的台北安可舞台'
+  document.title = title ?? '台北安可大舞台｜台北安可之夜・蔣萬安黃金十年政見 3D 互動派對'
 }

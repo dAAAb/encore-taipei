@@ -19,7 +19,7 @@ export function startTvAnalytics() {
     const moved = s.index !== prev.index || s.dial[s.index]?.number !== prev.dial[prev.index]?.number || (s.phase === 'tv' && prev.phase !== 'tv')
     if (s.phase === 'tv' && slot && moved) {
       const title = slot.kind === 'empty' ? '訊號徵求中' : slot.channel.title
-      trackPage(channelPath(slot.number), `第 ${slot.number} 台｜${title}｜台北安可電視台`)
+      trackPage(channelPath(slot.number), `第 ${slot.number} 台｜${title}｜台北安可大舞台`)
       track('channel_view', { channel_number: slot.number, channel_title: title, channel_kind: slot.kind })
     }
 

@@ -18,7 +18,7 @@ export function InfoSheet() {
   const prompt = ch?.prompt ?? (slot.number === 2026 ? making.prompt : null)
   const link = channelUrl(slot.number)
   const share = async () => {
-    const data = { title: `第 ${slot.number} 台｜${ch?.title ?? '訊號徵求中'}｜台北安可電視台`, url: link }
+    const data = { title: `第 ${slot.number} 台｜${ch?.title ?? '訊號徵求中'}｜台北安可大舞台`, url: link }
     track('share', { method: 'share' in navigator ? 'native' : 'copy', content_type: 'channel', item_id: String(slot.number), place: 'info' })
     if (navigator.share) await navigator.share(data).catch(() => {})
     else copy(link, 'link')
