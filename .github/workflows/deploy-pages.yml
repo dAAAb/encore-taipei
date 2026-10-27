@@ -42,14 +42,14 @@ jobs:
           site=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url | sed 's#/*$##')
           live=$(curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/encore_public_channels" \
             -H "apikey: $SUPABASE_KEY" -H 'Content-Type: application/json' -d '{}' | jq -cS "$norm") || live=error
-          built=$(curl -fsS "$site/beta/channels.json?t=$(date +%s)" | jq -cS "$norm") || built=missing
+          built=$(curl -fsS "$site/channels.json?t=$(date +%s)" | jq -cS "$norm") || built=missing
           if [ "$live" = "$built" ]; then echo build=false; else echo build=true; fi >> "$GITHUB_OUTPUT"
 
   build:
     needs: check
     if: needs.check.outputs.build == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - name: Read GitHub Pages configuration
@@ -59,7 +59,19 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Stage screenshots for share images need CJK fonts on the runner (direct download: apt can stall).
+      - name: Install CJK fonts
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          mkdir -p ~/.local/share/fonts
+          for w in Regular Bold Black; do
+            curl -fsSL --retry 3 -o ~/.local/share/fonts/NotoSansCJKtc-$w.otf \
+              "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-$w.otf"
+          done
+          fc-cache -f ~/.local/share/fonts
       - run: npm ci
+      # The home page is the Encore TV (opening on channel 2026); the beta branch previews the next version at /beta/.
       - name: Build
         run: npm run build
         env:
@@ -74,18 +86,6 @@ jobs:
         with:
           ref: ${{ env.BETA_BRANCH }}
           path: beta-src
-      # Stage screenshots for share images need CJK fonts on the runner (direct download: apt can stall).
-      - name: Install CJK fonts
-        if: steps.beta-src.outcome == 'success'
-        continue-on-error: true
-        timeout-minutes: 3
-        run: |
-          mkdir -p ~/.local/share/fonts
-          for w in Regular Bold Black; do
-            curl -fsSL --retry 3 -o ~/.local/share/fonts/NotoSansCJKtc-$w.otf \
-              "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-$w.otf"
-          done
-          fc-cache -f ~/.local/share/fonts
       - name: Build beta into /beta/
         if: steps.beta-src.outcome == 'success'
         continue-on-error: true
@@ -96,14 +96,6 @@ jobs:
           npm run build
           rm -rf ../dist/beta
           cp -r dist ../dist/beta
-          # The Encore Tower and the submit page are also published at the site root. Their asset URLs are
-          # absolute (/beta/...), so the pages work unchanged from /tower/ and /submit/.
-          for page in tower submit; do
-            if [ -d "dist/$page" ]; then
-              rm -rf "../dist/$page"
-              cp -r "dist/$page" "../dist/$page"
-            fi
-          done
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}/beta/
           SITE_URL: ${{ steps.pages.outputs.base_url }}/beta
