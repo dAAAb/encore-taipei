@@ -385,12 +385,10 @@ export function TvApp() {
             ▶ 打開電視 · 第 {deepLink ?? FIRST_CHANNEL} 台
           </button>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            {!deepLink && (
-              <button type="button" className="gate-chip" onClick={() => powerOn(false)}>
-                <Clapperboard className="size-4 shrink-0 text-white/70" aria-hidden />
-                從頭看開場・台北安可新聞特輯
-              </button>
-            )}
+            <button type="button" className="gate-chip" onClick={() => powerOn(false)}>
+              <Clapperboard className="size-4 shrink-0 text-white/70" aria-hidden />
+              從頭看開場・台北安可新聞特輯
+            </button>
             <a href={`${BASE}tower/`} className="gate-chip">
               <Building2 className="size-4 shrink-0 text-[#ffd400]" aria-hidden />
               <span className="text-[#ffd400]">新玩法</span>搭無人機逛台北安可大樓
