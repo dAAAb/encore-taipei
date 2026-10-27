@@ -19,7 +19,7 @@ import { Osd } from './components/Osd'
 import { Remote } from './components/Remote'
 import { SubmitForm } from './components/SubmitForm'
 import { loadNarrationDurations } from './montage/narrator'
-import { channelFromPath, syncUrl } from './routing'
+import { aliasFromPage, deepLinkFromPage, syncUrl } from './routing'
 import { pickLayout } from './scene/layouts'
 import { RoomStage } from './scene/RoomStage'
 import { sfx } from './sfx'
@@ -61,10 +61,13 @@ export function TvApp() {
   const lowPower = useMemo(() => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.hardwareConcurrency ?? 8) <= 4, [])
 
   useEffect(() => {
-    const n = channelFromPath()
+    const n = deepLinkFromPage()
     if (n) useTv.setState({ deepLink: n })
     loadNarrationDurations().then(setDurations)
+    const alias = aliasFromPage()
     const apply = (rows: Channel[]) => {
+      const moved = alias?.id ? rows.find((r) => r.id === alias.id)?.channel : undefined
+      if (moved && moved !== useTv.getState().deepLink) useTv.setState({ deepLink: moved })
       useTv.getState().setChannels(rows)
       const s = useTv.getState()
       if (s.deepLink && s.phase !== 'tv') s.tuneNumber(s.deepLink)
