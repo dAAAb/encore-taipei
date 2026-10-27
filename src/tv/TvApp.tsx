@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Volume2 } from 'lucide-react'
+import { Building2, Clapperboard, Volume2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
 import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from './channel-data'
@@ -93,7 +93,7 @@ export function TvApp() {
       const slot = s.dial[s.index]
       if (!slot) return
       const title = slot.kind === 'empty' ? '訊號徵求中' : slot.channel.title
-      syncUrl(slot.number, `第 ${slot.number} 台｜${title}｜台北安可電視台`)
+      syncUrl(slot.number, `第 ${slot.number} 台｜${title}｜台北安可大舞台`)
     }
     sync()
     return useTv.subscribe((s, prev) => {
@@ -301,7 +301,7 @@ export function TvApp() {
 
   return (
     <main className="relative h-full w-full overflow-hidden bg-black">
-      <h1 className="sr-only">台北安可電視台 ENCORE.TAIPEI：轉台看每個人做的台北安可舞台</h1>
+      <h1 className="sr-only">台北安可大舞台 ENCORE.TAIPEI：轉台看每一位市民用 AI 做的安可政策大舞台</h1>
 
       {phase === 'tv' && (
         <>
@@ -362,10 +362,8 @@ export function TvApp() {
       {phase === 'gate' && !resuming && (
         <div className="fixed inset-0 z-30 flex flex-col items-center justify-end bg-[radial-gradient(ellipse_at_50%_35%,transparent_30%,rgba(0,0,0,0.65))] p-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-center">
           <p className="tv-caption text-xs font-black tracking-[0.5em] text-[#ffd400]/90">ENCORE.TAIPEI</p>
-          <h2 className="tv-caption mt-2 text-[34px] leading-none font-black tracking-[0.08em] text-[#fff4d6] sm:text-[52px]">台北安可電視台</h2>
-          <p className="tv-caption mt-3 max-w-md text-sm leading-relaxed text-[#f3e6bf]/85 sm:text-base">
-            空房間裡有一台電視。每一台，都是一位市民用 AI 做的台北安可舞台。
-          </p>
+          <h2 className="tv-caption mt-2 text-[34px] leading-none font-black tracking-[0.08em] text-[#fff4d6] sm:text-[52px]">台北安可大舞台</h2>
+          <p className="tv-caption mt-3 max-w-md text-sm leading-relaxed text-[#f3e6bf]/85 sm:text-base">每一台，都是一位市民用 AI 做的安可政策大舞台。</p>
           <p className="sound-hint mt-5 inline-flex items-center gap-2 rounded-full border-2 border-[#ffd400]/80 bg-black/55 px-4 py-1.5 text-sm font-black text-[#ffd400] sm:text-base">
             <Volume2 className="sound-hint-icon size-5 shrink-0" aria-hidden />
             請打開電腦或手機的聲音，效果最好
@@ -379,14 +377,18 @@ export function TvApp() {
           >
             ▶ 打開電視 · 第 {deepLink ?? FIRST_CHANNEL} 台
           </button>
-          {!deepLink && (
-            <button type="button" className="tv-caption mt-4 text-sm text-white/70 underline underline-offset-4 hover:text-white" onClick={() => powerOn(false)}>
-              從頭看開場：台北安可新聞特輯
-            </button>
-          )}
-          <a href={`${BASE}tower/`} className="tv-caption mt-3 text-sm font-bold text-[#ffd400]/90 underline underline-offset-4 hover:text-[#ffd400]">
-            新玩法：搭無人機逛「台北安可大樓」→
-          </a>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {!deepLink && (
+              <button type="button" className="gate-chip" onClick={() => powerOn(false)}>
+                <Clapperboard className="size-4 shrink-0 text-white/70" aria-hidden />
+                從頭看開場・台北安可新聞特輯
+              </button>
+            )}
+            <a href={`${BASE}tower/`} className="gate-chip">
+              <Building2 className="size-4 shrink-0 text-[#ffd400]" aria-hidden />
+              <span className="text-[#ffd400]">新玩法</span>搭無人機逛台北安可大樓
+            </a>
+          </div>
           {DUO_MODE === 'tv' && (
             <p className="tv-caption mt-3 max-w-sm text-sm font-bold text-[#b6ffb0]">電視模式：打開後，用另一支手機掃畫面上的 QR code 當遙控器。</p>
           )}

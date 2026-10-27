@@ -17,7 +17,7 @@ const REDIRECT_MS = 2600
 const STEPS = [
   ['用 AI 做舞台', '按下面的按鈕複製完整 prompt，貼給 Cursor、Claude、Gemini 或 ChatGPT。不會寫程式也沒關係，用說的就好。'],
   ['部署成公開網址', '請 AI 幫你放到 GitHub Pages、Vercel、Cloudflare Pages 或 Netlify（都有免費方案）。網址要是 https，而且允許被 iframe 嵌入。'],
-  ['回來這裡上架', '貼上網址送出，馬上帶你到電視台預覽。管理員審核通過後，所有人都看得到。'],
+  ['回來這裡上架', '貼上網址送出，馬上帶你到大舞台預覽。管理員審核通過後，所有人都看得到。'],
 ] as const
 
 const RULES = [
@@ -77,7 +77,7 @@ export function SubmitApp() {
         </a>
         <nav className="flex gap-2">
           <a href={TV_URL} className="ink-btn flex items-center gap-1.5 px-3 py-1.5 text-sm">
-            <Tv className="size-4" /> 電視台
+            <Tv className="size-4" /> 大舞台
           </a>
           <a href={TOWER_URL} className="ink-btn flex items-center gap-1.5 px-3 py-1.5 text-sm">
             <Building2 className="size-4" /> 大樓
@@ -92,13 +92,13 @@ export function SubmitApp() {
           </p>
           <h1 className="submit-title mt-5 text-[56px] leading-none font-black tracking-[0.04em] sm:text-[76px]">換你上台</h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed font-bold text-[#ffe9a8]">
-            用 AI 做一座你自己的台北安可舞台，貼上網址就能上架。送出後馬上在電視台第 {next ?? '…'} 台預覽，審核通過後正式開播，也會變成台北安可大樓的
+            用 AI 做一座你自己的台北安可舞台，貼上網址就能上架。送出後馬上在大舞台第 {next ?? '…'} 台預覽，審核通過後正式開播，也會變成台北安可大樓的
             {next ? ` ${next} ` : ' '}樓。
           </p>
           <p className="mt-3 text-sm text-white/55">
             目前已有 {channels ? channels.length : '…'} 台開播。先去
             <a href={TV_URL} className="mx-1 underline underline-offset-2 hover:text-white">
-              電視台
+              大舞台
             </a>
             或
             <a href={TOWER_URL} className="mx-1 underline underline-offset-2 hover:text-white">
@@ -117,7 +117,7 @@ export function SubmitApp() {
                 </span>
                 <h2 className="mt-4 text-2xl font-black">送出成功！</h2>
                 <p className="mt-2 leading-relaxed text-[#2a2f52]">
-                  「{sent.title}」已經送進審核。現在帶你到電視台第 <b>{sent.channel}</b> 台預覽（只有你看得到）。
+                  「{sent.title}」已經送進審核。現在帶你到大舞台第 <b>{sent.channel}</b> 台預覽（只有你看得到）。
                 </p>
                 <a href={channelPath(sent.channel)} className="ink-btn mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-base" data-on="true">
                   馬上去看 <ArrowRight className="size-4" />
@@ -127,13 +127,13 @@ export function SubmitApp() {
               <>
                 <h2 className="text-2xl font-black text-[#13204f]">上架第 {next ?? '…'} 台</h2>
                 <p className="mt-1 text-sm leading-relaxed text-[#4a4f6e]">
-                  送出後馬上帶你到電視台預覽。管理員審核通過才會正式上架，號碼可能會變動。
+                  送出後馬上帶你到大舞台預覽。管理員審核通過才會正式上架，號碼可能會變動。
                 </p>
                 {waiting && (
                   <p className="mt-3 rounded-xl border-2 border-[#0c0812] bg-[#fff6d6] p-2.5 text-sm text-[#2a2f52]">
                     你送出的「{waiting.title}」還在審核中，可以到
                     <a href={channelPath(next ?? waiting.channel)} className="mx-1 font-black text-[#1f4fd1] underline underline-offset-2">
-                      電視台
+                      大舞台
                     </a>
                     預覽。再送一件的話，預覽會換成新的作品。
                   </p>

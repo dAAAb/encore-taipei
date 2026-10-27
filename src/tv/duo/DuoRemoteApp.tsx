@@ -255,7 +255,7 @@ export default function DuoRemoteApp() {
   useWakeLock(true)
 
   useEffect(() => {
-    document.title = '遙控器｜台北安可電視台'
+    document.title = '遙控器｜台北安可大舞台'
     document.documentElement.style.background = '#121116'
     document.body.style.background = '#121116'
     track('duo_open', { mode: 'remote' })

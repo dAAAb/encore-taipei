@@ -12,7 +12,7 @@ const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.m
 /** Screenshots are reused from the live site until the stage's URL or title changes, or they get this old. */
 const SHOT_MAX_AGE_DAYS = 7
 /** Bump to re-shoot every channel once (e.g. after changing how shots are taken). */
-const SHOT_VERSION = 2
+const SHOT_VERSION = 3
 /** YouTube channels get their own key, so a screenshot taken of the YouTube page before they were embedded is retaken. */
 const shotKey = (ch: Channel) => `${SHOT_VERSION}|${youtubeId(ch.url) ? 'youtube|' : ''}${ch.url}|${ch.title}`
 /** Hand-made share images for the built-in stages, keyed by stage URL so renumbering channels can't mix them up. */
@@ -72,7 +72,7 @@ function channelCard(n: number, live: boolean) {
   const bars = BARS.map((c, i) => `<rect x="${100 + (i * 1000) / 7}" y="66" width="${1000 / 7 + 1}" height="330" fill="${c}"/>`).join('')
   const body = live
     ? `<text x="1050" y="190" text-anchor="end" font-family="Noto Sans TC" font-weight="900" font-size="150" fill="#b6ffb0" filter="url(#glow)">${n}</text>
-       <text x="150" y="470" font-family="Noto Sans TC" font-weight="900" font-size="64" fill="#ffffff">台北安可電視台</text>
+       <text x="150" y="470" font-family="Noto Sans TC" font-weight="900" font-size="64" fill="#ffffff">台北安可大舞台</text>
        <text x="150" y="530" font-family="Noto Sans TC" font-weight="500" font-size="34" fill="#c9d3ff">ENCORE.TAIPEI · 第 ${n} 台 · 現正播放</text>`
     : `${bars}
        <rect x="100" y="396" width="1000" height="168" fill="#101010"/>
@@ -99,7 +99,7 @@ function shotPage(src: string, n: number, title: string) {
 </style></head><body>
 <img src="${esc(src)}" alt="">
 <div class="osd">${n}</div>
-<div class="tag"><b>台北安可電視台</b><span>第 ${n} 台・${esc(title)}</span></div>
+<div class="tag"><b>台北安可大舞台</b><span>第 ${n} 台・${esc(title)}</span></div>
 </body></html>`
 }
 
@@ -341,7 +341,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           image = versioned(`${n}.png`)
         }
         const html = setMeta(template, {
-          title: ch ? `第 ${n} 台｜${ch.title}｜台北安可電視台` : `第 ${n} 台｜訊號徵求中｜台北安可電視台`,
+          title: ch ? `第 ${n} 台｜${ch.title}｜台北安可大舞台` : `第 ${n} 台｜訊號徵求中｜台北安可大舞台`,
           description: ch
             ? `${ch.author} 做的台北安可舞台。${ch.message ?? ''}`.slice(0, 160)
             : `這一台還空著。用 AI 做一座你的台北安可舞台，送出就能佔下第 ${n} 台。`,

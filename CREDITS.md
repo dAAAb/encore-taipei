@@ -12,7 +12,7 @@ ENCORE.TAIPEI 的**程式碼**以 [MIT 授權](LICENSE) 釋出。以下第三方
 
 ## 影像
 
-### 電視台開場「台北安可 新聞特輯」（`public/montage/`）
+### 大舞台開場「台北安可 新聞特輯」（`public/montage/`）
 
 全部來自 [Wikimedia Commons](https://commons.wikimedia.org/)，片尾名單也會逐張列出。
 

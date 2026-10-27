@@ -85,7 +85,7 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
     if (!slot) return
     const url = channelUrl(slot.number)
     track('share', { method: 'share' in navigator ? 'native' : 'copy', content_type: 'channel', item_id: String(slot.number), place: 'remote' })
-    if (navigator.share) await navigator.share({ title: `第 ${slot.number} 台｜台北安可電視台`, url }).catch(() => {})
+    if (navigator.share) await navigator.share({ title: `第 ${slot.number} 台｜台北安可大舞台`, url }).catch(() => {})
     else await navigator.clipboard?.writeText(url).catch(() => {})
   }
 
