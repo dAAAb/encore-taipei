@@ -183,6 +183,16 @@ body,
   outline: 3px solid #2ef2ff;
   outline-offset: 2px;
 }
+.encore-btn {
+  background: linear-gradient(100deg, #ffd400 0%, #ff8fb1 45%, #8ff6ff 100%);
+  color: #0c0812;
+}
+.encore-btn[data-on='true'] {
+  background: linear-gradient(100deg, #ffd400 0%, #ff8fb1 45%, #8ff6ff 100%);
+  box-shadow:
+    3px 3px 0 #2b2f9e,
+    0 0 14px rgba(255, 212, 0, 0.75);
+}
 
 /* Colorfigures sticker type: cream fill, ink outline, flat crimson drop, faint neon halo. */
 .title-lockup {

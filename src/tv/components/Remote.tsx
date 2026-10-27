@@ -1,5 +1,5 @@
-import { Info, LayoutGrid, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { ChevronDown, ChevronUp, Info, LayoutGrid, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react'
 import { track } from '@/lib/analytics'
 import { channelUrl } from '../routing'
 import { sfx } from '../sfx'
@@ -50,9 +50,47 @@ function playFive(volume: number) {
   five.play().catch(() => {})
 }
 
-/** Floating TV remote, GTA-phone style: peeks from the corner, slides up when you reach for it. */
+const TOP_GAP = 12
+const LIFT = 14
+const PEEK = 92
+const MIN_PEEK = 58
+const SWIPE = 36
+
+/** Shrinks the remote until all of it, collapse handle included, fits the visible screen. */
+function useFitScale(body: RefObject<HTMLDivElement | null>) {
+  const [scale, setScale] = useState(1)
+  useLayoutEffect(() => {
+    const el = body.current
+    if (!el) return
+    const fit = () => {
+      const vv = window.visualViewport
+      const vh = vv?.height ?? window.innerHeight
+      const vw = vv?.width ?? window.innerWidth
+      const base = vw <= 640 ? 0.82 : 1
+      const room = (vh - TOP_GAP - LIFT) / el.offsetHeight
+      setScale(Math.max(0.42, Math.min(base, room)))
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    window.addEventListener('resize', fit)
+    window.visualViewport?.addEventListener('resize', fit)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', fit)
+      window.visualViewport?.removeEventListener('resize', fit)
+    }
+  }, [body])
+  return scale
+}
+
+/**
+ * Floating TV remote, GTA-phone style: peeks from the corner, slides up when you reach for it.
+ * Putting it down: the handle on top, a swipe down, a tap on the show, Esc or R.
+ */
 export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void; entry: string; onDigit: (d: number) => void }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpenState] = useState(true)
+  const openRef = useRef(open)
   const touched = useRef(false)
   const step = useTv((s) => s.step)
   const volume = useTv((s) => s.volume)
@@ -61,19 +99,70 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
   const muted = useTv((s) => s.muted)
   const slot = useTv((s) => s.dial[s.index])
   const ref = useRef<HTMLDivElement>(null)
+  const body = useRef<HTMLDivElement>(null)
+  const scale = useFitScale(body)
+  const drag = useRef<{ id: number; y: number; x: number; swiped: boolean } | null>(null)
+
+  const setOpen = useCallback((next: boolean | ((o: boolean) => boolean)) => {
+    const v = typeof next === 'function' ? next(openRef.current) : next
+    if (v === openRef.current) return
+    openRef.current = v
+    setOpenState(v)
+    track('remote_toggle', { open: v })
+  }, [])
 
   useEffect(() => {
     const t = window.setTimeout(() => !touched.current && setOpen(false), 4500)
     return () => window.clearTimeout(t)
-  }, [])
+  }, [setOpen])
 
   useEffect(() => {
+    const dialogOpen = () => {
+      const s = useTv.getState()
+      return s.overviewOpen || s.infoOpen || s.submitOpen || s.guideOpen
+    }
     const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (e.key === 'r' || e.key === 'R') setOpen((o) => !o)
+      else if (e.key === 'Escape' && !dialogOpen()) setOpen(false)
+    }
+    // A tap on the show itself lands in its iframe, which the page only notices as losing focus.
+    const onBlur = () =>
+      window.setTimeout(() => {
+        if (document.activeElement instanceof HTMLIFrameElement) setOpen(false)
+      }, 0)
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Element | null
+      if (!t || ref.current?.contains(t) || t.closest('[role="dialog"]')) return
+      setOpen(false)
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+    window.addEventListener('blur', onBlur)
+    document.addEventListener('pointerdown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('blur', onBlur)
+      document.removeEventListener('pointerdown', onDown)
+    }
+  }, [setOpen])
+
+  const onPointerDown = (e: ReactPointerEvent) => {
+    touched.current = true
+    drag.current = { id: e.pointerId, y: e.clientY, x: e.clientX, swiped: false }
+  }
+  const onPointerMove = (e: ReactPointerEvent) => {
+    const d = drag.current
+    if (!d || d.id !== e.pointerId || d.swiped) return
+    const dy = e.clientY - d.y
+    if (Math.abs(dy) < SWIPE || Math.abs(dy) < Math.abs(e.clientX - d.x) * 1.4) return
+    if (dy > 0 && openRef.current) setOpen(false)
+    else if (dy < 0 && !openRef.current) setOpen(true)
+    else return
+    d.swiped = true
+  }
+  const endDrag = () => {
+    window.setTimeout(() => (drag.current = null), 0)
+  }
 
   const toLastSlot = () => {
     const s = useTv.getState()
@@ -99,23 +188,44 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
     <div
       ref={ref}
       className={`remote-wrap fixed right-3 bottom-0 z-40 sm:right-8 ${open ? 'remote-open' : 'remote-peek'}`}
-      onPointerDown={() => (touched.current = true)}
-      onClick={() => !open && setOpen(true)}
+      style={{ '--remote-scale': scale, '--remote-peek': `${Math.max(PEEK, MIN_PEEK / scale)}px` } as CSSProperties}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onClickCapture={(e) => {
+        if (drag.current?.swiped) e.stopPropagation()
+        else if (!open) {
+          e.stopPropagation()
+          setOpen(true)
+        }
+      }}
     >
-      <div className="remote-body relative w-[168px] px-4 pt-4 pb-5 sm:w-[184px]">
+      <div ref={body} className="remote-body relative w-[168px] px-4 pt-2.5 pb-5 sm:w-[184px]">
+        <button
+          type="button"
+          className="remote-handle group mx-auto mb-2 flex w-full flex-col items-center gap-1 pt-0.5"
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? '收起遙控器（往下滑、點電視畫面或按 Esc 也可以）' : '拿起遙控器'}
+          aria-expanded={open}
+          title={open ? '收起遙控器（R／Esc）' : '拿起遙控器（R）'}
+        >
+          <span className="remote-grip" aria-hidden />
+          <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-black tracking-[0.12em] text-white/80 group-hover:bg-white/20 group-hover:text-white">
+            {open ? (
+              <>
+                <ChevronDown className="size-3.5" /> 收起
+              </>
+            ) : (
+              <>
+                <ChevronUp className="size-3.5" /> 遙控器
+              </>
+            )}
+          </span>
+        </button>
         <div className="flex items-center justify-between">
           <span className="remote-led" aria-hidden />
-          <button
-            type="button"
-            className="text-[10px] font-black tracking-[0.2em] text-white/45 hover:text-white/80"
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpen((o) => !o)
-            }}
-            aria-label={open ? '收起遙控器' : '拿起遙控器'}
-          >
-            {open ? '收起 ▾' : '遙控器 ▴'}
-          </button>
+          <span className="text-[10px] font-black tracking-[0.3em] text-white/30">ENCORE</span>
           <Key label="關機" onPress={onPowerOff} className="remote-power size-9 rounded-full">
             <Power className="size-4" />
           </Key>
@@ -207,8 +317,7 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
           ))}
         </div>
 
-        <p className="mt-4 text-center text-[11px] font-black tracking-[0.35em] text-white/35">ENCORE</p>
-        <p className="mt-1 hidden text-center text-[10px] leading-snug text-white/35 sm:block">鍵盤 ← → 轉台 · + − 音量 · M 靜音 · I 資訊</p>
+        <p className="mt-3 hidden text-center text-[10px] leading-snug text-white/35 sm:block">鍵盤 ← → 轉台 · + − 音量 · M 靜音 · I 資訊 · G 總覽 · R 收起</p>
       </div>
     </div>
   )

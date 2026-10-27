@@ -6,7 +6,10 @@ export type ViewMode = 'front' | 'close' | 'iso' | 'orbit'
 export type MusicMode = 'youtube' | 'synth' | 'off'
 export type Color = 'red' | 'green' | 'yellow' | 'blue'
 
-export type StageCommand = { a: 'view'; v: ViewMode } | { a: 'music'; v: MusicMode } | { a: 'troupe'; v: 'next' | 'solo' }
+/** 體感安可 from a phone remote: a confetti burst, a shake gust, or which way the phone is tilted (screen axes, ±1.5). */
+export type EncoreCommand = { a: 'encore'; t: 'burst' | 'gust' | 'tilt'; x: number; y: number }
+
+export type StageCommand = { a: 'view'; v: ViewMode } | { a: 'music'; v: MusicMode } | { a: 'troupe'; v: 'next' | 'solo' } | EncoreCommand
 
 export type Command =
   | { k: 'step'; d: 1 | -1 }
@@ -94,8 +97,11 @@ export function parseStageCommand(x: unknown): StageCommand | null {
   if (o.a === 'view' && oneOf(VIEWS, o.v)) return { a: 'view', v: o.v }
   if (o.a === 'music' && oneOf(MUSIC, o.v)) return { a: 'music', v: o.v }
   if (o.a === 'troupe' && (o.v === 'next' || o.v === 'solo')) return { a: 'troupe', v: o.v }
+  if (o.a === 'encore' && (o.t === 'burst' || o.t === 'gust' || o.t === 'tilt')) return { a: 'encore', t: o.t, x: axis(o.x), y: axis(o.y) }
   return null
 }
+
+const axis = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(-1.5, Math.min(1.5, Math.round(v * 100) / 100)) : 0)
 
 export function parseStageState(x: unknown): StageState | null {
   const o = obj(x)
