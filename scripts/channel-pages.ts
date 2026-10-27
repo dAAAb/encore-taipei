@@ -12,7 +12,7 @@ const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.m
 /** Screenshots are reused from the live site until the stage's URL or title changes, or they get this old. */
 const SHOT_MAX_AGE_DAYS = 7
 /** Bump to re-shoot every channel once (e.g. after changing how shots are taken). */
-const SHOT_VERSION = 3
+const SHOT_VERSION = 4
 /** YouTube channels get their own key, so a screenshot taken of the YouTube page before they were embedded is retaken. */
 const shotKey = (ch: Channel) => `${SHOT_VERSION}|${youtubeId(ch.url) ? 'youtube|' : ''}${ch.url}|${ch.title}`
 /** Hand-made share images for the built-in stages, keyed by stage URL so renumbering channels can't mix them up. */
@@ -101,6 +101,14 @@ function shotPage(src: string, n: number, title: string) {
 <div class="osd">${n}</div>
 <div class="tag"><b>台北安可大舞台</b><span>第 ${n} 台・${esc(title)}</span></div>
 </body></html>`
+}
+
+/** The same still alone, for the channel guide. */
+function thumbPage(src: string) {
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 640px; height: 336px; overflow: hidden; background: #000; }
+  img { width: 640px; height: 336px; object-fit: cover; display: block; }
+</style></head><body><img src="${esc(src)}" alt=""></body></html>`
 }
 
 /**
@@ -192,6 +200,9 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
       const { Resvg } = await import('@resvg/resvg-js')
       const ogDir = path.join(out, 'og')
       fs.mkdirSync(ogDir, { recursive: true })
+      // Clean 640×336 stills for the channel guide (the share images carry the channel tag and number on top).
+      const thumbDir = path.join(out, 'thumbs')
+      fs.mkdirSync(thumbDir, { recursive: true })
       const card = (file: string, svg: string) => {
         const target = path.join(ogDir, file)
         if (fs.existsSync(target)) return
@@ -219,6 +230,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         const file = HANDMADE[ch.url] && path.join(ogDir, HANDMADE[ch.url])
         if (file && fs.existsSync(file)) {
           fs.copyFileSync(file, path.join(ogDir, `${ch.channel}.jpg`))
+          fs.copyFileSync(file, path.join(thumbDir, `${ch.channel}.jpg`))
           handmade.add(ch.channel)
         }
       }
@@ -236,11 +248,14 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           const old = prev[ch.channel]
           const fresh = old && old.key === key && Date.now() - Date.parse(old.at) < SHOT_MAX_AGE_DAYS * 864e5
           if (fresh) {
-            const bytes = await fetch(`${root}og/${ch.channel}.jpg`, { signal: AbortSignal.timeout(8000) })
-              .then((r) => (r.ok ? r.arrayBuffer() : null))
-              .catch(() => null)
-            if (bytes) {
+            const get = (file: string) =>
+              fetch(`${root}${file}`, { signal: AbortSignal.timeout(8000) })
+                .then((r) => (r.ok ? r.arrayBuffer() : null))
+                .catch(() => null)
+            const [bytes, thumb] = await Promise.all([get(`og/${ch.channel}.jpg`), get(`thumbs/${ch.channel}.jpg`)])
+            if (bytes && thumb) {
               fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), Buffer.from(bytes))
+              fs.writeFileSync(path.join(thumbDir, `${ch.channel}.jpg`), Buffer.from(thumb))
               shots[ch.channel] = old
               continue
             }
@@ -278,22 +293,25 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
 
               // Fallbacks, fetched only if the screenshot is unusable: the stage's own og:image, the one saved at
               // submission, then the GitHub preview of the author's repo.
+              const own = /^https:\/\//.test(ch.url) && !yt ? await stageOgImage(ch.url) : null
+              const saved = ch.og_image?.startsWith('https://') ? ch.og_image : null
+              let cardSrc: string | null = null
               async function* candidates(): AsyncGenerator<[string, ShotEntry['from']]> {
                 if (still) yield [still, 'stage']
                 for (const u of yt ? youtubeThumbnails(yt) : []) {
                   const data = await asDataUrl(u)
                   if (data) yield [data, 'stage']
                 }
-                const own = /^https:\/\//.test(ch.url) ? await stageOgImage(ch.url) : null
-                const saved = ch.og_image?.startsWith('https://') ? ch.og_image : null
                 for (const u of new Set([own, saved, githubPreview(ch.author_url)].filter((u): u is string => !!u))) {
                   const data = await asDataUrl(u)
                   if (data) yield [data, 'preview']
                 }
               }
               const card = await browser.newPage()
+              const thumb = await browser.newPage()
               try {
                 await card.setViewport({ width: 1200, height: 630 })
+                await thumb.setViewport({ width: 640, height: 336 })
                 for await (const [src, from] of candidates()) {
                   try {
                     await card.setContent(shotPage(src, ch.channel, ch.title), { waitUntil: 'load', timeout: 20000 })
@@ -305,6 +323,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                     }
                     const jpg = await card.screenshot({ type: 'jpeg', quality: 86 })
                     fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
+                    cardSrc = src
                     shots[ch.channel] = { key: shotKey(ch), at: new Date().toISOString(), from }
                     config.logger.info(`[channel-pages] share image for channel ${ch.channel} (${from})`)
                     break
@@ -312,8 +331,30 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                     config.logger.warn(`[channel-pages] channel ${ch.channel}: ${from} image failed: ${(e as Error).message}`)
                   }
                 }
+
+                // The guide thumbnail shows the picture the stage chose for itself (its og:image, or the video's cover);
+                // the screenshot is only the fallback.
+                async function* thumbCandidates(): AsyncGenerator<string> {
+                  for (const u of new Set([...(yt ? youtubeThumbnails(yt) : []), own, saved].filter((u): u is string => !!u))) {
+                    const data = await asDataUrl(u)
+                    if (data) yield data
+                  }
+                  if (still) yield still
+                  if (cardSrc && cardSrc !== still) yield cardSrc
+                }
+                for await (const src of thumbCandidates()) {
+                  try {
+                    await thumb.setContent(thumbPage(src), { waitUntil: 'load', timeout: 20000 })
+                    if (((await thumb.evaluate(INSPECT_STILL)) as string) !== 'ok') continue
+                    fs.writeFileSync(path.join(thumbDir, `${ch.channel}.jpg`), await thumb.screenshot({ type: 'jpeg', quality: 80 }))
+                    break
+                  } catch (e) {
+                    config.logger.warn(`[channel-pages] channel ${ch.channel}: thumbnail failed: ${(e as Error).message}`)
+                  }
+                }
               } finally {
                 await card.close().catch(() => {})
+                await thumb.close().catch(() => {})
               }
             }
           } finally {

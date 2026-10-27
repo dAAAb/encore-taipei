@@ -58,6 +58,10 @@ interface TvState {
   osdNonce: number
   osdKind: 'channel' | 'volume'
   infoOpen: boolean
+  /** The channel overview: every channel as a thumbnail, opened from the remote. */
+  overviewOpen: boolean
+  /** When the overview last opened; channels newer than a week before it get a 新上架 badge. */
+  overviewAt: number
   submitOpen: boolean
   guideOpen: boolean
   /** The channel the visitor deep-linked to; the intro is shortened for them. */
@@ -73,6 +77,7 @@ interface TvState {
   setVolume: (v: number) => void
   toggleMute: () => void
   setInfoOpen: (v: boolean) => void
+  setOverviewOpen: (v: boolean) => void
   setSubmitOpen: (v: boolean) => void
   setGuideOpen: (v: boolean) => void
 }
@@ -92,6 +97,8 @@ export const useTv = create<TvState>((set, get) => ({
   osdNonce: 0,
   osdKind: 'channel',
   infoOpen: false,
+  overviewOpen: false,
+  overviewAt: 0,
   submitOpen: false,
   guideOpen: false,
   deepLink: null,
@@ -128,6 +135,7 @@ export const useTv = create<TvState>((set, get) => ({
   },
   toggleMute: () => set((s) => ({ muted: !s.muted, osdNonce: s.osdNonce + 1, osdKind: 'volume' })),
   setInfoOpen: (infoOpen) => set({ infoOpen }),
+  setOverviewOpen: (overviewOpen) => set(overviewOpen ? { overviewOpen, overviewAt: Date.now() } : { overviewOpen }),
   setSubmitOpen: (submitOpen) => set({ submitOpen }),
   setGuideOpen: (guideOpen) => set({ guideOpen }),
 }))

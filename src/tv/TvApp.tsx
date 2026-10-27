@@ -3,6 +3,7 @@ import { Building2, Clapperboard, Volume2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
 import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from './channel-data'
+import { ChannelOverview } from './components/ChannelOverview'
 import { ChannelScreen } from './components/ChannelScreen'
 import { DuoPairPanel } from './duo/DuoPairPanel'
 import { useWakeLock } from './duo/link'
@@ -143,8 +144,13 @@ export function TvApp() {
     if (phase !== 'tv') return
     const handle = (key: string) => {
       const s = useTv.getState()
-      if (s.submitOpen || s.guideOpen) return false
+      if (s.submitOpen || s.guideOpen || s.overviewOpen) return false
       switch (key) {
+        case 'g':
+        case 'G':
+          s.setInfoOpen(false)
+          s.setOverviewOpen(true)
+          return true
         case 'ArrowRight':
         case 'ArrowUp':
         case 'PageUp':
@@ -332,6 +338,7 @@ export function TvApp() {
             DUO_MODE !== 'tv' && <Remote onPowerOff={powerOff} entry={entry} onDigit={digit} />
           )}
           {duoRoom && <DuoPairPanel room={duoRoom} status={duo.status} remotes={duo.remotes} joins={duo.joins} />}
+          <ChannelOverview />
           <InfoSheet />
           <SubmitForm />
           <Guide />
@@ -378,12 +385,10 @@ export function TvApp() {
             ▶ 打開電視 · 第 {deepLink ?? FIRST_CHANNEL} 台
           </button>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            {!deepLink && (
-              <button type="button" className="gate-chip" onClick={() => powerOn(false)}>
-                <Clapperboard className="size-4 shrink-0 text-white/70" aria-hidden />
-                從頭看開場・台北安可新聞特輯
-              </button>
-            )}
+            <button type="button" className="gate-chip" onClick={() => powerOn(false)}>
+              <Clapperboard className="size-4 shrink-0 text-white/70" aria-hidden />
+              從頭看開場・台北安可新聞特輯
+            </button>
             <a href={`${BASE}tower/`} className="gate-chip">
               <Building2 className="size-4 shrink-0 text-[#ffd400]" aria-hidden />
               <span className="text-[#ffd400]">新玩法</span>搭無人機逛台北安可大樓

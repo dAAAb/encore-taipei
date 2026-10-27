@@ -1,4 +1,4 @@
-import { Info, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
+import { Info, LayoutGrid, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { track } from '@/lib/analytics'
 import { channelUrl } from '../routing'
@@ -81,6 +81,12 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
     if (s.dial[s.dial.length - 1]?.kind === 'empty') window.setTimeout(() => useTv.getState().setSubmitOpen(true), 500)
   }
 
+  const openOverview = () => {
+    const s = useTv.getState()
+    s.setInfoOpen(false)
+    s.setOverviewOpen(true)
+  }
+
   const share = async () => {
     if (!slot) return
     const url = channelUrl(slot.number)
@@ -115,10 +121,19 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
           </Key>
         </div>
 
-        <div className="remote-lcd mt-3 flex h-9 items-center justify-between px-2.5">
+        <button
+          type="button"
+          className="remote-lcd mt-3 flex h-9 w-full items-center justify-between px-2.5"
+          onClick={openOverview}
+          aria-label="頻道總覽"
+          title="頻道總覽（G）"
+        >
           <span className="text-[10px] font-black tracking-[0.18em] text-[#7dff7a]/70">CH</span>
           <span className="font-mono text-lg font-bold tracking-wider text-[#b6ffb0]">{entry ? entry.padEnd(4, '_') : slot?.number}</span>
-        </div>
+        </button>
+        <Key label="頻道總覽（G）" onPress={openOverview} className="remote-guide mt-2 h-8 w-full gap-1.5 rounded-full text-xs font-black">
+          <LayoutGrid className="size-4" /> 頻道總覽
+        </Key>
 
         <div className="mt-3 grid grid-cols-3 gap-2">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
