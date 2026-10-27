@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Volume2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
-import { fetchLiveChannels, type Channel } from './channel-data'
+import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from './channel-data'
 import { ChannelScreen } from './components/ChannelScreen'
 import { DuoPairPanel } from './duo/DuoPairPanel'
 import { useWakeLock } from './duo/link'
@@ -347,7 +347,7 @@ export function TvApp() {
             durations={durations}
             onDone={introDone}
             lowPower={lowPower}
-            onTvClick={phase === 'gate' && durations ? () => powerOn(!!deepLink) : undefined}
+            onTvClick={phase === 'gate' && durations ? () => powerOn(true) : undefined}
             onEdgeColor={SAMPLE_EDGE || DUO_MODE ? onEdgeColor : undefined}
           />
         </div>
@@ -375,13 +375,13 @@ export function TvApp() {
             className="ink-btn gate-pulse mt-4 px-8 py-3 text-xl"
             data-on="true"
             disabled={!durations}
-            onClick={() => powerOn(!!deepLink)}
+            onClick={() => powerOn(true)}
           >
-            ▶ 打開電視{deepLink ? ` · 第 ${deepLink} 台` : ''}
+            ▶ 打開電視 · 第 {deepLink ?? FIRST_CHANNEL} 台
           </button>
           {!deepLink && (
-            <button type="button" className="tv-caption mt-4 text-sm text-white/70 underline underline-offset-4 hover:text-white" onClick={() => powerOn(true)}>
-              略過開場，直接轉到第 2026 台
+            <button type="button" className="tv-caption mt-4 text-sm text-white/70 underline underline-offset-4 hover:text-white" onClick={() => powerOn(false)}>
+              從頭看開場：台北安可新聞特輯
             </button>
           )}
           <a href={`${BASE}tower/`} className="tv-caption mt-3 text-sm font-bold text-[#ffd400]/90 underline underline-offset-4 hover:text-[#ffd400]">
