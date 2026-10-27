@@ -1,0 +1,326 @@
+html,
+body,
+#root {
+  background: #000;
+}
+
+/* LCD-TV on-screen display */
+.osd-fade {
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+.osd-digits {
+  font-family: 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #b6ffb0;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 0 2px #0a2a0a,
+    2px 2px 0 rgba(0, 0, 0, 0.85),
+    0 0 18px rgba(125, 255, 122, 0.55);
+}
+.osd-label {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 4px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.9);
+}
+.osd-banner {
+  background: linear-gradient(90deg, rgba(10, 18, 52, 0.92), rgba(10, 18, 52, 0.72));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+/* The remote */
+.remote-wrap {
+  transition: transform 0.55s cubic-bezier(0.2, 0.9, 0.25, 1.15);
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.6));
+}
+.remote-open {
+  transform: translateY(-14px) rotate(0deg);
+}
+.remote-peek {
+  transform: translateY(calc(100% - 92px)) rotate(-7deg);
+  cursor: pointer;
+}
+.remote-peek:hover {
+  transform: translateY(calc(100% - 118px)) rotate(-5deg);
+}
+@media (max-width: 640px) {
+  .remote-wrap {
+    scale: 0.82;
+    transform-origin: 100% 100%;
+  }
+}
+.remote-body {
+  background:
+    radial-gradient(120% 60% at 30% 0%, rgba(255, 255, 255, 0.12), transparent 60%),
+    linear-gradient(180deg, #2e2d35 0%, #1b1a20 55%, #121116 100%);
+  border-radius: 40px 40px 34px 34px;
+  border: 2px solid #0c0812;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.5);
+}
+.remote-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #3a0b10;
+  box-shadow: inset 0 0 2px #000;
+}
+.remote-body:active .remote-led {
+  background: #ff3b4a;
+  box-shadow: 0 0 8px #ff3b4a;
+}
+.remote-key {
+  color: #eeeef2;
+  background: linear-gradient(180deg, #45444d, #2c2b32);
+  border: 1.5px solid #0c0812;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 2px 0 #0c0812;
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.06s ease;
+}
+.remote-key:hover {
+  background: linear-gradient(180deg, #55545e, #33323a);
+}
+.remote-key:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.remote-key:focus-visible {
+  outline: 2px solid #2ef2ff;
+  outline-offset: 2px;
+}
+.remote-power {
+  background: linear-gradient(180deg, #e2363f, #a81822);
+  color: #fff;
+}
+.remote-power:hover {
+  background: linear-gradient(180deg, #f04650, #b81f2a);
+}
+.remote-rocker {
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 24px;
+  padding: 3px;
+}
+.remote-lcd {
+  background: linear-gradient(180deg, #0b1a0c, #071007);
+  border: 1.5px solid #0c0812;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+/* Duo: the full-size remote and the pairing card */
+.duo-pad {
+  background:
+    radial-gradient(120% 50% at 30% 0%, rgba(255, 255, 255, 0.1), transparent 60%),
+    linear-gradient(180deg, #2e2d35 0%, #1b1a20 55%, #121116 100%);
+  -webkit-tap-highlight-color: transparent;
+}
+.duo-key[data-on] {
+  color: #0c0812;
+  background: linear-gradient(180deg, #ffe14d, #e0b800);
+}
+.duo-led {
+  background: #ff3b4a;
+  box-shadow: 0 0 8px #ff3b4a;
+}
+.duo-strip {
+  scrollbar-width: none;
+}
+.duo-strip::-webkit-scrollbar {
+  display: none;
+}
+.duo-thumb {
+  border: 2px solid #0c0812;
+  -webkit-touch-callout: none;
+}
+.duo-thumb--on {
+  border-color: #2ef2ff;
+  box-shadow:
+    0 0 0 2px #2ef2ff,
+    0 0 14px rgba(46, 242, 255, 0.6);
+}
+.duo-gutter {
+  background: linear-gradient(180deg, #050407, #0b0a0e);
+  touch-action: none;
+}
+.duo-gutter::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 4px;
+  margin: -2px 0 0 -22px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Power off: the picture flares, folds into a bright line, shrinks to a dot and dies, like a tube set */
+.crt-off {
+  transform-origin: 50% 50%;
+  animation: crt-off 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, filter, opacity;
+}
+@keyframes crt-off {
+  0% {
+    transform: scale(1, 1);
+    filter: brightness(1);
+  }
+  14% {
+    transform: scale(1, 1);
+    filter: brightness(2.6);
+  }
+  42% {
+    transform: scale(1, 0.008);
+    filter: brightness(4) saturate(0.2);
+    opacity: 1;
+  }
+  60%,
+  100% {
+    transform: scale(1, 0.008);
+    filter: brightness(4) saturate(0.2);
+    opacity: 0;
+  }
+}
+.crt-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: crt-flash 0.55s ease-out forwards;
+}
+.crt-line::after {
+  content: '';
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow:
+    0 0 12px 3px rgba(255, 255, 255, 0.9),
+    0 0 42px 12px rgba(170, 200, 255, 0.55);
+  opacity: 0;
+  animation: crt-line 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes crt-flash {
+  0% {
+    background: rgba(255, 255, 255, 0);
+  }
+  10% {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  32%,
+  100% {
+    background: rgba(255, 255, 255, 0);
+  }
+}
+@keyframes crt-line {
+  0%,
+  34% {
+    opacity: 0;
+    transform: scale(1, 1);
+  }
+  42% {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
+  74% {
+    opacity: 1;
+    transform: scale(0.012, 2.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.004, 1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-off {
+    animation: crt-fade 0.35s ease-out forwards;
+  }
+  .crt-line {
+    display: none;
+  }
+}
+@keyframes crt-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Intro / finale overlays */
+.tv-caption {
+  font-family: 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.8),
+    0 0 18px rgba(0, 0, 0, 0.6);
+}
+.gate-pulse {
+  animation: gate-pulse 2.2s ease-in-out infinite;
+}
+@keyframes gate-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.flash-white {
+  animation: flash-white 0.9s ease-out forwards;
+}
+@keyframes flash-white {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Stepping out of the slit: white light that drains away into the room. */
+.arrive-flash {
+  animation: arrive-flash 1.6s ease-out forwards;
+}
+@keyframes arrive-flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.shake {
+  animation: shake 0.12s linear infinite;
+}
+@keyframes shake {
+  25% {
+    transform: translate(2px, -1px);
+  }
+  50% {
+    transform: translate(-2px, 1px);
+  }
+  75% {
+    transform: translate(1px, 2px);
+  }
+}
+.sound-hint-icon {
+  animation: sound-hint 1.4s ease-in-out infinite;
+}
+@keyframes sound-hint {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18) rotate(-6deg);
+  }
+}

@@ -1,0 +1,130 @@
+.roof-bubble {
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 11px;
+  border-radius: 14px;
+  background: #fff8e6;
+  border: 2.5px solid #0c0812;
+  box-shadow: 3px 3px 0 #0c0812;
+  color: #13204f;
+  font: 700 14px/1.4 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;
+  white-space: normal;
+  word-break: break-word;
+  position: relative;
+}
+.roof-bubble b {
+  display: block;
+  font-size: 11px;
+  color: #c8234a;
+}
+.roof-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 14px;
+  height: 14px;
+  background: #fff8e6;
+  border-right: 2.5px solid #0c0812;
+  border-bottom: 2.5px solid #0c0812;
+  transform: translateX(-50%) rotate(45deg);
+}
+.roof-bubble--fresh {
+  animation: bubble-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes bubble-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* Inside a floor: the stage stays sharp in the middle, the edges go misty like breath on glass. */
+.floor-mist {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(9px) saturate(1.15);
+  backdrop-filter: blur(9px) saturate(1.15);
+  -webkit-mask-image: radial-gradient(ellipse 64% 68% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.75) 82%, #000 100%);
+  mask-image: radial-gradient(ellipse 64% 68% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.75) 82%, #000 100%);
+  background: radial-gradient(ellipse 70% 72% at 50% 50%, transparent 55%, rgba(214, 206, 255, 0.16) 85%, rgba(240, 236, 255, 0.28) 100%);
+  transition: opacity 0.6s;
+}
+.floor-glint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.07) 46%, transparent 54%);
+  background-size: 300% 100%;
+  animation: glint 9s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes glint {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+.elevator-door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 7px),
+    linear-gradient(90deg, #6e7383, #b9bfcc 30%, #8a90a0 55%, #c9ced9 80%, #747a8a);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+  transition: transform 0.45s cubic-bezier(0.6, 0, 0.3, 1);
+  z-index: 30;
+}
+.elevator-door--l {
+  left: 0;
+  transform: translateX(-101%);
+  border-right: 2px solid #3a3e4a;
+}
+.elevator-door--r {
+  right: 0;
+  transform: translateX(101%);
+  border-left: 2px solid #3a3e4a;
+}
+.elevator-shut .elevator-door {
+  transform: translateX(0);
+}
+
+.elevator-digits {
+  font: 900 26px/1 ui-monospace, 'DejaVu Sans Mono', monospace;
+  color: #ff9a3c;
+  text-shadow: 0 0 10px rgba(255, 140, 40, 0.8);
+  letter-spacing: 1px;
+}
+
+.drone-pad {
+  background: linear-gradient(160deg, #24222e, #121119);
+  border: 2.5px solid #0c0812;
+  border-radius: 26px;
+  box-shadow:
+    4px 4px 0 #0c0812,
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.pad-key {
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #3a3846, #24222e);
+  border: 2px solid #0c0812;
+  color: #f2f0f6;
+  box-shadow: 0 2px 0 #0c0812;
+  transition: transform 0.08s;
+}
+.pad-key:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+.pad-key:disabled {
+  opacity: 0.35;
+}

@@ -1,7 +1,6 @@
 # 素材來源與授權 CREDITS
 
-ENCORE.TAIPEI 的**程式碼**以 [MIT 授權](LICENSE) 釋出。電視台與大樓的素材（`public/montage/`、`public/finale/`）放在
-[`cursor/encore-tv-0d54`](https://github.com/dAAAb/encore-taipei/tree/cursor/encore-tv-0d54) 分支，一併列在這裡。以下第三方素材**不屬於** MIT 授權範圍，各自依原授權使用；
+ENCORE.TAIPEI 的**程式碼**以 [MIT 授權](LICENSE) 釋出。以下第三方素材**不屬於** MIT 授權範圍，各自依原授權使用；
 重新散布或改作時，請保留這份清單裡的作者與授權資訊。
 
 ## 聲明
@@ -62,7 +61,7 @@ ENCORE.TAIPEI 的**程式碼**以 [MIT 授權](LICENSE) 釋出。電視台與大
 
 ## 字型
 
-- [Noto Sans TC](https://fonts.google.com/noto/specimen/Noto+Sans+TC)（`public/fonts/`，只保留網站用到的字），
+- [Noto Sans TC](https://fonts.google.com/noto/specimen/Noto+Sans+TC)（`public/fonts/`、`scripts/assets/`，只保留網站用到的字），
   [SIL Open Font License 1.1](public/fonts/OFL.txt)。
 
 ## 商標

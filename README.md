@@ -1,14 +1,13 @@
 <div align="center">
 
-<img src="docs/media/club-troupe.jpg" alt="台北安可之夜：蔣萬安和可愛動物、市民伴舞在霓虹舞台上跳舞，台下群眾揮著螢光棒" width="100%" />
+<img src="docs/media/club-troupe.jpg" alt="台北安可之夜：蔣萬安和可愛動物、市民朋友一起在霓虹舞台上跳舞，台下群眾揮著螢光棒" width="100%" />
 
 # 台北安可 ENCORE.TAIPEI
 
 **為台北拼下一個黃金十年：一場市民用 AI 一起蓋的 3D 台北安可派對**
 
 [![立即體驗 encore.taipei](https://img.shields.io/badge/立即體驗-encore.taipei-ffd400?style=for-the-badge&labelColor=0c0812)](https://encore.taipei)
-[![台北安可電視台](https://img.shields.io/badge/電視台-BETA-c8234a?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/beta/)
-[![台北安可大樓](https://img.shields.io/badge/大樓-BETA-2ef2ff?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/tower/)
+[![台北安可大樓](https://img.shields.io/badge/大樓-台北安可大樓-2ef2ff?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/tower/)
 [![換你上台](https://img.shields.io/badge/換你上台-上架你的舞台-b6ffb0?style=for-the-badge&labelColor=0c0812)](https://encore.taipei/submit/)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -22,19 +21,19 @@
 > [!NOTE]
 > 粉絲創作之互動藝術作品，**非蔣萬安競選團隊官方網站**。施政成績與政見每一條都附出處；素材授權見 [CREDITS.md](CREDITS.md)。
 
-免安裝、手機電腦都能玩。三種逛法，同一份熱情：
+免安裝、手機電腦都能玩。首頁 **台北安可大舞台** 是一台電視：打開就是第 2026 台〈台北安可之夜〉，拿起遙控器往下轉，每一台都是一位市民用 AI 做的舞台。
 
 <table>
   <tr>
     <td width="33%" valign="top">
-      <a href="https://encore.taipei"><img src="docs/media/club-stage.jpg" alt="台北安可之夜" /></a>
-      <h3><a href="https://encore.taipei">台北安可之夜</a></h3>
+      <a href="https://encore.taipei/2026/"><img src="docs/media/club-stage.jpg" alt="台北安可之夜" /></a>
+      <h3><a href="https://encore.taipei/2026/">第 2026 台：台北安可之夜</a></h3>
       2033 年的台北 AI 園區夜店，市長在台上跳 MJ 舞步，黃金十年政見化成 3D 立體字飛進場，台下群眾喊出四年施政成績。
     </td>
     <td width="33%" valign="top">
-      <a href="https://encore.taipei/beta/"><img src="docs/media/tv-card.jpg" alt="台北安可電視台" /></a>
-      <h3><a href="https://encore.taipei/beta/">台北安可電視台</a></h3>
-      後室裡的一台老電視。看完台灣建設新聞特輯後開始轉台，每一台都是一位市民用 AI 做的台北安可舞台。
+      <a href="https://encore.taipei/"><img src="docs/media/tv-card.jpg" alt="台北安可大舞台" /></a>
+      <h3><a href="https://encore.taipei/">台北安可大舞台</a></h3>
+      後室裡的一台老電視。打開直接看第 2026 台，用遙控器轉台，每一台都是一位市民用 AI 做的台北安可舞台；也可以從頭看台灣建設新聞特輯。
     </td>
     <td width="33%" valign="top">
       <a href="https://encore.taipei/tower/"><img src="docs/media/tower-card.jpg" alt="台北安可大樓" /></a>
@@ -57,16 +56,16 @@
 - **搭電梯換樓層**：在樓層裡按 ↑ ↓，電梯門關上、「叮」一聲，門打開就是另一場派對；從最高樓再往上就到頂樓。
 - **頂樓花園**：串燈、躺椅、火盆、紐約水塔和「台北安可 黃金十年」跑馬燈泡招牌，留言會變成對話泡泡浮在躺椅上。
 
-## 台北安可電視台
+## 台北安可大舞台（電視）
 
 <p align="center">
   <img src="docs/media/tv-backrooms.jpg" alt="黃色壁紙的後室走廊，盡頭是一台老電視" width="49%" />
   <img src="docs/media/tv-card.jpg" alt="老電視播著第 2026 台台北安可之夜" width="49%" />
 </p>
 
-1. **後室開場**：黃色壁紙走廊盡頭的老電視「啪」一聲亮起，播出〈台北安可 新聞特輯〉：1974 十大建設、1980 新竹科學園區、
+1. **後室開場**：按「打開電視」直接轉到第 2026 台；選「從頭看開場」的話，黃色壁紙走廊盡頭的老電視「啪」一聲亮起，播出〈台北安可 新聞特輯〉：1974 十大建設、1980 新竹科學園區、
    1987 台積電、2012 美國免簽、2016 北門重見天日、2025 公館圓環改正交路口。電視一路從木頭電視、映像管變成液晶，推進到滿版。
-2. **轉台**：漂浮遙控器或鍵盤 ← → 轉台，有雜訊、音效與台號顯示；彩色鍵會傳給舞台，例如叫伴舞上台。
+2. **轉台**：漂浮遙控器或鍵盤 ← → 轉台，有雜訊、音效與台號顯示；最下排彩色鍵是 5️⃣ 音效、📱 Duo、📺 電視、🕹️ 遙控器模式。YouTube 連結的頻道會用內嵌播放器滿版播放。
 3. **上架你的舞台**：最後一台「訊號徵求中」有「一鍵交給你的 AI Agent」，把完整 prompt 貼給 Claude、Gemini 或 Cursor 就能開工；
    送出網址後立刻能在電視上預覽，管理員審核通過才正式上架。
 4. **關機彩蛋**：電視在大安森林公園露天音樂台噴火升空，穿過雲層看見以台灣為中心的地球，星星連成市長的臉眨眼，片尾名單滾動。
@@ -79,7 +78,7 @@
 
 | 看點 | 內容 |
 | --- | --- |
-| 舞台 | 卡通 3D 市長角色，40 拍一輪的 MJ 式旋轉、月球漫步與踮腳舞步，跟著節拍跳；電視台版本還能叫可愛動物（橘貓、柴犬、臺灣黑熊、石虎…）與市民伴舞上台 |
+| 舞台 | 卡通 3D 市長角色，40 拍一輪的 MJ 式旋轉、月球漫步與踮腳舞步，跟著節拍跳；按「大家一起上台」，可愛動物（橘貓、柴犬、臺灣黑熊、石虎…）和市民朋友會一起上台跳舞 |
 | 3D 政見泡泡 | 從 22 條黃金十年政見中輪流挑選，每個字都是擠出成型的 3D 字，從畫面外旋轉飛入 |
 | 群眾 | 約 450 位背對鏡頭的人影揮應援棒、錄影，隨機喊出 35 項四年施政成績 |
 | 政績資料 | 側欄列出所有政績與政見，**每條附出處連結** |
@@ -90,7 +89,7 @@
 
 任何人都可以用 AI 做一座自己的台北安可舞台，上架成電視台的一台、大樓的一層：
 
-1. 打開上架頁 **[encore.taipei/submit](https://encore.taipei/submit/)**（或在[電視台](https://encore.taipei/beta/)轉到最後一台、到[大樓](https://encore.taipei/tower/)點「招租中」那一層）。
+1. 打開上架頁 **[encore.taipei/submit](https://encore.taipei/submit/)**（或在[電視](https://encore.taipei/)轉到最後一台、到[大樓](https://encore.taipei/tower/)點「招租中」那一層）。
 2. 按「一鍵交給你的 AI Agent」，把 prompt 貼給你的 AI 助手，做好後部署成公開的 `https://` 網址（要允許被 iframe 嵌入）。
 3. 貼上網址送出，馬上帶你到電視台預覽；管理員審核通過後所有人都看得到，還會自動產生分享預覽圖。
 
@@ -103,21 +102,25 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:4733
+npm run dev        # Vite 預設 http://localhost:5173
 npm run build      # 產生 dist/
 ```
 
-網址加上 `?autostart=1` 可略過進場畫面；`?view=close` 直接以特寫視角開啟。
+首頁是電視（`index.html`），單獨的舞台在 `/club/`（加 `?autostart=1` 略過進場畫面、`?view=close` 以特寫視角開啟），另有 `/tower/`、`/submit/` 與管理後台 `/admin/`。
+完整的架構、遙控器協定、Duo 模式與部署細節見 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。
 
 | 分支 | 內容 | 網址 |
 | --- | --- | --- |
-| `main` | 台北安可之夜 | [encore.taipei](https://encore.taipei) |
-| [`cursor/encore-tv-0d54`](https://github.com/dAAAb/encore-taipei/tree/cursor/encore-tv-0d54) | 電視台、大樓、管理後台、Supabase 資料庫與 Edge Functions | [/beta/](https://encore.taipei/beta/)、[/tower/](https://encore.taipei/tower/) |
+| `main` | 正式站：台北安可大舞台（電視）、各頻道、大樓、上架頁、管理後台 | [encore.taipei](https://encore.taipei) |
+| [`cursor/encore-tv-0d54`](https://github.com/dAAAb/encore-taipei/tree/cursor/encore-tv-0d54) | 下一版的預覽，測試順利後同步到 `main` | [/beta/](https://encore.taipei/beta/) |
 
-GitHub Actions（`.github/workflows/deploy-pages.yml`）會把兩個分支一起建置並發布到 GitHub Pages：推到 `main`、手動執行、管理員上架頻道，或每 10 分鐘偵測到頻道清單變動時都會重新部署。
+GitHub Actions（`.github/workflows/deploy-pages.yml`）把 `main` 建置到網站根目錄、Beta 分支建置到 `/beta/`，一起發布到 GitHub Pages：推到 `main`、手動執行、管理員上架頻道，或每 10 分鐘偵測到頻道清單變動時都會重新部署。
 
 ```
 src/
+  tv/           電視（首頁）：後室開場、頻道、遙控器、Duo、上架、關機彩蛋
+  tower/        台北安可大樓
+  submit/ admin/ 上架頁、管理後台
   scene/        夜店、舞台與 LED、市長角色與舞步、3D 政見泡泡、群眾、2033 台北 AI 園區
   three/        toon 材質與墨線、幾何快取、3D 字型與排版
   audio/        節拍時鐘、Web Audio 合成器、YouTube 播放器

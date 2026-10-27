@@ -1,0 +1,30 @@
+html,
+body,
+#root {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  overflow-x: hidden;
+  overscroll-behavior: auto;
+  background: #0b0710;
+}
+
+.submit-bg {
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 0%, rgba(255, 42, 77, 0.22), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 0% 30%, rgba(46, 242, 255, 0.12), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 4px),
+    #0b0710;
+}
+
+.color-bars {
+  background: linear-gradient(90deg, #c0c0c0 0 14.28%, #c0c000 0 28.57%, #00c0c0 0 42.85%, #00c000 0 57.14%, #c000c0 0 71.42%, #c00000 0 85.71%, #0000c0 0);
+}
+
+.submit-title {
+  color: #fff4d6;
+  text-shadow:
+    3px 3px 0 #c8234a,
+    6px 6px 0 #0c0812,
+    0 0 28px rgba(255, 60, 110, 0.5);
+}

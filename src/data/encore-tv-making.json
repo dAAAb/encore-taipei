@@ -1,0 +1,9 @@
+{
+  "startedAt": "2026-10-23T03:49:00+08:00",
+  "minutes": 80,
+  "modelCalls": 220,
+  "tokens": { "total": 49000000, "cacheRead": 47500000, "cacheWrite": 410000, "output": 140000 },
+  "usd": 16.3,
+  "twd": 530,
+  "note": "Estimated from the session transcript at Claude Opus 5.5 list prices and the CBC 2026/10/22 rate 32.508, including the research subagent; actual Cursor billing may differ."
+}

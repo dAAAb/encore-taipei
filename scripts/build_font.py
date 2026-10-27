@@ -34,7 +34,7 @@ def chars_3d() -> str:
 
 def chars_ui() -> str:
     seen = set(ASCII)
-    files = [ROOT / "index.html", *(ROOT / "src").rglob("*")]
+    files = [*ROOT.glob("*/index.html"), ROOT / "index.html", *(ROOT / "src").rglob("*")]
     for f in files:
         if f.is_file() and f.suffix in {".ts", ".tsx", ".json", ".html", ".css"}:
             seen.update(f.read_text("utf-8"))

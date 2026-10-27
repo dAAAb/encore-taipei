@@ -7,6 +7,7 @@ import { loadYouTubeApi, TAIPEI_ENCORE_VIDEO_ID, type YTPlayer } from './youtube
 let player: YTPlayer | null = null
 let locked = false
 let tapped = false
+let outLevel = 1
 
 const UNLOCK_EVENTS = ['click', 'touchend', 'keydown', 'pointerup'] as const
 /** How long the MV may take to load before the built-in beat takes over. */
@@ -17,8 +18,8 @@ let waitTimer = 0
 const resumeAudio = () => Promise.race([engine.resume().catch(() => {}), new Promise<void>((r) => setTimeout(r, 300))])
 
 /**
- * When the browser refuses to start sound (Safari, or the MV became ready after the tap),
- * keep the MV rolling muted so the beat and picture run, and turn the sound on at the next tap or key.
+ * Safari won't start sound in a frame the user hasn't touched (the TV hub loads this page in an iframe).
+ * Keep the MV rolling muted so the beat and picture run, and turn the sound on at the first tap or key.
  */
 function lockSound() {
   if (locked || tapped) return
@@ -36,8 +37,10 @@ function lockSound() {
     engine.resume().catch(() => {})
     const mode = useClub.getState().musicMode
     if (mode === 'youtube' && player) {
-      player.unMute()
-      player.setVolume(85)
+      if (outLevel > 0) {
+        player.unMute()
+        player.setVolume(Math.round(85 * outLevel))
+      }
       player.playVideo()
     } else if (mode === 'synth') engine.startMusic()
   }
@@ -110,7 +113,7 @@ export async function applyMusic(mode: MusicMode) {
     if (locked) player!.mute()
     else {
       player!.unMute()
-      player!.setVolume(85)
+      player!.setVolume(Math.round(85 * outLevel))
     }
     player!.playVideo()
     setTimeout(() => {
@@ -138,4 +141,17 @@ export async function applyMusic(mode: MusicMode) {
   engine.startMusic()
   if (engine.ctx?.state !== 'running') lockSound()
   return 'synth' as const
+}
+
+/** Volume from the Encore TV remote (0–1), applied to both the MV and the synth fallback. */
+export function setExternalVolume(volume: number, muted: boolean) {
+  const level = muted ? 0 : Math.max(0, Math.min(1, volume))
+  outLevel = level
+  engine.setOutput(level)
+  if (!player || locked) return
+  if (level === 0) player.mute()
+  else {
+    player.unMute()
+    player.setVolume(Math.round(85 * level))
+  }
 }
