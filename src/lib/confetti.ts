@@ -60,6 +60,8 @@ export class Confetti {
   private w = 0
   private h = 0
   private dpr = 1
+  /** Piece size grows with the screen so confetti still reads on a TV or a large monitor. */
+  private k = 1
   private gravity: Vec = { x: 0, y: 1 }
   private gravityTarget: Vec = { x: 0, y: 1 }
   private air: Vec = { x: 0, y: 0 }
@@ -150,7 +152,8 @@ export class Confetti {
     const ex = cx + down.x * reach
     const ey = cy + down.y * reach
     const span = Math.abs(along.x) * this.w + Math.abs(along.y) * this.h
-    const perSide = Math.round((this.lite ? 75 : 130) * p)
+    const perSide = Math.round((this.lite ? 75 : 150) * p)
+    const k = this.k
     const H = Math.max(this.w, this.h) * 0.62 + Math.min(this.w, this.h) * 0.38
 
     for (const side of [-1, 1]) {
@@ -172,8 +175,8 @@ export class Confetti {
           y: oy + rand(-12, 12),
           vx: dir.x * speed,
           vy: dir.y * speed,
-          w: dot ? rand(7, 11) : rand(7, 13),
-          h: dot ? 0 : rand(3.5, 6.5),
+          w: (dot ? rand(7, 11) : rand(7, 13)) * k,
+          h: dot ? 0 : rand(3.5, 6.5) * k,
           rot: rand(0, Math.PI * 2),
           spin: rand(-7, 7),
           flip: rand(0, Math.PI * 2),
@@ -201,7 +204,7 @@ export class Confetti {
           sway: rand(0.24, 0.42),
           swayRate: rand(3.5, 5.5),
           phase: rand(0, Math.PI * 2),
-          width: rand(4.5, 7),
+          width: rand(4.5, 7) * k,
           color: pick(),
           age: 0,
           trail: Array.from({ length: TRAIL }, () => [x, y]).flat(),
@@ -217,6 +220,7 @@ export class Confetti {
     this.dpr = Math.min(this.lite ? 1.5 : 2, window.devicePixelRatio || 1)
     this.w = c.clientWidth
     this.h = c.clientHeight
+    this.k = Math.max(1, Math.min(1.8, Math.min(this.w, this.h) / 720))
     c.width = Math.round(this.w * this.dpr)
     c.height = Math.round(this.h * this.dpr)
   }
@@ -294,7 +298,7 @@ export class Confetti {
       const tr = r.trail
       const dx = r.x - tr[0]
       const dy = r.y - tr[1]
-      const seg = 4.5
+      const seg = 4.5 * this.k
       if (dx * dx + dy * dy > seg * seg) {
         tr.unshift(r.x, r.y)
         tr.length = TRAIL * 2
