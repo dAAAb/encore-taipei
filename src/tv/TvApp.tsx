@@ -3,6 +3,7 @@ import { Building2, Clapperboard, Volume2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
 import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from './channel-data'
+import { ChannelOverview } from './components/ChannelOverview'
 import { ChannelScreen } from './components/ChannelScreen'
 import { DuoPairPanel } from './duo/DuoPairPanel'
 import { useWakeLock } from './duo/link'
@@ -143,8 +144,13 @@ export function TvApp() {
     if (phase !== 'tv') return
     const handle = (key: string) => {
       const s = useTv.getState()
-      if (s.submitOpen || s.guideOpen) return false
+      if (s.submitOpen || s.guideOpen || s.overviewOpen) return false
       switch (key) {
+        case 'g':
+        case 'G':
+          s.setInfoOpen(false)
+          s.setOverviewOpen(true)
+          return true
         case 'ArrowRight':
         case 'ArrowUp':
         case 'PageUp':
@@ -332,6 +338,7 @@ export function TvApp() {
             DUO_MODE !== 'tv' && <Remote onPowerOff={powerOff} entry={entry} onDigit={digit} />
           )}
           {duoRoom && <DuoPairPanel room={duoRoom} status={duo.status} remotes={duo.remotes} joins={duo.joins} />}
+          <ChannelOverview />
           <InfoSheet />
           <SubmitForm />
           <Guide />

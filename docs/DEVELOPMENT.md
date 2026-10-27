@@ -129,6 +129,8 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 3. 截圖打不開或幾乎是一片純色（錯誤頁、空白頁）時，改用舞台網站自己的 og:image → 投稿時存下的 og:image → 作者 GitHub repo 的預覽圖，一樣加上台號和標籤。
 4. 都沒有就用文字卡。
 本機建置預設不截圖，要測試可加 `ENCORE_OG_SHOTS=1`。
+每一台拍分享圖時，也會另存一張沒有台號與標籤的 640×336 縮圖 `thumbs/<台號>.jpg`，給遙控器的「頻道總覽」（`src/tv/components/ChannelOverview.tsx`）使用；沒有縮圖時依序改用分享圖、舞台自己的 og:image、文字卡。
+
 首頁的分享圖是 `public/og/home.jpg`（第 2026 台舞台全景）。README 裡的大舞台卡片 `docs/media/tv-card.jpg` 由 `scripts/og/tv-card.html` 用無頭 Chrome 截成 1200×630。
 
 投稿表單貼上網址後，會透過 Supabase Edge Function `encore-meta`（`supabase/functions/encore-meta/`）

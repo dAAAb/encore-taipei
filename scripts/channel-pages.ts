@@ -103,6 +103,14 @@ function shotPage(src: string, n: number, title: string) {
 </body></html>`
 }
 
+/** The same still alone, for the channel guide. */
+function thumbPage(src: string) {
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 640px; height: 336px; overflow: hidden; background: #000; }
+  img { width: 640px; height: 336px; object-fit: cover; display: block; }
+</style></head><body><img src="${esc(src)}" alt=""></body></html>`
+}
+
 /**
  * `blank` when the still is (nearly) one flat colour: an error page, a site that refused to load, or a stage still black.
  */
@@ -192,6 +200,9 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
       const { Resvg } = await import('@resvg/resvg-js')
       const ogDir = path.join(out, 'og')
       fs.mkdirSync(ogDir, { recursive: true })
+      // Clean 640×336 stills for the channel guide (the share images carry the channel tag and number on top).
+      const thumbDir = path.join(out, 'thumbs')
+      fs.mkdirSync(thumbDir, { recursive: true })
       const card = (file: string, svg: string) => {
         const target = path.join(ogDir, file)
         if (fs.existsSync(target)) return
@@ -219,6 +230,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         const file = HANDMADE[ch.url] && path.join(ogDir, HANDMADE[ch.url])
         if (file && fs.existsSync(file)) {
           fs.copyFileSync(file, path.join(ogDir, `${ch.channel}.jpg`))
+          fs.copyFileSync(file, path.join(thumbDir, `${ch.channel}.jpg`))
           handmade.add(ch.channel)
         }
       }
@@ -236,11 +248,14 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           const old = prev[ch.channel]
           const fresh = old && old.key === key && Date.now() - Date.parse(old.at) < SHOT_MAX_AGE_DAYS * 864e5
           if (fresh) {
-            const bytes = await fetch(`${root}og/${ch.channel}.jpg`, { signal: AbortSignal.timeout(8000) })
-              .then((r) => (r.ok ? r.arrayBuffer() : null))
-              .catch(() => null)
-            if (bytes) {
+            const get = (file: string) =>
+              fetch(`${root}${file}`, { signal: AbortSignal.timeout(8000) })
+                .then((r) => (r.ok ? r.arrayBuffer() : null))
+                .catch(() => null)
+            const [bytes, thumb] = await Promise.all([get(`og/${ch.channel}.jpg`), get(`thumbs/${ch.channel}.jpg`)])
+            if (bytes && thumb) {
               fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), Buffer.from(bytes))
+              fs.writeFileSync(path.join(thumbDir, `${ch.channel}.jpg`), Buffer.from(thumb))
               shots[ch.channel] = old
               continue
             }
@@ -292,8 +307,10 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                 }
               }
               const card = await browser.newPage()
+              const thumb = await browser.newPage()
               try {
                 await card.setViewport({ width: 1200, height: 630 })
+                await thumb.setViewport({ width: 640, height: 336 })
                 for await (const [src, from] of candidates()) {
                   try {
                     await card.setContent(shotPage(src, ch.channel, ch.title), { waitUntil: 'load', timeout: 20000 })
@@ -305,6 +322,8 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                     }
                     const jpg = await card.screenshot({ type: 'jpeg', quality: 86 })
                     fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
+                    await thumb.setContent(thumbPage(src), { waitUntil: 'load', timeout: 20000 })
+                    fs.writeFileSync(path.join(thumbDir, `${ch.channel}.jpg`), await thumb.screenshot({ type: 'jpeg', quality: 80 }))
                     shots[ch.channel] = { key: shotKey(ch), at: new Date().toISOString(), from }
                     config.logger.info(`[channel-pages] share image for channel ${ch.channel} (${from})`)
                     break
@@ -314,6 +333,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                 }
               } finally {
                 await card.close().catch(() => {})
+                await thumb.close().catch(() => {})
               }
             }
           } finally {
