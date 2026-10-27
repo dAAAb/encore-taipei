@@ -88,9 +88,11 @@ function useBox() {
   return [ref, box] as const
 }
 
-/** The channel's share image, falling back to its text card, then to its title on a dark tile. */
+/** The channel's guide thumbnail, then its share image and text card, then its title on a dark tile. */
 function Thumb({ entry, on, onPick, className }: { entry: DialEntry; on: boolean; onPick: () => void; className: string }) {
-  const [src, setSrc] = useState<string | null>(`${BASE}og/${entry.n}.${entry.k === 'live' ? 'jpg' : 'png'}`)
+  const sources = entry.k === 'live' ? [`${BASE}thumbs/${entry.n}.jpg`, `${BASE}og/${entry.n}.jpg`, `${BASE}og/${entry.n}.png`] : [`${BASE}og/${entry.n}.png`]
+  const [at, setAt] = useState(0)
+  const src = sources[at] ?? null
   const ref = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (!on) return
@@ -117,7 +119,7 @@ function Thumb({ entry, on, onPick, className }: { entry: DialEntry; on: boolean
           loading="lazy"
           draggable={false}
           className="h-full w-full object-cover"
-          onError={() => setSrc((s) => (s?.endsWith('.jpg') ? `${BASE}og/${entry.n}.png` : null))}
+          onError={() => setAt((i) => i + 1)}
         />
       ) : (
         <span className="line-clamp-2 p-1.5 text-[10px] leading-tight text-white/70">{entry.k === 'empty' ? '訊號徵求中' : entry.t}</span>

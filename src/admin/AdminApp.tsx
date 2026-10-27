@@ -1,9 +1,10 @@
 import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Settings2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { rpc, RpcError, SUPABASE_KEY, SUPABASE_URL, type AdminChannel } from '@/tv/channel-data'
+import { fetchSiteMeta, rpc, RpcError, SUPABASE_KEY, SUPABASE_URL, type AdminChannel } from '@/tv/channel-data'
 import { useCopy } from '@/tv/components/useCopy'
 import { channelPath, stageFrameUrl, stageUrl } from '@/tv/routing'
+import { youtubeId, youtubeThumbnails } from '@/tv/youtube'
 
 const KEY = 'encore.adminKey'
 const REBUILD_URL = 'https://github.com/dAAAb/encore-taipei/actions/workflows/deploy-pages.yml'
@@ -87,15 +88,40 @@ function useShareCard(ch: AdminChannel, nonce: number): ShareCard | null {
   return card
 }
 
+/** The picture the stage chose for itself: the og:image saved at submission, the video cover, or its live og:image. */
+function useStageImage(ch: AdminChannel) {
+  const yt = youtubeId(ch.url)
+  const [live, setLive] = useState<{ url: string; image: string | null } | null>(null)
+  const lookup = !ch.og_image && !yt && /^https:\/\//.test(ch.url)
+  useEffect(() => {
+    if (!lookup) return
+    const ctrl = new AbortController()
+    fetchSiteMeta(ch.url, ctrl.signal)
+      .then((m) => setLive({ url: ch.url, image: m?.image ?? null }))
+      .catch(() => {})
+    return () => ctrl.abort()
+  }, [ch.url, lookup])
+  if (ch.og_image) return ch.og_image
+  if (yt) return youtubeThumbnails(yt)[1]
+  return live?.url === ch.url ? live.image : null
+}
+
 function Capsule({ ch, nonce }: { ch: AdminChannel; nonce: number }) {
   const card = useShareCard(ch, nonce)
-  const [broken, setBroken] = useState<string | null>(null)
-  const src = ch.og_image ?? card?.image ?? null
+  const own = useStageImage(ch)
+  const [broken, setBroken] = useState<string[]>([])
+  const src = [own, card?.image].find((u): u is string => !!u && !broken.includes(u)) ?? null
   const hue = (ch.title.length * 47 + (ch.channel ?? 0) * 13) % 360
   return (
     <div className="relative">
-      {src && broken !== src ? (
-        <img src={src} alt={`第 ${ch.channel} 台分享預覽圖`} className="aspect-[1200/630] w-full bg-black object-cover" loading="lazy" onError={() => setBroken(src)} />
+      {src ? (
+        <img
+          src={src}
+          alt={`第 ${ch.channel} 台預覽圖`}
+          className="aspect-[1200/630] w-full bg-black object-cover"
+          loading="lazy"
+          onError={() => setBroken((b) => [...b, src])}
+        />
       ) : (
         <div
           className="relative flex aspect-[1200/630] w-full items-end overflow-hidden p-3"
@@ -107,11 +133,11 @@ function Capsule({ ch, nonce }: { ch: AdminChannel; nonce: number }) {
       )}
       {ch.status === 'live' && card && (
         <span
-          className={`absolute bottom-2 left-2 flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-black ${card.fresh || ch.og_image ? 'bg-[#10151d]/85 text-[#b6ffb0]' : 'bg-[#ffd400] text-[#10151d]'}`}
-          title={card.fresh || ch.og_image ? '分享連結已經會顯示這張圖' : '分享頁還是上次建置的版本，每小時第 17 分自動重建'}
+          className={`absolute bottom-2 left-2 flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-black ${card.fresh ? 'bg-[#10151d]/85 text-[#b6ffb0]' : 'bg-[#ffd400] text-[#10151d]'}`}
+          title={card.fresh ? '分享頁已經是這一台的最新內容' : '分享頁還是上次建置的版本，頻道清單有變動時 10 分鐘內會自動重建'}
         >
-          {card.fresh || ch.og_image ? <Check className="size-3" /> : <Clock className="size-3" />}
-          {card.fresh || ch.og_image ? '分享圖已更新' : '分享圖等待重建'}
+          {card.fresh ? <Check className="size-3" /> : <Clock className="size-3" />}
+          {card.fresh ? '分享圖已更新' : '分享圖等待重建'}
         </span>
       )}
     </div>

@@ -4,7 +4,7 @@ import { track } from '@/lib/analytics'
 import { toLastSlot, shareChannel } from '../duo/tvControl'
 import { sfx } from '../sfx'
 import { useTv, type Slot } from '../store'
-import { youtubeId } from '../youtube'
+import { youtubeId, youtubeThumbnails } from '../youtube'
 
 const BASE = import.meta.env.BASE_URL
 const NEW_DAYS = 7
@@ -16,12 +16,17 @@ const titleOf = (s: Slot) => (s.kind === 'empty' ? '訊號徵求中' : s.channel
 const authorOf = (s: Slot) => (s.kind === 'empty' ? '' : s.channel.author)
 const createdOf = (s: Slot) => (s.kind === 'live' && s.channel.created_at ? Date.parse(s.channel.created_at) : 0)
 
-/** Clean guide still, then the share image, the stage's own preview, the text card; null shows a title tile. */
+/**
+ * The built guide thumbnail (the stage's own og:image, else a screenshot), then the og:image saved at submission,
+ * the video cover, the share image, the text card; past the end a title tile.
+ */
 function thumbSources(s: Slot): string[] {
   if (s.kind === 'empty') return []
   const own = s.channel.og_image?.startsWith('https://') ? [s.channel.og_image] : []
-  if (s.kind === 'pending') return own
-  return [`${BASE}thumbs/${s.number}.jpg`, `${BASE}og/${s.number}.jpg`, ...own, `${BASE}og/${s.number}.png`]
+  const yt = youtubeId(s.channel.url)
+  const cover = yt ? [youtubeThumbnails(yt)[1]] : []
+  if (s.kind === 'pending') return [...own, ...cover]
+  return [`${BASE}thumbs/${s.number}.jpg`, ...own, ...cover, `${BASE}og/${s.number}.jpg`, `${BASE}og/${s.number}.png`]
 }
 
 function Thumb({ slot, className = '' }: { slot: Slot; className?: string }) {

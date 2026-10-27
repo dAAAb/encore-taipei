@@ -12,7 +12,7 @@ const FONTS = ['og-black.ttf', 'og-medium.ttf'].map((f) => path.resolve(import.m
 /** Screenshots are reused from the live site until the stage's URL or title changes, or they get this old. */
 const SHOT_MAX_AGE_DAYS = 7
 /** Bump to re-shoot every channel once (e.g. after changing how shots are taken). */
-const SHOT_VERSION = 3
+const SHOT_VERSION = 4
 /** YouTube channels get their own key, so a screenshot taken of the YouTube page before they were embedded is retaken. */
 const shotKey = (ch: Channel) => `${SHOT_VERSION}|${youtubeId(ch.url) ? 'youtube|' : ''}${ch.url}|${ch.title}`
 /** Hand-made share images for the built-in stages, keyed by stage URL so renumbering channels can't mix them up. */
@@ -293,14 +293,15 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
 
               // Fallbacks, fetched only if the screenshot is unusable: the stage's own og:image, the one saved at
               // submission, then the GitHub preview of the author's repo.
+              const own = /^https:\/\//.test(ch.url) && !yt ? await stageOgImage(ch.url) : null
+              const saved = ch.og_image?.startsWith('https://') ? ch.og_image : null
+              let cardSrc: string | null = null
               async function* candidates(): AsyncGenerator<[string, ShotEntry['from']]> {
                 if (still) yield [still, 'stage']
                 for (const u of yt ? youtubeThumbnails(yt) : []) {
                   const data = await asDataUrl(u)
                   if (data) yield [data, 'stage']
                 }
-                const own = /^https:\/\//.test(ch.url) ? await stageOgImage(ch.url) : null
-                const saved = ch.og_image?.startsWith('https://') ? ch.og_image : null
                 for (const u of new Set([own, saved, githubPreview(ch.author_url)].filter((u): u is string => !!u))) {
                   const data = await asDataUrl(u)
                   if (data) yield [data, 'preview']
@@ -322,13 +323,33 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                     }
                     const jpg = await card.screenshot({ type: 'jpeg', quality: 86 })
                     fs.writeFileSync(path.join(ogDir, `${ch.channel}.jpg`), jpg)
-                    await thumb.setContent(thumbPage(src), { waitUntil: 'load', timeout: 20000 })
-                    fs.writeFileSync(path.join(thumbDir, `${ch.channel}.jpg`), await thumb.screenshot({ type: 'jpeg', quality: 80 }))
+                    cardSrc = src
                     shots[ch.channel] = { key: shotKey(ch), at: new Date().toISOString(), from }
                     config.logger.info(`[channel-pages] share image for channel ${ch.channel} (${from})`)
                     break
                   } catch (e) {
                     config.logger.warn(`[channel-pages] channel ${ch.channel}: ${from} image failed: ${(e as Error).message}`)
+                  }
+                }
+
+                // The guide thumbnail shows the picture the stage chose for itself (its og:image, or the video's cover);
+                // the screenshot is only the fallback.
+                async function* thumbCandidates(): AsyncGenerator<string> {
+                  for (const u of new Set([...(yt ? youtubeThumbnails(yt) : []), own, saved].filter((u): u is string => !!u))) {
+                    const data = await asDataUrl(u)
+                    if (data) yield data
+                  }
+                  if (still) yield still
+                  if (cardSrc && cardSrc !== still) yield cardSrc
+                }
+                for await (const src of thumbCandidates()) {
+                  try {
+                    await thumb.setContent(thumbPage(src), { waitUntil: 'load', timeout: 20000 })
+                    if (((await thumb.evaluate(INSPECT_STILL)) as string) !== 'ok') continue
+                    fs.writeFileSync(path.join(thumbDir, `${ch.channel}.jpg`), await thumb.screenshot({ type: 'jpeg', quality: 80 }))
+                    break
+                  } catch (e) {
+                    config.logger.warn(`[channel-pages] channel ${ch.channel}: thumbnail failed: ${(e as Error).message}`)
                   }
                 }
               } finally {
