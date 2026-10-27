@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin, ResolvedConfig } from 'vite'
+import { CHANNEL_ALIASES } from '../src/tv/aliases.ts'
 import { FALLBACK_CHANNELS, fetchLiveChannels, FIRST_CHANNEL, type Channel } from '../src/tv/channel-data.ts'
 import { youtubeId, youtubeThumbnails } from '../src/tv/youtube.ts'
 
@@ -374,23 +375,43 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         }
       }
 
+      const liveMeta = (ch: Channel, url: string) => ({
+        title: `第 ${ch.channel} 台｜${ch.title}｜台北安可大舞台`,
+        description: `${ch.author} 做的台北安可舞台。${ch.message ?? ''}`.slice(0, 160),
+        image: images.get(ch.channel) ?? versioned(`${ch.channel}.png`),
+        url,
+      })
       for (let n = FIRST_CHANNEL; n <= last + SPARE_CHANNELS; n++) {
         const ch = channels.find((c) => c.channel === n)
-        let image = images.get(n)
-        if (!image) {
-          card(`${n}.png`, channelCard(n, !!ch))
-          image = versioned(`${n}.png`)
-        }
-        const html = setMeta(template, {
-          title: ch ? `第 ${n} 台｜${ch.title}｜台北安可大舞台` : `第 ${n} 台｜訊號徵求中｜台北安可大舞台`,
-          description: ch
-            ? `${ch.author} 做的台北安可舞台。${ch.message ?? ''}`.slice(0, 160)
-            : `這一台還空著。用 AI 做一座你的台北安可舞台，送出就能佔下第 ${n} 台。`,
-          image,
-          url: `${root}${n}/`,
-        })
+        if (!images.get(n)) card(`${n}.png`, channelCard(n, !!ch))
+        const html = setMeta(
+          template,
+          ch
+            ? liveMeta(ch, `${root}${n}/`)
+            : {
+                title: `第 ${n} 台｜訊號徵求中｜台北安可大舞台`,
+                description: `這一台還空著。用 AI 做一座你的台北安可舞台，送出就能佔下第 ${n} 台。`,
+                image: versioned(`${n}.png`),
+                url: `${root}${n}/`,
+              },
+        )
         fs.mkdirSync(path.join(out, String(n)), { recursive: true })
         fs.writeFileSync(path.join(out, String(n), 'index.html'), html)
+      }
+      // Short links and retired numbers: the target channel's page, plus tags telling the TV which channel to open.
+      for (const [slug, id] of Object.entries(CHANNEL_ALIASES)) {
+        const ch = channels.find((c) => c.id === id)
+        if (!ch) {
+          config.logger.warn(`[channel-pages] alias /${slug}/ points at a channel that is not live`)
+          continue
+        }
+        if (/^\d+$/.test(slug) && channels.some((c) => c.channel === Number(slug))) continue
+        const html = setMeta(template, liveMeta(ch, `${root}${slug}/`)).replace(
+          '</head>',
+          `  <meta name="encore:channel" content="${ch.channel}" />\n  <meta name="encore:alias" content="${esc(id)}" />\n  </head>`,
+        )
+        fs.mkdirSync(path.join(out, slug), { recursive: true })
+        fs.writeFileSync(path.join(out, slug, 'index.html'), html)
       }
       // The tower gets one page per occupied floor; it is also published at the site root, its canonical home.
       const towerIndex = path.join(out, 'tower', 'index.html')

@@ -9,6 +9,17 @@ export function channelFromPath(pathname = location.pathname): number | null {
   return m ? Number(m[1]) : null
 }
 
+const pageMeta = (name: string) => document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)?.content ?? null
+
+/** A short link or retired number names the channel it opens (and that channel's id, in case it moved since the build). */
+export function aliasFromPage(): { n: number; id: string | null } | null {
+  const n = Number(pageMeta('encore:channel'))
+  return n ? { n, id: pageMeta('encore:alias') } : null
+}
+
+/** The channel this page should open: a short link's target, or the number in the path. */
+export const deepLinkFromPage = () => aliasFromPage()?.n ?? channelFromPath()
+
 /** The submit page is built with the station but published at the site root (/submit/), next to /tower/. */
 export const SUBMIT_PATH = `${BASE.replace(/beta\/$/, '')}submit/`
 
@@ -38,8 +49,12 @@ export function postStageVolume(win: Window | null | undefined, url: string, vol
   if (youtubeId(url)) for (const cmd of youtubeVolumeCommands(volume, muted)) win.postMessage(cmd, '*')
 }
 
+/** The short link the page was opened on; once the visitor changes channel the address shows channel numbers. */
+const aliasPath = location.pathname
+
 export function syncUrl(n: number | null, title?: string) {
   const path = n == null ? BASE : channelPath(n)
-  if (location.pathname !== path) history.replaceState(null, '', path + location.search)
+  const onAlias = n != null && aliasFromPage()?.n === n && location.pathname === aliasPath
+  if (location.pathname !== path && !onAlias) history.replaceState(null, '', path + location.search)
   document.title = title ?? '台北安可大舞台｜台北安可之夜・蔣萬安黃金十年政見 3D 互動派對'
 }
