@@ -38,7 +38,7 @@ export function DataSheet() {
         </SheetHeader>
         <Tabs defaultValue="done" className="min-h-0 flex-1 px-4 pb-4">
           <TabsList className="w-full border-2 border-[#0c0812] bg-[#efe3c9]">
-            <TabsTrigger value="done" className="font-black data-active:bg-[#ffd400]">四年政績 {achievements.length}</TabsTrigger>
+            <TabsTrigger value="done" className="font-black data-active:bg-[#ffd400]">精選政績 {achievements.length}</TabsTrigger>
             <TabsTrigger value="next" className="font-black data-active:bg-[#ffd400]">黃金十年政見 {platform.length}</TabsTrigger>
             <TabsTrigger value="about" className="font-black data-active:bg-[#ffd400]">關於</TabsTrigger>
           </TabsList>
