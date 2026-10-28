@@ -396,8 +396,10 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
                 url: `${root}${n}/`,
               },
         )
-        fs.mkdirSync(path.join(out, String(n)), { recursive: true })
+        fs.mkdirSync(path.join(out, String(n), 'info'), { recursive: true })
         fs.writeFileSync(path.join(out, String(n), 'index.html'), html)
+        // /2027/info/ opens the same channel with its info sidebar out; same preview, its own address.
+        fs.writeFileSync(path.join(out, String(n), 'info', 'index.html'), html.replaceAll(`${root}${n}/`, `${root}${n}/info/`))
       }
       // Short links and retired numbers: the target channel's page, plus tags telling the TV which channel to open.
       for (const [slug, id] of Object.entries(CHANNEL_ALIASES)) {

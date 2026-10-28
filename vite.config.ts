@@ -35,7 +35,7 @@ function channelRoutes(): Plugin {
   const rewrite = (url = '') =>
     url
       .replace(/^(.*?\/)me\/?(\?.*)?$/, (_m, pre: string, q = '') => `${pre}submit/index.html${q}`)
-      .replace(/^(.*?\/)(\d{4,5})\/?(\?.*)?$/, (_m, pre: string, _n, q = '') => `${pre}index.html${q}`)
+      .replace(/^(.*?\/)(\d{4,5})(\/info)?\/?(\?.*)?$/, (_m, pre: string, _n, _i, q = '') => `${pre}index.html${q}`)
   return {
     name: 'channel-routes',
     configureServer(server) {
