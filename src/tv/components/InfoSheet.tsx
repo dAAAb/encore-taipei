@@ -4,6 +4,7 @@ import making from '@/data/making-of.json'
 import { track } from '@/lib/analytics'
 import { channelUrl, stageUrl } from '../routing'
 import { useTv } from '../store'
+import { RichMessage } from './RichMessage'
 import { useCopy } from './useCopy'
 
 /** Channel details: who made it, what they said, the prompt, and a share link for this channel. */
@@ -50,7 +51,7 @@ export function InfoSheet() {
         </SheetHeader>
 
         <div className="space-y-4 p-5">
-          {ch?.message && <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-[#2a2f52]">{ch.message}</p>}
+          {ch?.message && <RichMessage text={ch.message} />}
 
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className="ink-btn flex items-center justify-center gap-1.5 px-3 py-2 text-sm" data-on="true" onClick={share}>

@@ -4,6 +4,7 @@ import path from 'node:path'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { CHANNEL_ALIASES } from '../src/tv/aliases.ts'
 import { FALLBACK_CHANNELS, fetchLiveChannels, FIRST_CHANNEL, type Channel } from '../src/tv/channel-data.ts'
+import { plainMessage } from '../src/tv/message.ts'
 import { youtubeId, youtubeThumbnails } from '../src/tv/youtube.ts'
 
 /** Empty "signal wanted" channels pre-rendered past the last live one, so fresh share links still unfurl. */
@@ -377,7 +378,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
 
       const liveMeta = (ch: Channel, url: string) => ({
         title: `第 ${ch.channel} 台｜${ch.title}｜台北安可大舞台`,
-        description: `${ch.author} 做的台北安可舞台。${ch.message ?? ''}`.slice(0, 160),
+        description: `${ch.author} 做的台北安可舞台。${plainMessage(ch.message ?? '')}`.slice(0, 160),
         image: images.get(ch.channel) ?? versioned(`${ch.channel}.png`),
         url,
       })
@@ -428,7 +429,7 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
           const n = ch.channel
           const html = setMeta(towerTemplate, {
             title: `${n} 樓｜${ch.title}｜台北安可大樓`,
-            description: `${ch.author} 做的台北安可派對，在台北安可大樓 ${n} 樓。${ch.message ?? ''}`.slice(0, 160),
+            description: `${ch.author} 做的台北安可派對，在台北安可大樓 ${n} 樓。${plainMessage(ch.message ?? '')}`.slice(0, 160),
             image: images.get(n) ?? versioned(`${n}.png`),
             url: `${towerRoot}${n}/`,
           })

@@ -4,6 +4,7 @@ import { track } from '@/lib/analytics'
 import { toLastSlot, shareChannel } from '../duo/tvControl'
 import { sfx } from '../sfx'
 import { useTv, type Slot } from '../store'
+import { plainMessage } from '../message'
 import { youtubeId, youtubeThumbnails } from '../youtube'
 
 const BASE = import.meta.env.BASE_URL
@@ -219,7 +220,7 @@ export function ChannelOverview() {
                 <h3 className="mt-2 line-clamp-2 text-xl leading-snug font-black text-[#fff4d6] sm:text-2xl">{titleOf(current)}</h3>
                 {ch && <p className="mt-1 text-sm text-white/60">by {ch.author}{ch.tools ? `・${ch.tools}` : ''}</p>}
                 {ch?.message ? (
-                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-white/75">{ch.message}</p>
+                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-white/75">{plainMessage(ch.message)}</p>
                 ) : (
                   !ch && <p className="mt-2 text-sm text-white/75">這一台還空著，等你用 AI 做一座安可政策大舞台。</p>
                 )}
