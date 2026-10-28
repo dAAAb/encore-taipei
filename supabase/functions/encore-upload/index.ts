@@ -53,7 +53,12 @@ async function sha256(s: string) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-/** Pinned as `stage/index.html` so the gateway serves a folder: the URL ends in `/` and the page gets text/html. */
+/**
+ * Pinned as `stage/index.html` so the page gets text/html and relative paths resolve inside the folder. Some gateways
+ * list a folder instead of serving its index.html, so stage URLs always name the file.
+ */
+const stageUrl = (gateway: string, cid: string) => `https://${gateway}/ipfs/${cid}/index.html`
+
 async function pin(jwt: string, bytes: Uint8Array, name: string) {
   const form = new FormData()
   form.append('file', new Blob([bytes], { type: 'text/html' }), 'stage/index.html')
@@ -148,7 +153,7 @@ async function upload(req: Request) {
   const head = html.slice(0, 200_000)
   const title = meta(head, 'og:title') ?? (head.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ? decode(head.match(/<title[^>]*>([^<]*)<\/title>/i)![1]) : null)
   return json({
-    url: `https://${gateway}/ipfs/${cid}/`,
+    url: stageUrl(gateway, cid),
     cid,
     title: title?.slice(0, 120) || null,
     description: (meta(head, 'og:description') ?? meta(head, 'description'))?.slice(0, 300) || null,
@@ -167,7 +172,7 @@ async function test() {
     const status = (e as { status?: number }).status
     return json({ ok: false, error: status === 401 || status === 403 ? 'pinata_auth' : 'pinata', status, detail: (e as { detail?: string }).detail })
   }
-  const url = `https://${gateway}/ipfs/${cid}/`
+  const url = stageUrl(gateway, cid)
   const checks: { name: string; ok: boolean; detail?: string }[] = [{ name: 'pin', ok: true, detail: cid }]
   try {
     let res: Response | null = null
