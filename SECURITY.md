@@ -16,3 +16,6 @@
 - 投稿的舞台一律在 sandbox iframe 裡播放，且必須經管理員審核才會上架；建置時寫進分享頁的投稿文字都會先做 HTML 跳脫。
 - 「上架後自動重建」用的 GitHub token 只存在 Supabase（`encore_settings`），只有 Edge Function `encore-rebuild` 讀得到，
   權限限定為這個 repo 的 Actions 讀寫。
+- 投稿上傳的 HTML 由 Edge Function `encore-upload` 用站方的 Pinata 金鑰釘到 IPFS（金鑰只存在 `encore_settings`），
+  頁面由 IPFS 閘道提供，跟 encore.taipei 是不同網域，碰不到本站的資料。上傳有次數與大小限制、只紀錄 IP 的雜湊值；
+  上傳後一樣要審核才會上架。

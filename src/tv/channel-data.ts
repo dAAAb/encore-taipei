@@ -82,6 +82,51 @@ export async function fetchSiteMeta(url: string, signal?: AbortSignal): Promise<
   return { title: d.title ?? null, description: d.description ?? null, image: d.image ?? null }
 }
 
+export const UPLOAD_MAX_BYTES = 5 * 1024 * 1024
+
+let uploadsEnabled: Promise<boolean> | null = null
+
+/** Whether the site has a Pinata account set up for one-file HTML stages (asked once per page). */
+export function htmlUploadsEnabled() {
+  uploadsEnabled ??= fetch(`${SUPABASE_URL}/functions/v1/encore-upload`, { headers: { apikey: SUPABASE_KEY } })
+    .then((r) => (r.ok ? (r.json() as Promise<{ enabled?: boolean }>) : { enabled: false }))
+    .then((d) => d.enabled === true)
+    .catch(() => false)
+  return uploadsEnabled
+}
+
+export interface UploadedStage {
+  url: string
+  cid: string
+  title: string | null
+  description: string | null
+}
+
+export class UploadError extends Error {}
+
+/** Pins a one-file HTML stage to IPFS and returns its gateway URL; the message is ready to show the visitor. */
+export async function uploadHtmlStage(file: File): Promise<UploadedStage> {
+  const body = new FormData()
+  body.append('file', file, file.name || 'stage.html')
+  let res: Response
+  try {
+    res = await fetch(`${SUPABASE_URL}/functions/v1/encore-upload`, { method: 'POST', headers: { apikey: SUPABASE_KEY }, body })
+  } catch {
+    throw new UploadError('連不上伺服器，請檢查網路後再試一次。')
+  }
+  const d = (await res.json().catch(() => ({}))) as Partial<UploadedStage> & { error?: string }
+  if (res.ok && d.url && d.cid) return { url: d.url, cid: d.cid, title: d.title ?? null, description: d.description ?? null }
+  throw new UploadError(
+    {
+      too_large: '檔案太大了，單一 HTML 最多 5 MB。圖片可以改用網址引用，不要內嵌進檔案。',
+      not_html: '這個檔案看起來不是網頁。請上傳 .html 檔，或貼上完整的 HTML 程式碼。',
+      no_file: '沒有收到檔案，請再拖一次。',
+      rate_limited: '上傳次數有點多，請過一小時再試。',
+      not_configured: '網站暫時沒有開放上傳，請改貼公開網址。',
+    }[d.error ?? ''] ?? '上傳失敗，請稍後再試；也可以先把作品放到 GitHub Pages 等地方，再貼網址。',
+  )
+}
+
 export class RpcError extends Error {
   readonly status: number
 
