@@ -21,6 +21,7 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [noteFor, setNoteFor] = useState<number | null>(null)
+  const [cooling, setCooling] = useState(false)
   const list = useRef<HTMLOListElement>(null)
   const ordered = [...messages].reverse()
 
@@ -30,7 +31,7 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
 
   const send = async (e: FormEvent) => {
     e.preventDefault()
-    if (!text.trim() || busy) return
+    if (!text.trim() || busy || cooling) return
     setBusy(true)
     setError(null)
     try {
@@ -39,6 +40,8 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
       onPosted(m)
       setText('')
       track('roof_chat_post')
+      setCooling(true)
+      window.setTimeout(() => setCooling(false), 5000)
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -118,7 +121,7 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
             aria-label="訊息"
             className="min-w-0 flex-1 rounded-lg border-2 border-[#0c0812] bg-white px-2 py-1.5 text-sm text-[#13204f]"
           />
-          <button type="submit" disabled={busy || !text.trim()} className="ink-btn px-3 disabled:opacity-50" data-on="true" aria-label="送出">
+          <button type="submit" disabled={busy || cooling || !text.trim()} className="ink-btn px-3 disabled:opacity-50" data-on="true" aria-label="送出">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           </button>
         </div>

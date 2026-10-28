@@ -104,10 +104,14 @@ export function TowerApp() {
         .finally(() => alive && setChatLoading(false))
     load()
     if (!nearRoof) return () => void (alive = false)
-    const t = window.setInterval(load, 6000)
+    // Background tabs don't poll; coming back refreshes right away.
+    const t = window.setInterval(() => document.visibilityState === 'visible' && load(), 6000)
+    const back = () => document.visibilityState === 'visible' && load()
+    document.addEventListener('visibilitychange', back)
     return () => {
       alive = false
       window.clearInterval(t)
+      document.removeEventListener('visibilitychange', back)
     }
   }, [nearRoof])
 
