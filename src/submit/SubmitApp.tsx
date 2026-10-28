@@ -1,7 +1,7 @@
 import { ArrowRight, Building2, Check, ShieldCheck, Tv } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { track } from '@/lib/analytics'
-import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from '@/tv/channel-data'
+import { FIRST_CHANNEL, fetchLiveChannels, htmlUploadsEnabled, type Channel } from '@/tv/channel-data'
 import { CopyBlock } from '@/tv/components/Guide'
 import { OnboardAgent } from '@/tv/components/OnboardAgent'
 import { SubmitFields } from '@/tv/components/SubmitForm'
@@ -18,6 +18,12 @@ const STEPS = [
   ['用 AI 做舞台', '按下面的按鈕複製完整 prompt，貼給 Cursor、Claude、Gemini 或 ChatGPT。不會寫程式也沒關係，用說的就好。'],
   ['部署成公開網址', '請 AI 幫你放到 GitHub Pages、Vercel、Cloudflare Pages 或 Netlify（都有免費方案）。網址要是 https，而且允許被 iframe 嵌入。'],
   ['回來這裡上架', '貼上網址送出，馬上帶你到大舞台預覽。管理員審核通過後，所有人都看得到。'],
+] as const
+
+const UPLOAD_STEPS = [
+  STEPS[0],
+  ['取得網址或 HTML 檔', '已經部署好就準備 https 網址。Gemini Canvas、Claude 這類只有一個 HTML 檔的作品，把程式碼存成 .html 檔就好，不用自己部署。'],
+  ['回來這裡上架', '貼上網址，或把 .html 檔拖進上架表單（也可以直接貼上程式碼），送出後馬上帶你到大舞台預覽。管理員審核通過後，所有人都看得到。'],
 ] as const
 
 const RULES = [
@@ -40,8 +46,10 @@ export function SubmitApp() {
   const [channels, setChannels] = useState<Channel[] | null>(null)
   const [earlier, setEarlier] = useState<PendingStage | null>(() => loadPending())
   const [sent, setSent] = useState<PendingStage | null>(null)
+  const [uploadsOn, setUploadsOn] = useState(false)
 
   useEffect(() => {
+    void htmlUploadsEnabled().then(setUploadsOn)
     loadChannels()
       .then(setChannels)
       .catch(() => setChannels([]))
@@ -148,7 +156,7 @@ export function SubmitApp() {
           <div className="ink-card p-5 sm:p-6">
             <h2 className="text-xl font-black">三步驟上台</h2>
             <ol className="mt-3 space-y-3">
-              {STEPS.map(([title, body], i) => (
+              {(uploadsOn ? UPLOAD_STEPS : STEPS).map(([title, body], i) => (
                 <li key={title} className="flex gap-3">
                   <span className="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[#0c0812] bg-[#ffd400] text-sm font-black text-[#0c0812]">
                     {i + 1}

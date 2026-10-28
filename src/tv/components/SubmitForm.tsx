@@ -1,7 +1,7 @@
-import { Loader2, Sparkles } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { ExternalLink, FileCheck2, FileUp, Loader2, Sparkles } from 'lucide-react'
+import { useEffect, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { fetchSiteMeta, RpcError, rpc, type SiteMeta } from '../channel-data'
+import { fetchSiteMeta, htmlUploadsEnabled, RpcError, rpc, UPLOAD_MAX_BYTES, UploadError, uploadHtmlStage, type SiteMeta } from '../channel-data'
 import { useTv, type PendingStage } from '../store'
 
 const ERRORS: Record<string, string> = {
@@ -24,6 +24,12 @@ function Field({ label, hint, children }: { label: string; hint?: ReactNode; chi
 
 const input =
   'w-full rounded-xl border-2 border-[#0c0812] bg-white px-3 py-2 text-[15px] text-[#13204f] shadow-[2px_2px_0_#2b2f9e] outline-none placeholder:text-[#9aa0bb] focus:border-[#1f4fd1]'
+
+type Upload = { state: 'busy' | 'done'; name: string; bytes: number; url?: string }
+
+const size = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`)
+const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files')
+const looksLikeHtml = (s: string) => /^\s*</.test(s) && /<!doctype html|<html[\s>]|<body[\s>]|<script[\s>]/i.test(s)
 
 /** `unit` is how a slot is counted where the form opens: TV channels (台) or tower floors (樓). */
 export function SubmitForm({ unit = '台' }: { unit?: '台' | '樓' }) {
@@ -64,8 +70,80 @@ export function SubmitFields({ number, unit = '台', onDone }: { number?: number
   const [site, setSite] = useState<SiteMeta | null>(null)
   const [reading, setReading] = useState(false)
   const auto = useRef({ title: '', message: '' })
+  const [uploadsOn, setUploadsOn] = useState(false)
+  const [upload, setUpload] = useState<Upload | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const drags = useRef(0)
+  const picker = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    let alive = true
+    void htmlUploadsEnabled().then((on) => alive && setUploadsOn(on))
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Fill the name (and the note, if the site has a description) from the stage itself; never overwrite what the user typed.
+  const prefill = (meta: { title: string | null; description: string | null }) => {
+    if (meta.title) {
+      const next = meta.title.slice(0, 80)
+      setTitle((cur) => (cur === '' || cur === auto.current.title ? ((auto.current.title = next), next) : cur))
+    }
+    if (meta.description) {
+      const next = meta.description.slice(0, 1000)
+      setMessage((cur) => (cur === '' || cur === auto.current.message ? ((auto.current.message = next), next) : cur))
+    }
+  }
+
+  const sendFile = async (file: File) => {
+    setUploadError(null)
+    if (!/\.html?$/i.test(file.name) && file.type !== 'text/html') return setUploadError('請上傳 .html 檔（單一網頁檔）。')
+    if (file.size > UPLOAD_MAX_BYTES) return setUploadError('檔案太大了，單一 HTML 最多 5 MB。')
+    setUpload({ state: 'busy', name: file.name, bytes: file.size })
+    try {
+      const res = await uploadHtmlStage(file)
+      setUpload({ state: 'done', name: file.name, bytes: file.size, url: res.url })
+      setUrl(res.url)
+      prefill(res)
+    } catch (err) {
+      setUpload(null)
+      setUploadError(err instanceof UploadError ? err.message : '上傳失敗，請稍後再試。')
+    }
+  }
+
+  const dropProps = uploadsOn
+    ? {
+        onDragEnter: (e: DragEvent) => {
+          if (!hasFiles(e)) return
+          e.preventDefault()
+          drags.current++
+          setDragging(true)
+        },
+        onDragOver: (e: DragEvent) => {
+          if (!hasFiles(e)) return
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+        },
+        onDragLeave: (e: DragEvent) => {
+          if (!hasFiles(e)) return
+          drags.current = Math.max(0, drags.current - 1)
+          if (!drags.current) setDragging(false)
+        },
+        onDrop: (e: DragEvent) => {
+          if (!hasFiles(e)) return
+          e.preventDefault()
+          drags.current = 0
+          setDragging(false)
+          const file = e.dataTransfer.files[0]
+          if (file && upload?.state !== 'busy') void sendFile(file)
+        },
+      }
+    : {}
+
+  const uploaded = upload?.state === 'done' && upload.url === url ? upload : null
+
   useEffect(() => {
     setSite(null)
     if (!/^https:\/\/[^/\s]+\.[^/\s]+/.test(url)) return
@@ -76,14 +154,7 @@ export function SubmitFields({ number, unit = '台', onDone }: { number?: number
         const meta = await fetchSiteMeta(url, ctrl.signal)
         if (!meta) return
         setSite(meta)
-        if (meta.title) {
-          const next = meta.title.slice(0, 80)
-          setTitle((cur) => (cur === '' || cur === auto.current.title ? ((auto.current.title = next), next) : cur))
-        }
-        if (meta.description) {
-          const next = meta.description.slice(0, 1000)
-          setMessage((cur) => (cur === '' || cur === auto.current.message ? ((auto.current.message = next), next) : cur))
-        }
+        prefill(meta)
       } catch {
         // Unreachable or slow sites just leave the fields for the user.
       } finally {
@@ -143,6 +214,7 @@ export function SubmitFields({ number, unit = '台', onDone }: { number?: number
       setUrl('')
       setTitle('')
       setMessage('')
+      setUpload(null)
       auto.current = { title: '', message: '' }
     } catch (err) {
       const msg = err instanceof RpcError ? (ERRORS[err.message] ?? `送出失敗：${err.message}`) : '連不上伺服器，請檢查網路後再試一次。'
@@ -153,19 +225,83 @@ export function SubmitFields({ number, unit = '台', onDone }: { number?: number
   }
 
   return (
-    <form className="mt-1 space-y-3.5" onSubmit={submit}>
-      <Field label="作品網址 *" hint="公開的 https 網址">
-        <input
-          name="url"
-          type="url"
-          required
-          pattern="https://.+"
-          placeholder="https://你的帳號.github.io/my-encore/"
-          className={input}
-          value={url}
-          onChange={(e) => setUrl(e.target.value.trim())}
-        />
-      </Field>
+    <form className="relative mt-1 space-y-3.5" onSubmit={submit} {...dropProps}>
+      <div className="relative">
+        <Field label="作品網址 *" hint={uploadsOn ? '公開的 https 網址，或上傳單一 HTML 檔' : '公開的 https 網址'}>
+          <div className="flex gap-2">
+            <input
+              name="url"
+              type="url"
+              required
+              pattern="https://.+"
+              placeholder={uploadsOn ? 'https://… 或把 .html 檔拖進來' : 'https://你的帳號.github.io/my-encore/'}
+              className={`${input} min-w-0`}
+              value={url}
+              onChange={(e) => setUrl(e.target.value.trim())}
+              onPaste={(e) => {
+                const text = e.clipboardData.getData('text')
+                if (!uploadsOn || !looksLikeHtml(text)) return
+                e.preventDefault()
+                void sendFile(new File([text], 'pasted.html', { type: 'text/html' }))
+              }}
+            />
+            {uploadsOn && (
+              <button
+                type="button"
+                className="ink-btn flex shrink-0 items-center gap-1 px-3 text-sm disabled:opacity-60"
+                disabled={upload?.state === 'busy'}
+                onClick={() => picker.current?.click()}
+                title="上傳單一 HTML 檔（例如 Gemini Canvas、Claude 做的網頁），也可以直接拖進來或在網址欄貼上程式碼"
+              >
+                {upload?.state === 'busy' ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
+                <span className="hidden sm:inline">上傳 HTML</span>
+                <span className="sm:hidden">HTML</span>
+              </button>
+            )}
+          </div>
+        </Field>
+        {uploadsOn && (
+          <input
+            ref={picker}
+            type="file"
+            accept=".html,.htm,text/html"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (file) void sendFile(file)
+            }}
+          />
+        )}
+        {dragging && (
+          <div className="pointer-events-none absolute -inset-1.5 z-10 flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#1f4fd1] bg-[#e8eeff]/95 text-sm font-black text-[#1f4fd1]">
+            <FileUp className="size-5" /> 放開就上傳這個 HTML 檔
+          </div>
+        )}
+        {upload?.state === 'busy' && (
+          <p className="mt-2 flex items-center gap-2 rounded-xl border-2 border-[#0c0812] bg-[#e8eeff] px-3 py-2 text-sm font-bold text-[#1f4fd1]" role="status">
+            <Loader2 className="size-4 shrink-0 animate-spin" />
+            <span className="min-w-0 [overflow-wrap:anywhere]">
+              正在上傳 {upload.name}（{size(upload.bytes)}）…
+            </span>
+          </p>
+        )}
+        {uploaded && (
+          <div className="mt-2 flex items-start gap-2 rounded-xl border-2 border-[#0c0812] bg-[#e7f7ea] px-3 py-2 text-sm text-[#13204f]" role="status">
+            <FileCheck2 className="mt-0.5 size-4 shrink-0 text-[#1a7f3c]" />
+            <div className="min-w-0 flex-1">
+              <p className="font-black [overflow-wrap:anywhere]">
+                已上傳 {uploaded.name}（{size(uploaded.bytes)}）
+              </p>
+              <p className="text-xs leading-snug text-[#4a4f6e]">檔案公開存放在 IPFS。送出後電視會先播給你看，審核通過才會正式上架。</p>
+            </div>
+            <a href={uploaded.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs font-black text-[#1f4fd1] underline">
+              預覽 <ExternalLink className="size-3" />
+            </a>
+          </div>
+        )}
+        {uploadError && <p className="mt-2 rounded-xl border-2 border-[#0c0812] bg-[#ffd9d9] p-2.5 text-sm font-bold text-[#7a1020]">{uploadError}</p>}
+      </div>
       <Field label="舞台名稱 *" hint={titleHint}>
         <input name="title" required maxLength={80} placeholder="貼上網址後會自動帶入，例如：大稻埕煙火安可夜" className={input} value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>

@@ -1,4 +1,4 @@
-import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Settings2, Trash2 } from 'lucide-react'
+import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, FileUp, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Settings2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { fetchSiteMeta, rpc, RpcError, SUPABASE_KEY, SUPABASE_URL, type AdminChannel } from '@/tv/channel-data'
@@ -29,6 +29,21 @@ async function requestRebuild(adminKey: string): Promise<RebuildResult> {
     return { ok: false, reason: 'failed', message: (e as Error).message }
   }
 }
+type UploadCheck = { name: string; ok: boolean; detail?: string }
+type UploadTest = { ok: boolean; error?: string; status?: number; detail?: string; checks?: UploadCheck[] }
+
+/** Admin calls to the encore-upload edge function: test the Pinata setup, or unpin a deleted channel's upload. */
+async function uploadAdmin(adminKey: string, body: Record<string, unknown>) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/encore-upload`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: adminKey, ...body }),
+  })
+  return (await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }))) as UploadTest
+}
+
+const isUpload = (url: string) => /\/ipfs\/[a-z0-9]+/i.test(url)
+
 type Filter = 'all' | 'pending' | 'live' | 'hidden' | 'chat'
 
 interface ChatRow {
@@ -394,6 +409,154 @@ function RebuildSetup({
   )
 }
 
+const CHECK_LABEL: Record<string, string> = {
+  pin: '上傳到 Pinata',
+  reachable: '閘道讀得到檔案',
+  html: '以網頁（text/html）提供',
+  frame: '允許嵌入電視、可執行頁面內的程式',
+}
+
+function UploadSetup({
+  open,
+  onOpenChange,
+  adminKey,
+  configuredAt,
+  onSaved,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  adminKey: string
+  configuredAt: string | null
+  onSaved: (at: string | null) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
+  const [checks, setChecks] = useState<UploadCheck[] | null>(null)
+
+  const runTest = async () => {
+    const res = await uploadAdmin(adminKey, { action: 'test' })
+    setChecks(res.checks ?? null)
+    if (res.ok) {
+      setNote({ ok: true, text: '測試通過：投稿頁已經可以拖曳上傳 HTML，送出後會在電視上預覽。' })
+      return true
+    }
+    setNote({
+      ok: false,
+      text:
+        res.error === 'pinata_auth'
+          ? 'Pinata 不接受這把金鑰。請確認是 JWT，而且有上傳（pinFileToIPFS）和刪除（unpin）的權限。'
+          : res.error === 'pinata'
+            ? `Pinata 上傳失敗：${res.detail ?? res.status ?? '未知錯誤'}`
+            : '閘道有些項目沒通過（見下方），投稿人上傳的網頁可能無法在電視上播放。請到 Pinata 檢查閘道設定，或換一個閘道。',
+    })
+    return false
+  }
+
+  const save = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    const f = new FormData(form)
+    const jwt = String(f.get('jwt') ?? '').trim()
+    const gateway = String(f.get('gateway') ?? '')
+      .trim()
+      .replace(/^https?:\/\//i, '')
+      .replace(/\/.*$/, '')
+    if (!gateway || (!jwt && !configuredAt)) return
+    setBusy(true)
+    setNote(null)
+    setChecks(null)
+    try {
+      if (jwt) await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'pinata_jwt', p_value: jwt })
+      await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'pinata_gateway', p_value: gateway })
+      onSaved(new Date().toISOString())
+      if (await runTest()) form.reset()
+    } catch (err) {
+      setNote({ ok: false, text: `儲存失敗：${(err as Error).message}` })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const clear = async () => {
+    setBusy(true)
+    try {
+      await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'pinata_jwt', p_value: null })
+      await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: 'pinata_gateway', p_value: null })
+      onSaved(null)
+      setChecks(null)
+      setNote({ ok: true, text: '已清除。投稿頁不再顯示上傳 HTML，已上架的作品不受影響。' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto border border-white/10 bg-[#18212c] text-[#c7d5e0] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black text-white">投稿上傳 HTML（IPFS）</DialogTitle>
+          <DialogDescription className="text-[#8fa3b5]">
+            Gemini、Google 等網站的分享頁不准被嵌入電視。設定好 Pinata 後，投稿人可以直接拖進單一 HTML 檔，網站幫他放到 IPFS，送出後馬上在電視上預覽。
+          </DialogDescription>
+        </DialogHeader>
+        {configuredAt && (
+          <p className="flex items-center gap-2 rounded-md bg-[#75b022]/15 p-3 text-sm text-[#b6ffb0]">
+            <Check className="size-4 shrink-0" /> 已設定（{fmt(configuredAt)}）。要換金鑰或閘道就在下面重填；金鑰留空會沿用舊的。
+          </p>
+        )}
+        <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-relaxed">
+          <li>
+            到 Pinata 的
+            <a href="https://app.pinata.cloud/developers/api-keys" target="_blank" rel="noreferrer" className="mx-1 font-bold text-[#66c0f4] underline">
+              API Keys
+            </a>
+            建立新金鑰。不要選 Admin；在權限裡只開 <b className="text-white">pinFileToIPFS</b> 和 <b className="text-white">unpin</b>，複製 <b className="text-white">JWT</b>。
+          </li>
+          <li>
+            到
+            <a href="https://app.pinata.cloud/gateway" target="_blank" rel="noreferrer" className="mx-1 font-bold text-[#66c0f4] underline">
+              Gateways
+            </a>
+            複製你的專屬閘道網域（像 <code className="text-white">xxx.mypinata.cloud</code>）。公用的 gateway.pinata.cloud 會擋掉頁面裡的程式，不能用。
+          </li>
+          <li>貼到下面按「儲存並測試」。會上傳一個小測試檔，確認電視能播，再把它刪掉。金鑰只存在伺服器端，網頁讀不到。</li>
+        </ol>
+        <form onSubmit={save} className="space-y-2">
+          <input name="jwt" type="password" autoComplete="off" placeholder={configuredAt ? 'Pinata JWT（留空沿用目前的）' : 'Pinata JWT（eyJ…）'} className="steam-input w-full font-mono text-sm" />
+          <input name="gateway" required autoComplete="off" placeholder="xxx.mypinata.cloud" className="steam-input w-full font-mono text-sm" />
+          <div className="flex gap-2">
+            <button type="submit" disabled={busy} className="steam-btn steam-btn--go flex flex-1 items-center justify-center gap-1.5">
+              {busy && <Loader2 className="size-4 animate-spin" />} 儲存並測試
+            </button>
+            {configuredAt && (
+              <button type="button" disabled={busy} className="steam-btn steam-btn--danger" onClick={clear}>
+                清除
+              </button>
+            )}
+          </div>
+        </form>
+        {note && <p className={`rounded-md p-2 text-sm ${note.ok ? 'bg-[#75b022]/15 text-[#b6ffb0]' : 'bg-[#e0304a]/20 text-[#ff8a99]'}`}>{note.text}</p>}
+        {checks && (
+          <ul className="space-y-1 text-sm">
+            {checks.map((c) => (
+              <li key={c.name} className="flex items-start gap-2">
+                <span className={`mt-0.5 shrink-0 font-black ${c.ok ? 'text-[#b6ffb0]' : 'text-[#ff8a99]'}`}>{c.ok ? '✓' : '✗'}</span>
+                <span>
+                  {CHECK_LABEL[c.name] ?? c.name}
+                  {c.detail && <span className="ml-1 font-mono text-xs break-all text-[#8fa3b5]">{c.detail}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-xs leading-relaxed text-[#8fa3b5]">
+          每位訪客每小時最多上傳 6 次、每天 20 次，單檔 5 MB。上傳後一天內沒有被投稿使用的檔案會自動從 Pinata 移除；刪除頻道時也會一起移除。
+        </p>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 /** Smallest free channel number, treating `ignore` as free (it is about to be vacated). */
 function firstFree(rows: AdminChannel[], ignore: string[], skip: number[]) {
   const used = new Set(rows.filter((r) => r.channel != null && !ignore.includes(r.id)).map((r) => r.channel!))
@@ -485,6 +648,8 @@ export function AdminApp() {
   const [nonce, setNonce] = useState(() => Date.now())
   const [tokenAt, setTokenAt] = useState<string | null | undefined>(undefined)
   const [setupOpen, setSetupOpen] = useState(false)
+  const [uploadAt, setUploadAt] = useState<string | null | undefined>(undefined)
+  const [uploadOpen, setUploadOpen] = useState(false)
   const [rebuildNote, setRebuildNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [rebuilding, setRebuilding] = useState(false)
 
@@ -512,8 +677,15 @@ export function AdminApp() {
   useEffect(() => {
     if (!key) return
     rpc<{ name: string; updated_at: string }[]>('encore_admin_settings', { p_key: key })
-      .then((rows) => setTokenAt(rows.find((r) => r.name === 'github_token')?.updated_at ?? null))
-      .catch(() => setTokenAt(null))
+      .then((rows) => {
+        setTokenAt(rows.find((r) => r.name === 'github_token')?.updated_at ?? null)
+        const pinata = rows.filter((r) => r.name === 'pinata_jwt' || r.name === 'pinata_gateway')
+        setUploadAt(pinata.length === 2 ? pinata.map((r) => r.updated_at).sort().at(-1)! : null)
+      })
+      .catch(() => {
+        setTokenAt(null)
+        setUploadAt(null)
+      })
   }, [key])
 
   useEffect(() => {
@@ -590,9 +762,11 @@ export function AdminApp() {
     if (!key || !window.confirm('確定要刪除這個投稿？刪除後無法復原。')) return
     setBusy(true)
     try {
+      const url = rows?.find((r) => r.id === id)?.url
       await rpc('encore_admin_delete', { p_key: key, p_id: id })
       setRows((rs) => (rs ?? []).filter((r) => r.id !== id))
       setOpenId(null)
+      if (url && isUpload(url)) void uploadAdmin(key, { action: 'unpin', url }).catch(() => {})
     } finally {
       setBusy(false)
     }
@@ -623,6 +797,10 @@ export function AdminApp() {
           <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => setSetupOpen(true)}>
             <Settings2 className="size-4" /> 自動重建設定
             {tokenAt === null && <span className="size-2 rounded-full bg-[#ffd400]" aria-label="尚未設定" />}
+          </button>
+          <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => setUploadOpen(true)}>
+            <FileUp className="size-4" /> 上傳 HTML 設定
+            {uploadAt === null && <span className="size-2 rounded-full bg-[#ffd400]" aria-label="尚未設定" />}
           </button>
           <RotateKey adminKey={key} onRotated={setKey} />
           <button type="button" className="steam-btn steam-btn--plain flex items-center gap-1.5" onClick={() => load(key)} disabled={loading}>
@@ -693,6 +871,11 @@ export function AdminApp() {
                 {ch.channel != null && (
                   <span className="absolute top-2 right-2 rounded bg-black/70 px-2 py-0.5 font-mono text-xs font-bold text-[#b6ffb0]">CH {ch.channel}</span>
                 )}
+                {isUpload(ch.url) && (
+                  <span className="absolute top-9 left-2 rounded bg-[#66c0f4] px-2 py-0.5 text-[11px] font-black text-[#10151d]" title="投稿人上傳的 HTML，存放在 IPFS">
+                    IPFS 上傳
+                  </span>
+                )}
                 <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-black text-white opacity-0 transition-opacity group-hover:opacity-100">
                   預覽與管理
                 </span>
@@ -720,6 +903,7 @@ export function AdminApp() {
       )}
 
       <RebuildSetup open={setupOpen} onOpenChange={setSetupOpen} adminKey={key} configuredAt={tokenAt ?? null} onSaved={setTokenAt} />
+      <UploadSetup open={uploadOpen} onOpenChange={setUploadOpen} adminKey={key} configuredAt={uploadAt ?? null} onSaved={setUploadAt} />
 
       <Dialog open={!!current} onOpenChange={(o) => !o && setOpenId(null)}>
         {current && (
