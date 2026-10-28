@@ -1,7 +1,9 @@
-import { Loader2, MessageCircle, Send, X } from 'lucide-react'
+import { Info, Loader2, MessageCircle, Send, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { track } from '@/lib/analytics'
 import { chatName, postChat, saveChatName, type ChatMessage } from '../chat'
+
+const WAITING_NOTE = '已送出！留言較多時，要稍等一下才會公開。'
 
 const when = (iso: string) => {
   const s = (Date.now() - Date.parse(iso)) / 1000
@@ -18,6 +20,7 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [noteFor, setNoteFor] = useState<number | null>(null)
   const list = useRef<HTMLOListElement>(null)
   const ordered = [...messages].reverse()
 
@@ -81,7 +84,20 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
           <li key={m.id} className="text-sm leading-snug">
             <span className="font-black text-[#c8234a]">{m.name}</span>
             <span className="ml-1.5 text-[11px] text-[#8a8fa8]">{when(m.created_at)}</span>
+            {m.pending && (
+              <button
+                type="button"
+                className="ml-1 inline-flex translate-y-[2px] rounded-full text-[#b4b8cc] hover:text-[#6a6f8e]"
+                title={WAITING_NOTE}
+                aria-label={WAITING_NOTE}
+                aria-expanded={noteFor === m.id}
+                onClick={() => setNoteFor((id) => (id === m.id ? null : m.id))}
+              >
+                <Info className="size-3.5" />
+              </button>
+            )}
             <p className="break-words text-[#13204f]">{m.body}</p>
+            {m.pending && noteFor === m.id && <p className="text-[11px] text-[#8a8fa8]">{WAITING_NOTE}</p>}
           </li>
         ))}
       </ol>
@@ -107,7 +123,7 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
           </button>
         </div>
         {error && <p className="text-xs font-bold text-[#c8234a]">{error}</p>}
-        <p className="text-[10px] text-[#8a8fa8]">留言公開，請友善發言；管理員會移除不當內容。</p>
+        <p className="text-[10px] text-[#8a8fa8]">請友善發言，留言會公開在頂樓。</p>
       </form>
     </aside>
   )
