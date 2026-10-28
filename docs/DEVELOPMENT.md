@@ -151,7 +151,7 @@ values (encode(extensions.digest('新的長金鑰', 'sha256'), 'hex'), '說明')
 Gemini、Google 等網站的分享頁不准被 iframe 嵌入。後台設定好「上傳 HTML」（Pinata JWT 和專屬閘道網域，存在 `encore_settings`）後，
 投稿表單的網址欄可以拖進單一 `.html` 檔、按旁邊的「上傳 HTML」選檔，或直接貼上 HTML 程式碼。
 Edge Function `encore-upload`（`supabase/functions/encore-upload/`）把它以 `stage/index.html` 釘到 IPFS，
-回傳 `https://<閘道>/ipfs/<CID>/` 填進網址欄，送出後跟一般投稿一樣先在電視上預覽、再等審核。
+回傳 `https://<閘道>/ipfs/<CID>/index.html` 填進網址欄（有些閘道開資料夾只會列出檔案，所以一定帶檔名），送出後跟一般投稿一樣先在電視上預覽、再等審核。
 每位訪客每小時 6 次、每天 20 次、全站每小時 120 次，單檔 5 MB（紀錄在 `encore_uploads`）；
 一天內沒被任何投稿使用的檔案會在之後的上傳時順便從 Pinata 移除，後台刪除頻道時也會移除。
 後台「儲存並測試」會上傳一個測試檔，確認閘道讀得到、以 text/html 提供、沒有擋 iframe 或頁面內的程式，再把它刪掉。
