@@ -1,4 +1,4 @@
-import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, FileUp, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Settings2, Trash2 } from 'lucide-react'
+import { Ban, Check, Clock, Copy, ExternalLink, Eye, EyeOff, FileUp, Hammer, KeyRound, Loader2, LogOut, RefreshCw, Settings2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { fetchSiteMeta, rpc, RpcError, SUPABASE_KEY, SUPABASE_URL, type AdminChannel } from '@/tv/channel-data'
@@ -53,6 +53,8 @@ interface ChatRow {
   approved: boolean
   hidden: boolean
   created_at: string
+  /** Salted hash of the poster's address; the same value means the same source. */
+  ip_hash: string | null
 }
 
 const chatWaiting = (r: ChatRow) => !r.approved && !r.hidden
@@ -256,6 +258,21 @@ function RoofChatAdmin({
     }
   }
 
+  const block = async (r: ChatRow) => {
+    const same = rows?.filter((x) => x.ip_hash === r.ip_hash && !x.approved && !x.hidden).length ?? 0
+    if (!window.confirm(`封鎖這個來源 24 小時？\n它接下來送的留言不會存進來（對方自己的畫面上照常顯示），目前待審核的 ${same} 則也會一起隱藏。`)) return
+    setBusy(true)
+    setFailed(null)
+    try {
+      await rpc<number>('encore_admin_chat_block', { p_key: adminKey, p_id: r.id, p_hours: 24 })
+      onChange((rs) => rs.map((x) => (x.ip_hash === r.ip_hash && !x.approved ? { ...x, hidden: true } : x)))
+    } catch {
+      setFailed('封鎖失敗，請再試一次。')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (error) return <p className="rounded-md bg-[#e0304a]/20 p-3 text-sm text-[#ff8a99]">{error}</p>
   if (!rows)
     return (
@@ -272,11 +289,16 @@ function RoofChatAdmin({
       <div className="min-w-0 flex-1">
         <p className="text-sm">
           <b className="text-white">{r.name}</b> <span className="text-xs text-[#8fa3b5]">{fmt(r.created_at)}</span>
+          {r.ip_hash && (
+            <span className="ml-2 font-mono text-[11px] text-[#8fa3b5]" title="同一個代碼代表同一個來源（網路位址的雜湊，不是真實 IP）">
+              來源 {r.ip_hash.slice(0, 6)}
+            </span>
+          )}
           {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">已隱藏</span>}
         </p>
         <p className="break-words text-[#c7d5e0]">{r.body}</p>
       </div>
-      <div className="flex shrink-0 gap-1.5">
+      <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
         {!r.approved && (
           <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review([r.id], true)}>
             <Check className="size-3.5" /> {r.hidden ? '公開' : '通過'}
@@ -285,6 +307,11 @@ function RoofChatAdmin({
         {!r.hidden && (
           <button type="button" disabled={busy} className="steam-btn steam-btn--plain flex items-center gap-1.5 text-xs" onClick={() => review([r.id], false)}>
             <EyeOff className="size-3.5" /> 隱藏
+          </button>
+        )}
+        {r.ip_hash && !r.approved && (
+          <button type="button" disabled={busy} className="steam-btn steam-btn--danger flex items-center gap-1.5 text-xs" onClick={() => block(r)} title="這個來源 24 小時內的新留言不會存進來">
+            <Ban className="size-3.5" /> 封鎖
           </button>
         )}
       </div>
@@ -299,9 +326,19 @@ function RoofChatAdmin({
           <h2 className="font-black text-white">待審核 {waiting.length} 則</h2>
           <p className="mr-auto text-xs text-[#8fa3b5]">留言的人自己看得到，通過後其他人才看得到。</p>
           {waiting.length > 1 && (
-            <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review(waiting.map((r) => r.id), true)}>
-              <Check className="size-3.5" /> 全部通過
-            </button>
+            <>
+              <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review(waiting.map((r) => r.id), true)}>
+                <Check className="size-3.5" /> 全部通過
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                className="steam-btn steam-btn--plain flex items-center gap-1.5 text-xs"
+                onClick={() => window.confirm(`隱藏全部 ${waiting.length} 則待審核留言？`) && review(waiting.map((r) => r.id), false)}
+              >
+                <EyeOff className="size-3.5" /> 全部隱藏
+              </button>
+            </>
           )}
         </div>
         {waiting.length ? (

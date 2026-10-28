@@ -41,6 +41,9 @@ export async function recentChat(): Promise<ChatMessage[]> {
 const ERRORS: Record<string, string> = {
   empty: '說點什麼吧！',
   duplicate: '同一句話剛剛說過囉。',
+  too_fast: '慢一點，等幾秒再說。',
+  slow_down: '你今天說了好多，休息一下再來聊。',
+  reserved_name: '這個暱稱不能用，換一個吧。',
   rate_limited: '頂樓太熱鬧了，等一分鐘再說。',
 }
 
