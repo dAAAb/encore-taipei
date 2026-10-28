@@ -40,7 +40,7 @@ export const useTower = create<TowerState>((set) => ({
   yaw: 0,
   hover: null,
   active: 0,
-  mist: true,
+  mist: false,
   nudge: 0,
   setMode: (mode) => set({ mode }),
   setTarget: (target) => set((s) => ({ target, nudge: s.nudge + 1 })),
