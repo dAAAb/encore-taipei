@@ -51,6 +51,19 @@ body,
   transform: translateY(calc(100% - var(--remote-peek, 92px))) rotate(-7deg);
   cursor: pointer;
 }
+/* Minimized: the whole remote slides out of sight; only .remote-pill stays in the corner. */
+.remote-mini {
+  transform: translateY(calc(100% + 40px)) rotate(-7deg);
+  pointer-events: none;
+}
+.remote-pill {
+  background: linear-gradient(180deg, #2e2d35 0%, #1b1a20 100%);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  opacity: 0.85;
+}
+.remote-pill:hover {
+  opacity: 1;
+}
 .remote-peek:hover {
   transform: translateY(calc(100% - var(--remote-peek, 92px) - 26px)) rotate(-5deg);
 }
