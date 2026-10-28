@@ -15,6 +15,8 @@ const G = 9.81
 const SHAKE = 11
 const SHAKE_GAP = 140
 const SILENT_AFTER = 1600
+/** m/s² away from 1 g: the phone is being moved, so the reading is not just gravity and says nothing about tilt. */
+const MOVING = 3
 
 export const motionApi = typeof window !== 'undefined' && 'DeviceMotionEvent' in window
 
@@ -62,12 +64,12 @@ export function listenMotion(h: MotionHandlers): () => void {
     h.onSilent?.()
     return () => {}
   }
-  // iOS reports the pull of gravity, the spec (and Android) the push against it; people hold phones top-up, which settles it.
+  // iOS has reported the pull of gravity, the spec (and Android) the push against it. Someone looking at the screen
+  // holds it somewhere between flat face-up and upright top-up, so the push points out of the screen and toward its top.
   let sign = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? -1 : 1
   let calibrated = false
   let samples = 0
-  let sumY = 0
-  let sumMag = 0
+  let facing = 0
   let low: Vec | null = null
   let lastShake = 0
   let heard = false
@@ -76,22 +78,21 @@ export function listenMotion(h: MotionHandlers): () => void {
     const g = e.accelerationIncludingGravity
     if (g?.x == null || g.y == null) return
     heard = true
-    const pull = toScreen(-g.x * sign, -g.y * sign)
-    if (!calibrated) {
-      samples++
-      sumY += pull.y
-      sumMag += Math.hypot(pull.x, pull.y)
-      if (samples >= 20) {
+    const still = g.z == null || Math.abs(Math.hypot(g.x, g.y, g.z) - G) < MOVING
+    if (!calibrated && still && g.z != null) {
+      facing += g.z - toScreen(g.x, g.y).y
+      if (++samples >= 12) {
         calibrated = true
-        if (sumMag / samples > 5 && sumY / samples < -5) {
-          sign = -sign
-          low = null
-          return
-        }
+        const next = facing / samples > 4 ? 1 : facing / samples < -4 ? -1 : sign
+        if (next !== sign) low = null
+        sign = next
       }
     }
-    low = low ? { x: low.x + (pull.x - low.x) * 0.18, y: low.y + (pull.y - low.y) * 0.18 } : pull
-    h.onTilt?.({ x: low.x / G, y: low.y / G })
+    const pull = toScreen(-g.x * sign, -g.y * sign)
+    if (still || !low) {
+      low = low ? { x: low.x + (pull.x - low.x) * 0.12, y: low.y + (pull.y - low.y) * 0.12 } : pull
+      h.onTilt?.({ x: low.x / G, y: low.y / G })
+    }
 
     const a = e.acceleration
     const jolt = a?.x != null && a.y != null ? toScreen(a.x * sign, a.y * sign) : { x: low.x - pull.x, y: low.y - pull.y }
