@@ -50,9 +50,12 @@ interface ChatRow {
   id: number
   name: string
   body: string
+  approved: boolean
   hidden: boolean
   created_at: string
 }
+
+const chatWaiting = (r: ChatRow) => !r.approved && !r.hidden
 
 const STATUS: Record<AdminChannel['status'], { label: string; cls: string }> = {
   pending: { label: '待審核', cls: 'bg-[#ffd400] text-[#10151d]' },
@@ -221,27 +224,35 @@ function RotateKey({ adminKey, onRotated }: { adminKey: string; onRotated: (k: s
   )
 }
 
-/** Tower rooftop chat moderation: every message, newest first, each one hideable. */
-function RoofChatAdmin({ adminKey }: { adminKey: string }) {
-  const [rows, setRows] = useState<ChatRow[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState<number | null>(null)
+/**
+ * Tower rooftop chat moderation. New messages wait here (their author already sees them) until approved;
+ * the waiting ones are listed first and can be approved all at once.
+ */
+function RoofChatAdmin({
+  adminKey,
+  rows,
+  error,
+  onChange,
+}: {
+  adminKey: string
+  rows: ChatRow[] | null
+  error: string | null
+  onChange: (update: (rows: ChatRow[]) => ChatRow[]) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
 
-  useEffect(() => {
-    rpc<ChatRow[]>('encore_admin_chat', { p_key: adminKey })
-      .then(setRows)
-      .catch(() => setError('讀不到頂樓留言。'))
-  }, [adminKey])
-
-  const toggle = async (row: ChatRow) => {
-    setBusy(row.id)
+  const review = async (ids: number[], approved: boolean) => {
+    if (!ids.length) return
+    setBusy(true)
+    setFailed(null)
     try {
-      const hidden = await rpc<boolean>('encore_admin_chat_hide', { p_key: adminKey, p_id: row.id, p_hidden: !row.hidden })
-      setRows((rs) => (rs ?? []).map((r) => (r.id === row.id ? { ...r, hidden } : r)))
+      await rpc<number>('encore_admin_chat_review', { p_key: adminKey, p_ids: ids, p_approved: approved })
+      onChange((rs) => rs.map((r) => (ids.includes(r.id) ? { ...r, approved, hidden: !approved } : r)))
     } catch {
-      setError('更新失敗，請再試一次。')
+      setFailed('更新失敗，請再試一次。')
     } finally {
-      setBusy(null)
+      setBusy(false)
     }
   }
 
@@ -253,24 +264,59 @@ function RoofChatAdmin({ adminKey }: { adminKey: string }) {
       </p>
     )
   if (rows.length === 0) return <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm">頂樓還沒有人留言。</p>
-  return (
-    <ul className="divide-y divide-white/10 overflow-hidden rounded-lg border border-white/10 bg-[#18212c]">
-      {rows.map((r) => (
-        <li key={r.id} className={`flex items-start gap-3 p-3 ${r.hidden ? 'opacity-50' : ''}`}>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm">
-              <b className="text-white">{r.name}</b> <span className="text-xs text-[#8fa3b5]">{fmt(r.created_at)}</span>
-              {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">已隱藏</span>}
-            </p>
-            <p className="break-words text-[#c7d5e0]">{r.body}</p>
-          </div>
-          <button type="button" disabled={busy === r.id} className="steam-btn steam-btn--plain flex shrink-0 items-center gap-1.5 text-xs" onClick={() => toggle(r)}>
-            {r.hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-            {r.hidden ? '恢復' : '隱藏'}
+
+  const waiting = rows.filter(chatWaiting)
+  const rest = rows.filter((r) => !chatWaiting(r))
+  const item = (r: ChatRow) => (
+    <li key={r.id} className={`flex items-start gap-3 p-3 ${r.hidden ? 'opacity-50' : ''}`}>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm">
+          <b className="text-white">{r.name}</b> <span className="text-xs text-[#8fa3b5]">{fmt(r.created_at)}</span>
+          {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">已隱藏</span>}
+        </p>
+        <p className="break-words text-[#c7d5e0]">{r.body}</p>
+      </div>
+      <div className="flex shrink-0 gap-1.5">
+        {!r.approved && (
+          <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review([r.id], true)}>
+            <Check className="size-3.5" /> {r.hidden ? '公開' : '通過'}
           </button>
-        </li>
-      ))}
-    </ul>
+        )}
+        {!r.hidden && (
+          <button type="button" disabled={busy} className="steam-btn steam-btn--plain flex items-center gap-1.5 text-xs" onClick={() => review([r.id], false)}>
+            <EyeOff className="size-3.5" /> 隱藏
+          </button>
+        )}
+      </div>
+    </li>
+  )
+
+  return (
+    <div className="space-y-5">
+      {failed && <p className="rounded-md bg-[#e0304a]/20 p-3 text-sm text-[#ff8a99]">{failed}</p>}
+      <section>
+        <div className="mb-2 flex flex-wrap items-center gap-3">
+          <h2 className="font-black text-white">待審核 {waiting.length} 則</h2>
+          <p className="mr-auto text-xs text-[#8fa3b5]">留言的人自己看得到，通過後其他人才看得到。</p>
+          {waiting.length > 1 && (
+            <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review(waiting.map((r) => r.id), true)}>
+              <Check className="size-3.5" /> 全部通過
+            </button>
+          )}
+        </div>
+        {waiting.length ? (
+          <ul className="divide-y divide-white/10 overflow-hidden rounded-lg border border-[#ffd400]/30 bg-[#18212c]">{waiting.map(item)}</ul>
+        ) : (
+          <p className="rounded-lg border border-dashed border-white/15 p-4 text-center text-sm">目前沒有要審核的留言。</p>
+        )}
+      </section>
+      {rest.length > 0 && (
+        <section>
+          <h2 className="mb-2 font-black text-white">已公開與已隱藏</h2>
+          <ul className="divide-y divide-white/10 overflow-hidden rounded-lg border border-white/10 bg-[#18212c]">{rest.map(item)}</ul>
+        </section>
+      )}
+    </div>
   )
 }
 
@@ -652,11 +698,19 @@ export function AdminApp() {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [rebuildNote, setRebuildNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [rebuilding, setRebuilding] = useState(false)
+  const [chatRows, setChatRows] = useState<ChatRow[] | null>(null)
+  const [chatError, setChatError] = useState<string | null>(null)
 
   const load = useCallback(async (k: string) => {
     setLoading(true)
     setNonce(Date.now())
     setError(null)
+    rpc<ChatRow[]>('encore_admin_chat', { p_key: k })
+      .then((r) => {
+        setChatRows(r)
+        setChatError(null)
+      })
+      .catch(() => setChatError('讀不到頂樓留言。'))
     try {
       setRows(await rpc<AdminChannel[]>('encore_admin_list', { p_key: k }))
     } catch (e) {
@@ -717,8 +771,9 @@ export function AdminApp() {
       c.all++
       c[r.status]++
     }
+    c.chat = chatRows?.filter(chatWaiting).length || ''
     return c
-  }, [rows])
+  }, [rows, chatRows])
 
   const shown = filter === 'chat' ? [] : (rows ?? []).filter((r) => filter === 'all' || r.status === filter)
   const current = rows?.find((r) => r.id === openId) ?? null
@@ -834,7 +889,16 @@ export function AdminApp() {
               onClick={() => setFilter(f)}
               className={`rounded-md px-3 py-1.5 text-sm font-bold whitespace-nowrap ${filter === f ? 'bg-[#66c0f4] text-[#10151d]' : 'text-[#c7d5e0] hover:bg-white/10'}`}
             >
-              {label} <span className="opacity-70">{counts[f]}</span>
+              {label}{' '}
+              {f === 'chat' ? (
+                counts.chat !== '' && (
+                  <span className="rounded-full bg-[#ffd400] px-1.5 text-[11px] font-black text-[#10151d]" title="待審核的留言">
+                    {counts.chat}
+                  </span>
+                )
+              ) : (
+                <span className="opacity-70">{counts[f]}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -860,7 +924,7 @@ export function AdminApp() {
             <Loader2 className="size-4 animate-spin" /> 讀取投稿中…
           </p>
         )}
-        {filter === 'chat' && <RoofChatAdmin adminKey={key} />}
+        {filter === 'chat' && <RoofChatAdmin adminKey={key} rows={chatRows} error={chatError} onChange={(f) => setChatRows((rs) => (rs ? f(rs) : rs))} />}
         {rows && filter !== 'chat' && shown.length === 0 && <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm">這裡還沒有東西。</p>}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shown.map((ch) => (
