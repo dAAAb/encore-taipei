@@ -8,6 +8,7 @@ import { EdgeSampler } from '@/three/EdgeSampler'
 import type { ChatMessage } from '../chat'
 import { roofY, type Floor } from '../layout'
 import { useTower } from '../store'
+import { Blimp } from './Blimp'
 import { Building } from './Building'
 import { Drone } from './Drone'
 import { FOV, Rig } from './Rig'
@@ -47,6 +48,7 @@ export function TowerScene({ floors, messages, nearRoof, lowPower, onPick, onEnt
         <Skyline />
         <Building floors={floors} onPick={onPick} />
         <Rooftop y={roofY(floors.length)} messages={messages} showBubbles={nearRoof} />
+        <Blimp floors={floors} onPick={onPick} />
         <Drone />
         <Rig floors={floors.length} onEntered={onEntered} onLeft={onLeft} />
         <EffectComposer multisampling={lowPower ? 0 : 4}>

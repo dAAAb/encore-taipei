@@ -286,6 +286,23 @@ body,
 .gate-pulse {
   animation: gate-pulse 2.2s ease-in-out infinite;
 }
+/* 最新上架 ticker: the line is written twice, so sliding by half its width loops seamlessly. */
+.new-ticker-crawl {
+  animation: new-ticker-crawl 16s linear infinite;
+}
+@keyframes new-ticker-crawl {
+  from {
+    transform: translate(0, -50%);
+  }
+  to {
+    transform: translate(-50%, -50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .new-ticker-crawl {
+    animation: none;
+  }
+}
 /* Subtitles under the newsreel: broadcast-style white on a dark band, each line fading in. */
 .intro-subtitle {
   font-family: 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;

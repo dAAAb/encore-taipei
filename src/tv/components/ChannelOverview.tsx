@@ -20,7 +20,7 @@ const createdOf = (s: Slot) => (s.kind === 'live' && s.channel.created_at ? Date
  * The built guide thumbnail (the stage's own og:image, else a screenshot), then the og:image saved at submission,
  * the video cover, the share image, the text card; past the end a title tile.
  */
-function thumbSources(s: Slot): string[] {
+export function thumbSources(s: Slot): string[] {
   if (s.kind === 'empty') return []
   const own = s.channel.og_image?.startsWith('https://') ? [s.channel.og_image] : []
   const yt = youtubeId(s.channel.url)
