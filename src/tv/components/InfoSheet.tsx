@@ -2,7 +2,7 @@ import { Check, Copy, ExternalLink, Share2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import making from '@/data/making-of.json'
 import { track } from '@/lib/analytics'
-import { channelUrl, stageUrl } from '../routing'
+import { channelInfoUrl, channelUrl, stageUrl } from '../routing'
 import { useTv } from '../store'
 import { RichMessage } from './RichMessage'
 import { useCopy } from './useCopy'
@@ -63,6 +63,15 @@ export function InfoSheet() {
             </button>
           </div>
           <p className="truncate rounded-lg bg-white/60 px-2.5 py-1.5 font-mono text-xs text-[#4a4f6e]">{link}</p>
+          <button
+            type="button"
+            className="-mt-2 flex items-center gap-1 text-xs font-bold text-[#1f4fd1] underline underline-offset-2"
+            onClick={() => copy(channelInfoUrl(slot.number), 'info')}
+            title={channelInfoUrl(slot.number)}
+          >
+            {copied === 'info' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+            {copied === 'info' ? '已複製：打開就會直接顯示這個資訊欄' : '複製資訊欄連結（打開就直接顯示這裡）'}
+          </button>
 
           {ch && (
             <a href={stageUrl(ch.url)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm font-bold text-[#1f4fd1] underline">

@@ -2,12 +2,19 @@ import { youtubeEmbedUrl, youtubeId, youtubeVolumeCommands } from './youtube'
 
 const BASE = import.meta.env.BASE_URL
 
-/** The channel number in /2027/ (relative to the deploy base), if any. */
-export function channelFromPath(pathname = location.pathname): number | null {
+const pathMatch = (pathname: string) => {
   const rest = pathname.startsWith(BASE) ? pathname.slice(BASE.length) : pathname.replace(/^\//, '')
-  const m = rest.match(/^(\d{4,5})\/?$/)
+  return rest.match(/^(\d{4,5})(\/info)?\/?$/)
+}
+
+/** The channel number in /2027/ or /2027/info/ (relative to the deploy base), if any. */
+export function channelFromPath(pathname = location.pathname): number | null {
+  const m = pathMatch(pathname)
   return m ? Number(m[1]) : null
 }
+
+/** /2027/info/ opens that channel with its info sidebar already out. */
+export const infoFromPath = (pathname = location.pathname) => !!pathMatch(pathname)?.[2]
 
 const pageMeta = (name: string) => document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)?.content ?? null
 
@@ -31,6 +38,8 @@ export function channelUrl(n: number) {
   return new URL(channelPath(n), location.origin).toString()
 }
 
+export const channelInfoUrl = (n: number) => new URL(`${channelPath(n)}info/`, location.origin).toString()
+
 /** Resolve a channel's stored URL; built-in stages are stored relative to the site root. */
 export function stageUrl(url: string) {
   return /^https?:\/\//.test(url) ? url : `${BASE}${url.replace(/^\//, '')}`
@@ -52,9 +61,9 @@ export function postStageVolume(win: Window | null | undefined, url: string, vol
 /** The short link the page was opened on; once the visitor changes channel the address shows channel numbers. */
 const aliasPath = location.pathname
 
-export function syncUrl(n: number | null, title?: string) {
-  const path = n == null ? BASE : channelPath(n)
-  const onAlias = n != null && aliasFromPage()?.n === n && location.pathname === aliasPath
+export function syncUrl(n: number | null, title?: string, info = false) {
+  const path = n == null ? BASE : `${channelPath(n)}${info ? 'info/' : ''}`
+  const onAlias = !info && n != null && aliasFromPage()?.n === n && location.pathname === aliasPath
   if (location.pathname !== path && !onAlias) history.replaceState(null, '', path + location.search)
   document.title = title ?? '台北安可大舞台｜台北安可之夜・蔣萬安黃金十年政見 3D 互動派對'
 }

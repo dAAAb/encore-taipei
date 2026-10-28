@@ -20,7 +20,7 @@ import { Osd } from './components/Osd'
 import { Remote } from './components/Remote'
 import { SubmitForm } from './components/SubmitForm'
 import { loadNarrationDurations } from './montage/narrator'
-import { aliasFromPage, deepLinkFromPage, syncUrl } from './routing'
+import { aliasFromPage, deepLinkFromPage, infoFromPath, syncUrl } from './routing'
 import { pickLayout } from './scene/layouts'
 import { RoomStage } from './scene/RoomStage'
 import { sfx } from './sfx'
@@ -92,6 +92,7 @@ export function TvApp() {
     return unsub
   }, [])
 
+  // The address follows the channel, and reads /2027/info/ while that channel's info sidebar is out.
   useEffect(() => {
     if (phase !== 'tv') return
     const sync = () => {
@@ -99,12 +100,21 @@ export function TvApp() {
       const slot = s.dial[s.index]
       if (!slot) return
       const title = slot.kind === 'empty' ? '訊號徵求中' : slot.channel.title
-      syncUrl(slot.number, `第 ${slot.number} 台｜${title}｜台北安可大舞台`)
+      syncUrl(slot.number, `第 ${slot.number} 台｜${title}｜台北安可大舞台`, s.infoOpen)
     }
     sync()
     return useTv.subscribe((s, prev) => {
-      if (s.index !== prev.index || s.dial !== prev.dial) sync()
+      if (s.index !== prev.index || s.dial !== prev.dial || s.infoOpen !== prev.infoOpen) sync()
     })
+  }, [phase])
+
+  // Opened on /2027/info/: once the set is on, slide the sidebar out (one time only).
+  const wantInfo = useRef(infoFromPath())
+  useEffect(() => {
+    if (phase !== 'tv' || !wantInfo.current) return
+    wantInfo.current = false
+    const t = window.setTimeout(() => useTv.getState().setInfoOpen(true), 500)
+    return () => window.clearTimeout(t)
   }, [phase])
 
   const digit = useCallback((d: number) => {
