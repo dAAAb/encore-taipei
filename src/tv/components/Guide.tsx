@@ -30,7 +30,7 @@ const STEPS = [
   ['打開一個 AI 寫程式工具', 'Cursor、Claude Code、OpenAI Codex、GitHub Copilot、Lovable、v0 都可以。不會寫程式也沒關係，用說的就好。'],
   ['貼上 prompt，邊看邊改', '把下面的 prompt 改成你想要的樣子貼給 AI，做出來後再跟它說哪裡要調整。'],
   ['部署成公開網址', '請 AI 幫你放到 GitHub Pages、Vercel、Cloudflare Pages 或 Netlify（都有免費方案）。網址要是 https，而且允許被 iframe 嵌入。'],
-  ['回來上架', '轉到「訊號徵求中」那一台按「上架這一台」，或打開 encore.taipei/submit，貼上網址就能馬上預覽。'],
+  ['回來上架', '轉到「訊號徵求中」那一台按「上架這一台」，或打開 encore.taipei/me，貼上網址就能馬上預覽。'],
 ] as const
 
 export function Guide() {

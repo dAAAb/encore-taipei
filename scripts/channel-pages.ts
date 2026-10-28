@@ -413,6 +413,12 @@ export function channelPages({ siteUrl, base }: { siteUrl: string; base: string 
         fs.mkdirSync(path.join(out, slug), { recursive: true })
         fs.writeFileSync(path.join(out, slug, 'index.html'), html)
       }
+      // /me/ is the short, easy-to-say address of the submit page (its canonical link still points at /submit/).
+      const submitIndex = path.join(out, 'submit', 'index.html')
+      if (fs.existsSync(submitIndex)) {
+        fs.mkdirSync(path.join(out, 'me'), { recursive: true })
+        fs.copyFileSync(submitIndex, path.join(out, 'me', 'index.html'))
+      }
       // The tower gets one page per occupied floor; it is also published at the site root, its canonical home.
       const towerIndex = path.join(out, 'tower', 'index.html')
       if (fs.existsSync(towerIndex)) {

@@ -10,7 +10,7 @@ import { useWakeLock } from './duo/link'
 import { DUO_MODE, tvRoom } from './duo/mode'
 import type { Command } from './duo/protocol'
 import { RemotePad, type PadActions } from './duo/RemotePad'
-import { colorKey, shareChannel, stageCommand, toLastSlot, useLocalPadState } from './duo/tvControl'
+import { colorKey, openSubmitPage, shareChannel, stageCommand, useLocalPadState } from './duo/tvControl'
 import { useDuoTv } from './duo/useDuoTv'
 import { useSplit } from './duo/useSplit'
 import { Guide } from './components/Guide'
@@ -302,7 +302,7 @@ export function TvApp() {
     vol: (d) => useTv.getState().setVolume(useTv.getState().volume + d),
     mute: () => useTv.getState().toggleMute(),
     info: () => useTv.getState().setInfoOpen(!useTv.getState().infoOpen),
-    upload: toLastSlot,
+    upload: () => openSubmitPage('duo_remote'),
     color: colorKey,
     stage: stageCommand,
     power: powerOff,
