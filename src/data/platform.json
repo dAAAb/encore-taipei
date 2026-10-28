@@ -31,8 +31,8 @@
   },
   {
     "short": "北士科、內科、南港，AI一條龍！",
-    "detail": "北士科：輝達＋AI產業鏈；內科：硬體＋系統整合；南港：軟體＋應用（依競選文宣）。",
-    "source": null,
+    "detail": "北士科：輝達＋AI產業鏈；內科：硬體、資通訊與運算；南港：生技與軟體，串成基隆河AI產業廊帶。",
+    "source": "https://futurecity.cw.com.tw/article/4105",
     "tag": "產業心安"
   },
   {
@@ -80,7 +80,7 @@
   {
     "short": "社宅20%婚育專屬配額！",
     "detail": "擴大幸福住宅，社會住宅導入20%婚育專屬配額，讓新婚與育兒家庭住得起台北。",
-    "source": "https://www.ettoday.net/news/20260819/3221768.htm",
+    "source": "https://www.cna.com.tw/news/aloc/202608190132.aspx",
     "tag": "居住心安"
   },
   {
@@ -122,13 +122,13 @@
   {
     "short": "敦北地下大排，防洪更韌性！",
     "detail": "2027年度編列12億元防汛經費，推動全國首創「敦北地下大排」潛盾工程，並放寬防水閘門補助。",
-    "source": "https://news.pchome.com.tw/public/taipei/20260812/index-78652694025659126016.html",
+    "source": "https://www.gov.taipei/News_Content.aspx?n=2044902FC839D045&s=63455203FD0A1669",
     "tag": "防災心安"
   },
   {
     "short": "無菸商圈再擴大！",
     "detail": "增設負壓吸菸區，擴大西門町、迪化街、心中山、信義四大商圈無菸範圍，並導入AI偵測與語音勸導。",
-    "source": "https://news.pchome.com.tw/public/taipei/20260812/index-78652694025659126016.html",
+    "source": "https://www.gov.taipei/News_Content.aspx?n=2044902FC839D045&s=63455203FD0A1669",
     "tag": "城市心安"
   }
 ]
