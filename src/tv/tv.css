@@ -286,6 +286,20 @@ body,
 .gate-pulse {
   animation: gate-pulse 2.2s ease-in-out infinite;
 }
+/* Subtitles under the newsreel: broadcast-style white on a dark band, each line fading in. */
+.intro-subtitle {
+  font-family: 'NotoTC', 'Noto Sans TC', ui-sans-serif, system-ui, sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  animation: intro-subtitle 0.18s ease-out;
+}
+@keyframes intro-subtitle {
+  from {
+    opacity: 0;
+  }
+}
 /* Secondary choices under the power button: glass pills, quieter than the yellow ink button. */
 .gate-chip {
   display: inline-flex;

@@ -53,6 +53,7 @@ export function TvApp() {
   const [durations, setDurations] = useState<number[] | null>(null)
   const [quick, setQuick] = useState(false)
   const [fading, setFading] = useState(false)
+  const [subtitle, setSubtitle] = useState<string | null>(null)
   const [layout, setLayout] = useState(() => pickLayout())
   const [arriving, setArriving] = useState(0)
   const [entry, setEntry] = useState('')
@@ -359,8 +360,19 @@ export function TvApp() {
             lowPower={lowPower}
             onTvClick={phase === 'gate' && durations ? () => powerOn(true) : undefined}
             onEdgeColor={SAMPLE_EDGE || DUO_MODE ? onEdgeColor : undefined}
+            onSubtitle={setSubtitle}
           />
         </div>
+      )}
+
+      {phase === 'intro' && !fading && subtitle && (
+        <p
+          key={subtitle}
+          className="intro-subtitle pointer-events-none fixed inset-x-0 bottom-[max(4.25rem,calc(env(safe-area-inset-bottom)+3.5rem))] z-30 mx-auto w-fit max-w-[min(92vw,44rem)] rounded-lg bg-black/60 px-4 py-1.5 text-center text-[19px] leading-snug font-bold tracking-[0.04em] text-white sm:text-[24px]"
+          aria-live="polite"
+        >
+          {subtitle}
+        </p>
       )}
 
       {phase === 'off' && (

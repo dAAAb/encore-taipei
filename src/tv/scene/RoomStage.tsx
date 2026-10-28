@@ -44,11 +44,13 @@ function Director({
   quick,
   durations,
   onDone,
+  onSubtitle,
 }: {
   mode: RoomMode
   quick: boolean
   durations: number[]
   onDone: () => void
+  onSubtitle?: (text: string | null) => void
 }) {
   const { camera, size } = useThree()
   const aspect = size.width / size.height
@@ -66,6 +68,14 @@ function Director({
   const pushFrom = useRef<{ pos: THREE.Vector3; look: THREE.Vector3 } | null>(null)
   const doneRef = useRef(onDone)
   doneRef.current = onDone
+  const subtitleRef = useRef(onSubtitle)
+  subtitleRef.current = onSubtitle
+  const shownSubtitle = useRef<string | null>(null)
+  const showSubtitle = (text: string | null) => {
+    if (text === shownSubtitle.current) return
+    shownSubtitle.current = text
+    subtitleRef.current?.(text)
+  }
 
   useEffect(() => {
     montage.load()
@@ -80,7 +90,11 @@ function Director({
     eraRef.current = quick ? 'hd' : 'film'
     pushFrom.current = null
     narrator.load()
-    return () => narrator.stop()
+    return () => {
+      narrator.stop()
+      shownSubtitle.current = null
+      subtitleRef.current?.(null)
+    }
   }, [mode, quick, narrator])
 
   useEffect(() => {
@@ -154,6 +168,7 @@ function Director({
     montage.draw(Math.min(t, montage.total - 0.001))
     texture.current.needsUpdate = true
     narrator.update(t)
+    showSubtitle(montage.subtitleAt(t))
 
     const progress = Math.min(1, t / montage.pushAt)
     roomLight.level = 0.12 + 0.88 * smooth(progress)
@@ -202,6 +217,7 @@ export function RoomStage({
   lowPower,
   layout,
   onEdgeColor,
+  onSubtitle,
 }: {
   layout: Layout
   mode: RoomMode
@@ -211,6 +227,8 @@ export function RoomStage({
   onTvClick?: () => void
   lowPower: boolean
   onEdgeColor?: (rgb: Rgb) => void
+  /** The narration line being spoken, for the subtitle bar under the newsreel (null between lines). */
+  onSubtitle?: (text: string | null) => void
 }) {
   return (
     <Canvas
@@ -226,7 +244,7 @@ export function RoomStage({
     >
       <Suspense fallback={null}>
         <Backroom key={layout.id} layout={layout} />
-        <Director mode={mode} quick={quick} durations={durations} onDone={onDone} />
+        <Director mode={mode} quick={quick} durations={durations} onDone={onDone} onSubtitle={onSubtitle} />
         <EffectComposer multisampling={lowPower ? 0 : 4}>
           <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={0.7} radius={0.6} />
           <Noise premultiply blendFunction={BlendFunction.SCREEN} opacity={0.12} />

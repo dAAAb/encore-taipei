@@ -1,4 +1,4 @@
-import { SEGMENTS, type Era, type Segment } from './segments'
+import { FINALE_LINE, SEGMENTS, type Era, type Segment } from './segments'
 
 const BASE = import.meta.env.BASE_URL
 const FONT = `'NotoTC', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif`
@@ -13,6 +13,26 @@ type Shot =
 export interface Cue {
   at: number
   audio: string
+}
+
+export interface Subtitle {
+  t0: number
+  t1: number
+  text: string
+}
+
+/** One subtitle per sentence of a voice-over, timed by its share of the characters, punctuation dropped as on TV. */
+function subtitles(at: number, seconds: number, narration: string): Subtitle[] {
+  const parts = (narration.match(/[^。！？]+[。！？]?/g) ?? [])
+    .map((s) => s.replace(/[，。！？]/g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+  const total = parts.reduce((n, s) => n + s.length, 0) || 1
+  let t = at
+  return parts.map((text) => {
+    const t0 = t
+    t += (seconds * text.length) / total
+    return { t0, t1: t, text }
+  })
 }
 
 function hash(n: number) {
@@ -31,6 +51,7 @@ export class Montage {
   private noise = document.createElement('canvas')
   readonly shots: Shot[] = []
   readonly cues: Cue[] = []
+  readonly subtitles: Subtitle[] = []
   readonly total: number
   /** When the camera should start its final push into the screen. */
   readonly pushAt: number
@@ -54,12 +75,16 @@ export class Montage {
       add({ kind: 'leader', t0: t, t1: t + 2.0, era: 'film' })
       add({ kind: 'title', t0: t, t1: t + 1.8, era: 'film' })
       SEGMENTS.forEach((seg, index) => {
-        const d = Math.max(4.2, (narrationSeconds[index] ?? 4) + 0.7)
+        const said = narrationSeconds[index] ?? 4
+        const d = Math.max(4.2, said + 0.7)
         this.cues.push({ at: t + 0.35, audio: `${BASE}montage/vo-${seg.id}.mp3` })
+        this.subtitles.push(...subtitles(t + 0.35, said, seg.narration))
         add({ kind: 'segment', t0: t, t1: t + d, era: seg.era, seg, index })
       })
+      const said = narrationSeconds[SEGMENTS.length] ?? 2.4
       this.cues.push({ at: t + 0.3, audio: `${BASE}montage/vo-finale.mp3` })
-      add({ kind: 'finale', t0: t, t1: t + Math.max(3.2, (narrationSeconds[SEGMENTS.length] ?? 2.4) + 1.0), era: 'hd' })
+      this.subtitles.push(...subtitles(t + 0.3, said, FINALE_LINE))
+      add({ kind: 'finale', t0: t, t1: t + Math.max(3.2, said + 1.0), era: 'hd' })
       add({ kind: 'snow', t0: t, t1: t + 1.1, era: 'hd' })
     }
     this.total = t
@@ -77,6 +102,11 @@ export class Montage {
         img.src = `${BASE}montage/${file}`
         this.images.set(file, img)
       }
+  }
+
+  /** The subtitle on screen at time t; a line stays up a beat after its voice ends so it can be read to the end. */
+  subtitleAt(t: number) {
+    return this.subtitles.find((s, i) => t >= s.t0 && t < Math.min(s.t1 + 0.4, this.subtitles[i + 1]?.t0 ?? Infinity))?.text ?? null
   }
 
   shotAt(t: number) {
