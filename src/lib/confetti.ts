@@ -8,8 +8,14 @@ import type { Vec } from './motion'
 
 const COLORS = ['#ffd400', '#ff2a4d', '#2ef2ff', '#7dff7a', '#ffffff', '#b46bff', '#ff8a00', '#f5c542']
 const BACKS = ['#b89900', '#a8142f', '#14a4ad', '#3fae3c', '#c9c9d6', '#7432b8', '#b05e00', '#a8842a']
-const TRAIL = 18
-const LIFE = 15
+/** Campaign streamers like the ones at the rally: white with blue type, or light blue with white type. */
+const RIBBON_FACE = [
+  { cloth: '#f4f8ff', edge: '#c9d8ee', ink: '#1a8ad6' },
+  { cloth: '#3ca6ea', edge: '#1f7ec4', ink: '#ffffff' },
+] as const
+const SLOGAN = '台北安可 非你不可◆'
+const TRAIL = 52
+const LIFE = 16
 
 interface Bit {
   kind: 'chip' | 'dot'
@@ -41,7 +47,8 @@ interface Ribbon {
   swayRate: number
   phase: number
   width: number
-  color: number
+  face: 0 | 1
+  shift: number
   age: number
   trail: number[]
 }
@@ -137,7 +144,7 @@ export class Confetti {
     if (!this.ctx || !this.w) return
     const p = Math.max(0.35, Math.min(1.4, power))
     const cap = this.lite ? 380 : 720
-    const ribbonCap = this.lite ? 26 : 48
+    const ribbonCap = this.lite ? 32 : 56
     const room = Math.max(0, cap - this.bits.length)
     const g = this.gravity
     const gl = Math.hypot(g.x, g.y) || 1
@@ -189,9 +196,9 @@ export class Confetti {
           age: 0,
         })
       }
-      const rn = Math.min(Math.round((this.lite ? 5 : 8) * p), Math.max(0, Math.floor((ribbonCap - this.ribbons.length) / 2)))
+      const rn = Math.min(Math.round((this.lite ? 7 : 12) * p), Math.max(0, Math.floor((ribbonCap - this.ribbons.length) / 2)))
       for (let i = 0; i < rn; i++) {
-        const speed = rand(1.2, 2.2) * H
+        const speed = rand(1.05, 1.9) * H
         const dir = aim(0.75)
         const x = ox + rand(-8, 8)
         const y = oy + rand(-8, 8)
@@ -200,12 +207,13 @@ export class Confetti {
           y,
           vx: dir.x * speed,
           vy: dir.y * speed,
-          drag: rand(2.8, 3.6),
-          sway: rand(0.24, 0.42),
-          swayRate: rand(3.5, 5.5),
+          drag: rand(2.4, 3.2),
+          sway: rand(0.22, 0.4),
+          swayRate: rand(3.2, 5.2),
           phase: rand(0, Math.PI * 2),
-          width: rand(4.5, 7) * k,
-          color: pick(),
+          width: rand(16, 24) * k,
+          face: Math.random() < 0.55 ? 0 : 1,
+          shift: Math.floor(Math.random() * SLOGAN.length),
           age: 0,
           trail: Array.from({ length: TRAIL }, () => [x, y]).flat(),
         })
@@ -314,6 +322,51 @@ export class Confetti {
     this.ribbons.length = n
   }
 
+  /** Sample the same midpoint-quadratic path the fabric is drawn on. */
+  private walkRibbon(tr: number[], fn: (x: number, y: number, ang: number, dist: number) => void) {
+    if (tr.length < 6) return
+    let mx = tr[0]
+    let my = tr[1]
+    let px = mx
+    let py = my
+    let dist = 0
+    for (let i = 2; i < tr.length - 2; i += 2) {
+      const nx = (tr[i] + tr[i + 2]) / 2
+      const ny = (tr[i + 1] + tr[i + 3]) / 2
+      const cx = tr[i]
+      const cy = tr[i + 1]
+      for (let s = 1; s <= 4; s++) {
+        const u = s / 4
+        const x = (1 - u) * (1 - u) * mx + 2 * (1 - u) * u * cx + u * u * nx
+        const y = (1 - u) * (1 - u) * my + 2 * (1 - u) * u * cy + u * u * ny
+        const dx = x - px
+        const dy = y - py
+        const ds = Math.hypot(dx, dy)
+        if (ds < 0.2) continue
+        dist += ds
+        fn(x, y, Math.atan2(dy, dx), dist)
+        px = x
+        py = y
+      }
+      mx = nx
+      my = ny
+    }
+  }
+
+  private strokeRibbon(ctx: CanvasRenderingContext2D, tr: number[], width: number, color: string) {
+    if (tr.length < 6) return
+    ctx.strokeStyle = color
+    ctx.lineWidth = width
+    ctx.beginPath()
+    ctx.moveTo(tr[0], tr[1])
+    for (let i = 2; i < tr.length - 2; i += 2) {
+      const nx = (tr[i] + tr[i + 2]) / 2
+      const ny = (tr[i + 1] + tr[i + 3]) / 2
+      ctx.quadraticCurveTo(tr[i], tr[i + 1], nx, ny)
+    }
+    ctx.stroke()
+  }
+
   private draw() {
     const ctx = this.ctx
     if (!ctx) return
@@ -323,27 +376,48 @@ export class Confetti {
 
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
     for (const r of this.ribbons) {
       const a = r.age > LIFE - 1 ? Math.max(0, LIFE - r.age) : 1
-      ctx.globalAlpha = a
+      const face = RIBBON_FACE[r.face]
       const tr = r.trail
       ctx.setTransform(d, 0, 0, d, 0, 0)
-      // Curves through the midpoints, one stroke per segment so the band can twist (width and face color).
-      let mx = tr[0]
-      let my = tr[1]
-      for (let i = 2; i < tr.length - 2; i += 2) {
-        const nx = (tr[i] + tr[i + 2]) / 2
-        const ny = (tr[i + 1] + tr[i + 3]) / 2
-        const twist = Math.abs(Math.cos(i * 0.3 + this.t * 6 + r.phase))
-        ctx.lineWidth = 1 + r.width * twist
-        ctx.strokeStyle = twist > 0.45 ? COLORS[r.color] : BACKS[r.color]
-        ctx.beginPath()
-        ctx.moveTo(mx, my)
-        ctx.quadraticCurveTo(tr[i], tr[i + 1], nx, ny)
-        ctx.stroke()
-        mx = nx
-        my = ny
-      }
+      ctx.globalAlpha = a
+      // Edge, then the cloth, then the slogan printed along the band (same path the fabric follows).
+      this.strokeRibbon(ctx, tr, r.width + 2.4 * this.k, face.edge)
+      this.strokeRibbon(ctx, tr, r.width, face.cloth)
+      const size = Math.max(10, r.width * 0.72)
+      ctx.font = `900 ${size}px NotoTC, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`
+      ctx.fillStyle = face.ink
+      const step = size * 1.08
+      let next = step * 0.7
+      let glyph = r.shift
+      this.walkRibbon(tr, (x, y, ang, dist) => {
+        if (dist < next) return
+        const ch = SLOGAN[glyph % SLOGAN.length]
+        glyph++
+        next += ch === ' ' || ch === '◆' ? step * 0.7 : step
+        if (ch === ' ') return
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(ang)
+        if (ch === '◆') {
+          ctx.fillStyle = r.face === 0 ? '#f5c542' : '#ffe36a'
+          const q = size * 0.28
+          ctx.beginPath()
+          ctx.moveTo(0, -q)
+          ctx.lineTo(q, 0)
+          ctx.lineTo(0, q)
+          ctx.lineTo(-q, 0)
+          ctx.closePath()
+          ctx.fill()
+          ctx.fillStyle = face.ink
+        } else {
+          ctx.fillText(ch, 0, 0)
+        }
+        ctx.restore()
+      })
     }
 
     for (const b of this.bits) {
