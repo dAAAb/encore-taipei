@@ -4,6 +4,7 @@ import { track } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
 import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from './channel-data'
 import { ChannelOverview } from './components/ChannelOverview'
+import { NewChannelTicker } from './components/NewChannelTicker'
 import { ChannelScreen } from './components/ChannelScreen'
 import { DuoPairPanel } from './duo/DuoPairPanel'
 import { useWakeLock } from './duo/link'
@@ -343,6 +344,7 @@ export function TvApp() {
           )}
           {duoRoom && <DuoPairPanel room={duoRoom} status={duo.status} remotes={duo.remotes} joins={duo.joins} />}
           <ChannelOverview />
+          {DUO_MODE !== 'split' && <NewChannelTicker />}
           <InfoSheet />
           <SubmitForm />
           <Guide />
