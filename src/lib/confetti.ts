@@ -107,28 +107,41 @@ export class Confetti {
       this.gravityTarget = { x: 0, y: 1 }
       return
     }
-    const m = Math.hypot(g.x, g.y)
+    // A phone is read held upright-ish, where a comfortable sideways tilt is only ~0.3 g; steer more than that.
+    const x = Math.max(-1, Math.min(1, g.x * 1.8))
+    const m = Math.hypot(x, g.y)
     // Lying flat there is little pull across the screen; a hint of the screen's down keeps things from hovering forever.
     const bias = Math.max(0, 0.22 - m)
-    this.gravityTarget = { x: g.x, y: g.y + bias }
+    const y = g.y + bias
+    const over = Math.max(1, Math.hypot(x, y))
+    this.gravityTarget = { x: x / over, y: y / over }
     if (hold) this.tiltUntil = performance.now() + hold
   }
 
-  /** Throw the air (and everything in it) one way. strength 1 ≈ a firm shake. */
+  /** A shake tosses what is in the air back up (against gravity) and nudges it the way it was shaken. strength 1 ≈ a firm shake. */
   gust(dir: Vec, strength = 1) {
-    const s = Math.min(2, strength) * this.h
-    this.air.x += dir.x * s * 0.9
-    this.air.y += dir.y * s * 0.9
+    const s = Math.min(1.5, strength) * Math.min(this.w, this.h)
+    const gl = Math.hypot(this.gravity.x, this.gravity.y) || 1
+    const up = { x: -this.gravity.x / gl, y: -this.gravity.y / gl }
+    this.air.x += dir.x * s * 0.3
+    this.air.y += dir.y * s * 0.3
+    const am = Math.hypot(this.air.x, this.air.y)
+    const cap = Math.min(this.w, this.h) * 0.45
+    if (am > cap) {
+      this.air.x *= cap / am
+      this.air.y *= cap / am
+    }
+    // Lift tops up to a speed rather than adding, so a long shake keeps things aloft without flinging them off the top.
+    const toss = (p: { vx: number; vy: number }, push: number, lift: number) => {
+      const rise = Math.max(0, lift - (p.vx * up.x + p.vy * up.y))
+      p.vx += dir.x * push + up.x * rise
+      p.vy += dir.y * push + up.y * rise
+    }
     for (const b of this.bits) {
-      const k = rand(0.35, 0.75) * s
-      b.vx += dir.x * k
-      b.vy += dir.y * k
+      toss(b, rand(0.1, 0.25) * s, rand(0.25, 0.5) * s)
       b.flipRate *= 1.4
     }
-    for (const r of this.ribbons) {
-      r.vx += dir.x * s * 0.6
-      r.vy += dir.y * s * 0.6
-    }
+    for (const r of this.ribbons) toss(r, 0.15 * s, rand(0.22, 0.4) * s)
     this.run()
   }
 
