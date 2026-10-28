@@ -30,9 +30,12 @@ function shareUrls(): Plugin {
   }
 }
 
-/** /2026, /2027 … are TV channels served by the hub page; /tower/2027 are floors served by the tower page. */
+/** /2026, /2027 … are TV channels served by the hub page; /tower/2027 are floors served by the tower page; /me is the submit page. */
 function channelRoutes(): Plugin {
-  const rewrite = (url = '') => url.replace(/^(.*?\/)(\d{4,5})\/?(\?.*)?$/, (_m, pre: string, _n, q = '') => `${pre}index.html${q}`)
+  const rewrite = (url = '') =>
+    url
+      .replace(/^(.*?\/)me\/?(\?.*)?$/, (_m, pre: string, q = '') => `${pre}submit/index.html${q}`)
+      .replace(/^(.*?\/)(\d{4,5})\/?(\?.*)?$/, (_m, pre: string, _n, q = '') => `${pre}index.html${q}`)
   return {
     name: 'channel-routes',
     configureServer(server) {

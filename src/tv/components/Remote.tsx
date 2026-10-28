@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, Info, LayoutGrid, Plus, Power, Share2, Upload, VolumeX } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react'
 import { track } from '@/lib/analytics'
+import { openSubmitPage } from '../duo/tvControl'
 import { channelUrl } from '../routing'
 import { sfx } from '../sfx'
 import { useTv } from '../store'
@@ -164,12 +165,6 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
     window.setTimeout(() => (drag.current = null), 0)
   }
 
-  const toLastSlot = () => {
-    const s = useTv.getState()
-    s.tune(s.dial.length - 1)
-    if (s.dial[s.dial.length - 1]?.kind === 'empty') window.setTimeout(() => useTv.getState().setSubmitOpen(true), 500)
-  }
-
   const openOverview = () => {
     const s = useTv.getState()
     s.setInfoOpen(false)
@@ -257,7 +252,7 @@ export function Remote({ onPowerOff, entry, onDigit }: { onPowerOff: () => void;
           <Key label="數字 0" onPress={() => onDigit(0)} className="h-8 rounded-full text-sm font-bold">
             0
           </Key>
-          <Key label="上架你的舞台" onPress={toLastSlot} className="h-8 rounded-full text-[#ffd400]">
+          <Key label="上架你的舞台" onPress={() => openSubmitPage('remote')} className="h-8 rounded-full text-[#ffd400]">
             <Upload className="size-4" />
           </Key>
         </div>

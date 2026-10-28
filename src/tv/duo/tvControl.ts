@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { track } from '@/lib/analytics'
-import { channelUrl } from '../routing'
+import { channelUrl, SUBMIT_PATH } from '../routing'
 import { useTv } from '../store'
 import type { PadState } from './RemotePad'
 import type { Color, DialEntry, StageCommand, TvSnapshot } from './protocol'
@@ -33,7 +33,13 @@ export function colorKey(c: Color) {
   track('remote_color_key', { color: c })
 }
 
-/** The upload key: go to the empty channel and offer the submission form there. */
+/** The remote's upload key: the full submit page, with the prompt, the steps and HTML upload. */
+export function openSubmitPage(place: string) {
+  track('submit_page_open', { place })
+  location.assign(SUBMIT_PATH)
+}
+
+/** Go to the empty channel and offer the short submission form there. */
 export function toLastSlot() {
   const s = useTv.getState()
   s.tune(s.dial.length - 1)
