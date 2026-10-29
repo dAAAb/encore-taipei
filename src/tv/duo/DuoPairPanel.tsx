@@ -112,7 +112,7 @@ export function DuoPairPanel({ room, status, remotes, joins }: { room: string; s
               <QrCode text={link} />
             </div>
             <div className="min-w-0 text-center sm:text-left landscape:text-left">
-              <p className="text-[11px] font-black tracking-[0.25em] text-[#c8234a]">台北安可大舞台 · 窮人版 DUO</p>
+              <p className="text-[11px] font-black tracking-[0.25em] text-[#c8234a]">台北安可大舞台 · 創意版 DUO</p>
               <p className="mt-1.5 text-xl leading-snug font-black">用另一支手機的相機，掃這個 QR code 當遙控器</p>
               <p className="mt-3 text-xs font-bold text-[#4a4f6e]">或在遙控器輸入配對碼</p>
               {code && 'code' in code ? (
