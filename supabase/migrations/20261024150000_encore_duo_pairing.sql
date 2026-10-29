@@ -1,4 +1,4 @@
--- Pairing codes for "poor man's Duo": a phone opened with ?duo=tv asks for a 6-digit code for its
+-- Pairing codes for the creative two-phone Duo: a phone opened with ?duo=tv asks for a 6-digit code for its
 -- realtime room; a phone opened with ?duo=remote trades the code for the room. The QR code on the
 -- TV carries the room itself, so codes are only the typed fallback: short-lived, single-use, and
 -- both calls are throttled site-wide so the 10^6 code space cannot be walked.

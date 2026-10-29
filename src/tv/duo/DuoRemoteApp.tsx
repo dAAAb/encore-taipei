@@ -86,7 +86,7 @@ function PairScreen({ onPaired }: { onPaired: (room: string) => void }) {
         <p className="mt-3 flex items-start gap-2 rounded-lg bg-white/5 p-3 text-xs leading-relaxed text-white/60">
           <Smartphone className="mt-0.5 size-4 shrink-0" />
           <span>
-            還沒有電視？在另一支手機打開 <b className="font-mono text-[#ffd400]">{TV_LINK}</b>，兩支打橫上下貼在一起，就是窮人版 Duo。
+            還沒有電視？在另一支手機打開 <b className="font-mono text-[#ffd400]">{TV_LINK}</b>，兩支打橫上下貼在一起，就是創意版 Duo。
           </span>
         </p>
       </div>
