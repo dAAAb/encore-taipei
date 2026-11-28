@@ -10,16 +10,19 @@ const HEIGHT = 3
 const THICK = 0.18
 
 /**
- * Shared knob the director turns: 0 = sickly flicker in the dark, 1 = bright and clean. `haze` stretches the
- * director's fog distances for sets that open onto a skyline.
+ * Shared knob the director turns: 0 = sickly flicker in the dark, 1 = bright and clean. Each set says how it
+ * starts: `start` is the light before the TV comes on, `haze` stretches the director's fog distances for sets that
+ * open onto a skyline, and `misty` swaps the dark vignette for a soft bright haze that clears as the camera pushes in.
  */
-export const roomLight = { level: 0, flicker: 1, haze: 1 }
+export const roomLight = { level: 0, flicker: 1, haze: 1, start: 0.12, misty: false }
 
 /** Background and fog colour the backrooms are tuned for. */
 export function useBackroomAir() {
   const scene = useThree((s) => s.scene)
   useLayoutEffect(() => {
     roomLight.haze = 1
+    roomLight.start = 0.12
+    roomLight.misty = false
     scene.background = new THREE.Color('#14100a')
     if (scene.fog) scene.fog.color.set('#2b2412')
   }, [scene])

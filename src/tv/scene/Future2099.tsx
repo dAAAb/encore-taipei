@@ -390,6 +390,8 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
   const { scene, camera } = useThree()
   useLayoutEffect(() => {
     roomLight.haze = 12
+    roomLight.start = 0.6
+    roomLight.misty = true
     const cam = camera as THREE.PerspectiveCamera
     const far = cam.far
     cam.far = 900
@@ -397,6 +399,8 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
     scene.background = DAWN.fog.clone()
     return () => {
       roomLight.haze = 1
+      roomLight.start = 0.12
+      roomLight.misty = false
       cam.far = far
       cam.updateProjectionMatrix()
     }
