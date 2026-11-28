@@ -11,6 +11,8 @@ export type Pillar = [x: number, z: number, size: number]
 export interface Layout {
   id: string
   name: string
+  /** What the same floor plan is called in the 2099 season. */
+  future: string
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number }
   walls: Seg[]
   pillars: Pillar[]
@@ -60,6 +62,7 @@ function box(x1: number, z1: number, x2: number, z2: number): Seg[] {
 const longHall: Layout = {
   id: 'L0-01',
   name: '長廊與側室',
+  future: '天際長廊',
   bounds: { minX: -16, maxX: 16, minZ: -9, maxZ: 34 },
   walls: [
     ...[-1, 1].flatMap((s) =>
@@ -94,6 +97,7 @@ const pillarHall: Layout = (() => {
   return {
     id: 'L0-02',
     name: '無盡柱廳',
+    future: '光柱大廳',
     bounds: { minX: -30, maxX: 30, minZ: -14, maxZ: 34 },
     walls: [
       [-30, -14, 30, -14],
@@ -126,6 +130,7 @@ const maze: Layout = (() => {
   return {
     id: 'L0-03',
     name: '迷宮隔間',
+    future: '玻璃花園迷徑',
     bounds: { minX: -26, maxX: 26, minZ: -13, maxZ: 34 },
     walls,
     pillars: [
@@ -139,6 +144,7 @@ const maze: Layout = (() => {
 const suite: Layout = {
   id: 'L0-04',
   name: '連通房間',
+  future: '連通觀景艙',
   bounds: { minX: -14, maxX: 14, minZ: -9, maxZ: 34 },
   walls: [
     ...crossWall(22, -11, 11),

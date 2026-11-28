@@ -1,6 +1,7 @@
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { useSite } from '@/lib/season'
 import { rbox, sphere } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, toon } from '@/three/toon'
@@ -113,6 +114,7 @@ const isTap = (e: ThreeEvent<MouseEvent>) => e.delta < 8
  */
 export function Blimp({ floors, onPick }: { floors: Floor[]; onPick: (f: Floor) => void }) {
   const { camera } = useThree()
+  const day = useSite((s) => s.season === '2099')
   const picks = useMemo(
     () =>
       floors
@@ -210,11 +212,17 @@ export function Blimp({ floors, onPick }: { floors: Floor[]; onPick: (f: Floor) 
     <group>
       <group ref={ship} {...handlers} scale={S}>
         <group scale={[3.3, 1.08, 1.08]}>
-          <Part geo={sphere(1, 32, 20)} mat={toon('#f4f1ea')} outline={0.025} />
+          <Part geo={sphere(1, 32, 20)} mat={toon(day ? '#ffd400' : '#f4f1ea')} outline={0.025} />
         </group>
-        <mesh geometry={rbox(0.16, 2.3, 2.3, 0.06)} material={toon('#c8234a')} position={[0.2, 0, 0]} />
+        <mesh geometry={rbox(0.16, 2.3, 2.3, 0.06)} material={toon(day ? '#2f6bff' : '#c8234a')} position={[0.2, 0, 0]} />
         {[0, Math.PI / 2, Math.PI, -Math.PI / 2].map((a) => (
-          <mesh key={a} geometry={rbox(1.3, 0.08, 0.9, 0.03)} material={toon('#ffd400')} position={[-2.9, Math.sin(a) * 0.62, Math.cos(a) * 0.62]} rotation={[a, 0, 0]} />
+          <mesh
+            key={a}
+            geometry={rbox(1.3, 0.08, 0.9, 0.03)}
+            material={toon(day ? '#2f6bff' : '#ffd400')}
+            position={[-2.9, Math.sin(a) * 0.62, Math.cos(a) * 0.62]}
+            rotation={[a, 0, 0]}
+          />
         ))}
         <Part geo={rbox(1.5, 0.48, 0.62, 0.12)} mat={toon('#1a1a24')} position={[0.3, -1.2, 0]} outline={0.015} />
         {[-0.35, 0, 0.35, 0.7].map((x) => (

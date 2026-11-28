@@ -30,7 +30,7 @@ export function Credits({ duration, onEnd }: { duration: number; onEnd: () => vo
         title: '頻道',
         rows: [...channels.map((c) => [`第 ${c.channel} 台`, `${c.title}｜${c.author}`] as [string, string]), [`第 ${Math.max(2026, ...channels.map((c) => c.channel)) + 1} 台`, '等你來做']],
       },
-      { title: '製作', rows: [['總製作・創意', '台北安可市民'], ['AI 協作', 'Cursor Cloud Agent × Claude Opus 5.5'], ['畫風靈感', 'Colorfigures｜April Zhu'], ['場景靈感', '《電馭叛客 2077》來生酒吧・The Backrooms']] },
+      { title: '製作', rows: [['總製作・創意', '台北安可市民'], ['AI 協作', 'Cursor Cloud Agent × Claude Opus 5.5'], ['畫風靈感', 'Colorfigures｜April Zhu'], ['場景靈感', '《電馭叛客 2077》來生酒吧・The Backrooms・台北 2099']] },
       { title: '音樂與聲音', rows: [['主題曲', '〈台北安可〉蔣萬安 2026 連任競選主題曲（YouTube 官方 MV）'], ['新聞旁白', 'Microsoft Edge 語音合成 zh-TW HsiaoChen'], ['電視音效', 'Web Audio 即時合成']] },
       {
         title: '資料與影像',

@@ -66,6 +66,29 @@ export const carpet = (repeat: [number, number]) =>
     repeat,
   )
 
+/** 2099 floor: large pale stone tiles with hairline joints. */
+export const tiles = (repeat: [number, number]) =>
+  canvasTexture(
+    256,
+    (ctx, s) => {
+      ctx.fillStyle = '#f3efe6'
+      ctx.fillRect(0, 0, s, s)
+      speckle(ctx, s, 1600, 'rgba(200,190,170,0.18)', 'rgba(255,255,255,0.35)')
+      ctx.strokeStyle = 'rgba(176,166,146,0.55)'
+      ctx.lineWidth = 2
+      ctx.strokeRect(0, 0, s, s)
+      ctx.strokeStyle = 'rgba(176,166,146,0.25)'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(s / 2, 0)
+      ctx.lineTo(s / 2, s)
+      ctx.moveTo(0, s / 2)
+      ctx.lineTo(s, s / 2)
+      ctx.stroke()
+    },
+    repeat,
+  )
+
 /** Drop-ceiling tiles. */
 export const ceiling = (repeat: [number, number]) =>
   canvasTexture(

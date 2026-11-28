@@ -1,4 +1,4 @@
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
@@ -9,8 +9,21 @@ import { carpet, ceiling, wallpaper } from './textures'
 const HEIGHT = 3
 const THICK = 0.18
 
-/** Shared knob the director turns: 0 = sickly flicker in the dark, 1 = bright and clean. */
-export const roomLight = { level: 0, flicker: 1 }
+/**
+ * Shared knob the director turns: 0 = sickly flicker in the dark, 1 = bright and clean. `haze` stretches the
+ * director's fog distances for sets that open onto a skyline.
+ */
+export const roomLight = { level: 0, flicker: 1, haze: 1 }
+
+/** Background and fog colour the backrooms are tuned for. */
+export function useBackroomAir() {
+  const scene = useThree((s) => s.scene)
+  useLayoutEffect(() => {
+    roomLight.haze = 1
+    scene.background = new THREE.Color('#14100a')
+    if (scene.fog) scene.fog.color.set('#2b2412')
+  }, [scene])
+}
 
 function hash(n: number) {
   const x = Math.sin(n * 91.7) * 43758.5453
@@ -45,6 +58,7 @@ function wallMaterial() {
  * and a drop ceiling of fluorescent panels, some dead, some buzzing.
  */
 export function Backroom({ layout }: { layout: Layout }) {
+  useBackroomAir()
   const { bounds } = layout
   const w = bounds.maxX - bounds.minX
   const d = bounds.maxZ - bounds.minZ

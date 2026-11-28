@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Building2, Clapperboard, Volume2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
+import { loadSiteSettings, seasonName, useSite } from '@/lib/season'
 import { FIRST_CHANNEL, fetchLiveChannels, type Channel } from './channel-data'
 import { ChannelOverview } from './components/ChannelOverview'
 import { NewChannelTicker } from './components/NewChannelTicker'
@@ -56,6 +57,7 @@ export function TvApp() {
   const [fading, setFading] = useState(false)
   const [subtitle, setSubtitle] = useState<string | null>(null)
   const [layout, setLayout] = useState(() => pickLayout())
+  const season = useSite((s) => s.season)
   const [arriving, setArriving] = useState(0)
   const [entry, setEntry] = useState('')
   const entryTimer = useRef(0)
@@ -63,6 +65,7 @@ export function TvApp() {
   const lowPower = useMemo(() => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.hardwareConcurrency ?? 8) <= 4, [])
 
   useEffect(() => {
+    void loadSiteSettings()
     const n = deepLinkFromPage()
     if (n) useTv.setState({ deepLink: n })
     loadNarrationDurations().then(setDurations)
@@ -431,8 +434,11 @@ export function TvApp() {
               原始碼
             </a>
           </p>
-          <p className="tv-caption fixed bottom-[max(0.6rem,env(safe-area-inset-bottom))] left-3 font-mono text-[10px] tracking-widest text-white/35" title={layout.name}>
-            後室 {layout.id}
+          <p
+            className="tv-caption fixed bottom-[max(0.6rem,env(safe-area-inset-bottom))] left-3 font-mono text-[10px] tracking-widest text-white/35"
+            title={season === '2099' ? layout.future : layout.name}
+          >
+            {seasonName(season)} {layout.id}
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useEffect, useMemo, useReducer } from 'react'
 import * as THREE from 'three'
+import { useSite } from '@/lib/season'
 import { rbox } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, toon } from '@/three/toon'
@@ -24,6 +25,7 @@ function Storey({ floor, onPick }: { floor: Floor; onPick: (f: Floor) => void })
   const label = useMemo(() => floorLabel(floor), [floor])
   const y = floorY(floor.index)
   const edge = EDGE[floor.index % EDGE.length]
+  const day = useSite((s) => s.season === '2099')
 
   useEffect(() => () => {
     front.dispose()
@@ -72,7 +74,7 @@ function Storey({ floor, onPick }: { floor: Floor; onPick: (f: Floor) => void })
         <planeGeometry args={[WIDTH, 0.56]} />
         <meshBasicMaterial map={label} toneMapped={false} />
       </mesh>
-      <mesh geometry={rbox(WIDTH + 0.5, 0.12, DEPTH + 0.5, 0.03)} material={toon('#14121c')} position={[0, y - FLOOR_H / 2 + 0.02, 0]} />
+      <mesh geometry={rbox(WIDTH + 0.5, 0.12, DEPTH + 0.5, 0.03)} material={toon(day ? '#eef0f4' : '#14121c')} position={[0, y - FLOOR_H / 2 + 0.02, 0]} />
       <mesh position={[0, y - FLOOR_H / 2 + 0.07, DEPTH / 2 + 0.26]} material={neon(edge, floor.kind === 'future' ? 0.6 : 2.4)}>
         <boxGeometry args={[WIDTH + 0.5, 0.05, 0.05]} />
       </mesh>
@@ -82,21 +84,22 @@ function Storey({ floor, onPick }: { floor: Floor; onPick: (f: Floor) => void })
 
 function Lobby() {
   const sign = useMemo(() => lobbySign(), [])
+  const day = useSite((s) => s.season === '2099')
   return (
     <group>
-      <Part geo={rbox(WIDTH + 1.2, 0.5, DEPTH + 1.2, 0.08)} mat={toon('#1c1a26')} position={[0, 0.25, 0]} outline={0.04} />
+      <Part geo={rbox(WIDTH + 1.2, 0.5, DEPTH + 1.2, 0.08)} mat={toon(day ? '#e9e5dc' : '#1c1a26')} position={[0, 0.25, 0]} outline={0.04} />
       <mesh position={[0, LOBBY_H / 2 + 0.3, DEPTH / 2 - 0.4]}>
         <planeGeometry args={[WIDTH - 1, LOBBY_H - 1.6]} />
         <meshBasicMaterial color="#ffcf8a" toneMapped={false} />
       </mesh>
       {[-5.6, -2.8, 0, 2.8, 5.6].map((x) => (
-        <mesh key={x} geometry={rbox(0.18, LOBBY_H - 1.4, 0.18, 0.04)} material={toon('#0f0e14')} position={[x, LOBBY_H / 2 + 0.2, DEPTH / 2 - 0.2]} />
+        <mesh key={x} geometry={rbox(0.18, LOBBY_H - 1.4, 0.18, 0.04)} material={toon(day ? '#f4f2ec' : '#0f0e14')} position={[x, LOBBY_H / 2 + 0.2, DEPTH / 2 - 0.2]} />
       ))}
       <mesh position={[0, 2.0, DEPTH / 2 - 0.25]}>
         <planeGeometry args={[3.2, 3.2]} />
         <meshBasicMaterial color="#2a2018" transparent opacity={0.55} />
       </mesh>
-      <Part geo={rbox(9, 0.3, 3.2, 0.06)} mat={toon('#16141e')} position={[0, LOBBY_H - 2.2, DEPTH / 2 + 1.3]} outline={0.03} />
+      <Part geo={rbox(9, 0.3, 3.2, 0.06)} mat={toon(day ? '#f4f2ec' : '#16141e')} position={[0, LOBBY_H - 2.2, DEPTH / 2 + 1.3]} outline={0.03} />
       <mesh position={[0, LOBBY_H - 2.2 - 0.17, DEPTH / 2 + 2.85]} material={neon('#ffd400', 2.6)}>
         <boxGeometry args={[9, 0.05, 0.05]} />
       </mesh>
@@ -104,7 +107,7 @@ function Lobby() {
         <planeGeometry args={[9.6, 1.5]} />
         <meshBasicMaterial map={sign} transparent toneMapped={false} />
       </mesh>
-      <mesh geometry={rbox(WIDTH + 0.6, 0.3, DEPTH + 0.6, 0.05)} material={toon('#14121c')} position={[0, LOBBY_H, 0]} />
+      <mesh geometry={rbox(WIDTH + 0.6, 0.3, DEPTH + 0.6, 0.05)} material={toon(day ? '#eef0f4' : '#14121c')} position={[0, LOBBY_H, 0]} />
     </group>
   )
 }
@@ -113,6 +116,7 @@ function Lobby() {
 function Frame({ floors }: { floors: number }) {
   const h = roofY(floors) - LOBBY_H
   const cy = LOBBY_H + h / 2
+  const day = useSite((s) => s.season === '2099')
   return (
     <group>
       {[
@@ -121,16 +125,16 @@ function Frame({ floors }: { floors: number }) {
         [WIDTH / 2, -DEPTH / 2],
         [-WIDTH / 2, -DEPTH / 2],
       ].map(([x, z]) => (
-        <Part key={`${x}${z}`} geo={rbox(0.5, h, 0.5, 0.06)} mat={toon('#101018')} position={[x, cy, z]} outline={0.03} />
+        <Part key={`${x}${z}`} geo={rbox(0.5, h, 0.5, 0.06)} mat={toon(day ? '#f2f3f6' : '#101018')} position={[x, cy, z]} outline={0.03} />
       ))}
       {[WIDTH / 2 + 0.27, -WIDTH / 2 - 0.27].map((x) => (
-        <mesh key={x} position={[x, cy, DEPTH / 2 + 0.27]} material={neon('#ff2a4d', 2.2)}>
+        <mesh key={x} position={[x, cy, DEPTH / 2 + 0.27]} material={day ? neon('#ffd400', 1.8) : neon('#ff2a4d', 2.2)}>
           <boxGeometry args={[0.04, h, 0.04]} />
         </mesh>
       ))}
       <mesh position={[0, cy, -DEPTH / 2 - 0.01]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[WIDTH, h]} />
-        <meshBasicMaterial color="#0b0c16" />
+        <meshBasicMaterial color={day ? '#dfe3ea' : '#0b0c16'} />
       </mesh>
     </group>
   )

@@ -2,12 +2,13 @@ import { Tv, Volume2, VolumeX } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { initAnalytics, track, trackPage } from '@/lib/analytics'
 import { edgeSmoother, rgbHex, setPageEdgeColor, type Rgb } from '@/lib/page-edge'
+import { loadSiteSettings, useSite } from '@/lib/season'
 import { fetchLiveChannels, type Channel } from '@/tv/channel-data'
 import { Guide } from '@/tv/components/Guide'
 import { SubmitForm } from '@/tv/components/SubmitForm'
 import { sfx } from '@/tv/sfx'
 import { useTv } from '@/tv/store'
-import { recentChat, ROOF_CHAT_OPEN, type ChatMessage } from './chat'
+import { recentChat, type ChatMessage } from './chat'
 import { floorsFor, floorTitle, type Floor } from './layout'
 import { floorFromPath, floorPath, syncTowerUrl } from './routing'
 import { rig } from './scene/rigState'
@@ -71,10 +72,12 @@ export function TowerApp() {
   const webgl = useMemo(detectWebGL, [])
   const lowPower = useMemo(() => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.hardwareConcurrency ?? 8) <= 4, [])
   const nearRoof = mode === 'tower' && target > floors.length - 0.6
+  const chatOpen = useSite((s) => s.roofChat === 'open')
 
   useEffect(() => {
     if (import.meta.env.DEV) Object.assign(window, { __tower: useTower, __rig: rig })
     initAnalytics({ pageView: false })
+    void loadSiteSettings()
     trackPage(location.pathname, document.title)
     const apply = (rows: Channel[]) => useTv.getState().setChannels(rows)
     fetchLiveChannels()
@@ -97,7 +100,7 @@ export function TowerApp() {
 
   // the rooftop chat refreshes while anyone is up there
   useEffect(() => {
-    if (!ROOF_CHAT_OPEN) return
+    if (!chatOpen) return
     let alive = true
     const load = () =>
       recentChat()
@@ -115,7 +118,7 @@ export function TowerApp() {
       window.clearInterval(t)
       document.removeEventListener('visibilitychange', back)
     }
-  }, [nearRoof])
+  }, [nearRoof, chatOpen])
 
   useEffect(() => {
     if (nearRoof) track('roof_visit')
@@ -300,7 +303,7 @@ export function TowerApp() {
           {mode === 'tower' && <DronePad floors={floors} onEnter={enter} />}
           {mode === 'tower' && <HoverTag floors={floors} />}
           {nearRoof &&
-            (ROOF_CHAT_OPEN ? (
+            (chatOpen ? (
               <RoofChat messages={messages} loading={chatLoading} onPosted={(m) => setMessages((ms) => [m, ...ms.filter((x) => x.id !== m.id)])} />
             ) : (
               <RoofGardenNotice />
@@ -313,7 +316,7 @@ export function TowerApp() {
           <p className="tv-caption text-xs font-black tracking-[0.5em] text-[#ffd400]/90">ENCORE TOWER</p>
           <h2 className="tv-caption mt-2 text-[38px] leading-none font-black tracking-[0.08em] text-[#fff4d6] sm:text-[56px]">台北安可大樓</h2>
           <p className="tv-caption mt-3 max-w-md text-sm leading-relaxed text-[#f3e6bf]/90 sm:text-base">
-            一層一場派對，每一層都是一位市民用 AI 做的台北安可舞台。開著無人機繞大樓、飛進窗戶，頂樓還有空中花園可以吹風看夜景。
+            一層一場派對，每一層都是一位市民用 AI 做的台北安可舞台。開著無人機繞大樓、飛進窗戶，{chatOpen ? '頂樓空中花園重新開張，可以吹風聊天。' : '頂樓還有空中花園可以吹風看風景。'}
           </p>
           <p className="mt-5 inline-flex items-center gap-2 rounded-full border-2 border-[#ffd400]/80 bg-black/55 px-4 py-1.5 text-sm font-black text-[#ffd400]">
             <Volume2 className="sound-hint-icon size-5 shrink-0" aria-hidden />

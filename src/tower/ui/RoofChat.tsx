@@ -70,7 +70,7 @@ export function RoofChat({ messages, loading, onPosted }: { messages: ChatMessag
         <MessageCircle className="size-4" />
         <div className="flex-1">
           <p className="text-sm leading-tight font-black">頂樓花園聊天室</p>
-          <p className="text-[11px] font-bold text-[#4a3a10]">吹吹風、聊聊天，台北安可！</p>
+          <p className="text-[11px] font-bold text-[#4a3a10]">重新開張！吹吹風、聊聊天，台北安可！</p>
         </div>
         <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-black/10" aria-label="收起聊天室">
           <X className="size-4" />

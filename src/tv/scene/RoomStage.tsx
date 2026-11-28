@@ -4,17 +4,22 @@ import { BlendFunction, type VignetteEffect } from 'postprocessing'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { Rgb } from '@/lib/page-edge'
+import { useSite } from '@/lib/season'
 import { EdgeSampler } from '@/three/EdgeSampler'
+import { SceneBoundary } from '@/three/SceneBoundary'
 import { Montage } from '../montage/Montage'
 import { Narrator } from '../montage/narrator'
 import type { Era } from '../montage/segments'
 import { sfx } from '../sfx'
 import { Backroom, roomLight } from './Backroom'
+import { Future2099 } from './Future2099'
 import type { Layout } from './layouts'
 import { createScreenMaterial, ERA_LOOK } from './screenMaterial'
 import { LCD_FRONT_Z, lcdSize, SCREEN_Y, TV_POS, TvSet } from './TvSet'
 
 export type RoomMode = 'gate' | 'intro'
+
+if (import.meta.env.DEV) Object.assign(window, { __roomLight: roomLight })
 
 const FOV = 45
 /** Post effects the director fades out so the last frame matches the flat DOM channel underneath. */
@@ -121,8 +126,8 @@ function Director({
     if (mode === 'gate') {
       fx.vignette = 0.7
       if (fog) {
-        fog.near = 2
-        fog.far = 18
+        fog.near = 2 * roomLight.haze
+        fog.far = 18 * roomLight.haze
       }
       cam.position.set(START.x + Math.sin(now * 0.4) * 0.05, START.y + Math.sin(now * 0.7) * 0.02, START.z)
       cam.lookAt(0, 1.15, TV_POS.z)
@@ -174,8 +179,8 @@ function Director({
     roomLight.level = 0.12 + 0.88 * smooth(progress)
     roomLight.flicker = 1 - smooth(Math.min(1, progress * 1.4))
     if (fog) {
-      fog.near = 2 + 6 * roomLight.level
-      fog.far = 18 + 30 * roomLight.level
+      fog.near = (2 + 6 * roomLight.level) * roomLight.haze
+      fog.far = (18 + 30 * roomLight.level) * roomLight.haze
     }
 
     const { pos: fill, target } = fillPose(aspect)
@@ -230,6 +235,8 @@ export function RoomStage({
   /** The narration line being spoken, for the subtitle bar under the newsreel (null between lines). */
   onSubtitle?: (text: string | null) => void
 }) {
+  const season = useSite((s) => s.season)
+  const backroom = <Backroom key={layout.id} layout={layout} />
   return (
     <Canvas
       flat
@@ -243,7 +250,13 @@ export function RoomStage({
       onPointerDown={onTvClick}
     >
       <Suspense fallback={null}>
-        <Backroom key={layout.id} layout={layout} />
+        {season === '2099' ? (
+          <SceneBoundary key={`2099:${layout.id}`} fallback={backroom}>
+            <Future2099 layout={layout} lowPower={lowPower} />
+          </SceneBoundary>
+        ) : (
+          backroom
+        )}
         <Director mode={mode} quick={quick} durations={durations} onDone={onDone} onSubtitle={onSubtitle} />
         <EffectComposer multisampling={lowPower ? 0 : 4}>
           <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={0.7} radius={0.6} />

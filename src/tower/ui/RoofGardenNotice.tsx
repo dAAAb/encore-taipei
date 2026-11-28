@@ -34,7 +34,7 @@ export function RoofGardenNotice() {
       </header>
       <div className="space-y-2 px-4 py-3 text-sm leading-relaxed text-[#13204f]">
         <p>天氣轉涼，頂樓花園正在換上冬天的植栽，聊天角也跟著休息一下。</p>
-        <p>整理期間一樣可以上來吹吹風、看看台北夜景，下次飛上來說不定就變樣了。</p>
+        <p>整理期間一樣可以上來吹吹風、看看台北風景，下次飛上來說不定就變樣了。</p>
       </div>
     </aside>
   )
