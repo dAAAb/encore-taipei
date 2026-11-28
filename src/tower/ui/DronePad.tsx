@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Minus, Plus, PlaneLanding, Trees } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import { useSite } from '@/lib/season'
 import { sfx } from '@/tv/sfx'
-import { ROOF_CHAT_OPEN } from '../chat'
 import { floorTitle, type Floor } from '../layout'
 import { rig } from '../scene/rigState'
 import { useTower } from '../store'
@@ -84,6 +84,7 @@ export function DronePad({ floors, onEnter }: { floors: Floor[]; onEnter: (f: Fl
   const n = floors.length
   const at = Math.max(0, Math.min(n, Math.round(target)))
   const roof = at >= n
+  const chatOpen = useSite((s) => s.roofChat === 'open')
   const floor = roof ? null : floors[at]
   const go = (t: number) => {
     rig.lastInput = performance.now()
@@ -97,7 +98,7 @@ export function DronePad({ floors, onEnter }: { floors: Floor[]; onEnter: (f: Fl
     <div className="drone-pad fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-20 w-[min(300px,calc(100vw-24px))] p-3 text-white select-none sm:right-4">
       <div className="flex items-center gap-3 rounded-2xl border-2 border-[#0c0812] bg-[#0b0a10] px-3 py-2">
         <span className="elevator-digits min-w-[4.6rem]">{roof ? 'R' : `${floor!.number}F`}</span>
-        <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#fff4d6]">{roof ? (ROOF_CHAT_OPEN ? '頂樓花園・聊天室' : '頂樓花園') : floorTitle(floor!)}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#fff4d6]">{roof ? (chatOpen ? '頂樓花園・聊天室' : '頂樓花園') : floorTitle(floor!)}</span>
       </div>
 
       <div className="mt-2.5 grid grid-cols-[1fr_auto] gap-2.5">

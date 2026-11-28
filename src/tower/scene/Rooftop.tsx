@@ -2,6 +2,7 @@ import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { useSite } from '@/lib/season'
 import { capsule, cyl, rbox, sphere, torus } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, SANITIZE, toon } from '@/three/toon'
@@ -214,6 +215,108 @@ function StringLights() {
   )
 }
 
+const POLES: [number, number][] = [
+  [-6.4, 4.4],
+  [6.4, 4.4],
+  [6.4, -1.4],
+  [-6.4, -1.4],
+]
+const FONT = `'NotoTC', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif`
+
+/** Yellow and blue pennants strung under the café lights for the garden's reopening. */
+function Bunting() {
+  const mesh = useMemo(() => {
+    const runs: [[number, number], [number, number]][] = [
+      [POLES[0], POLES[1]],
+      [POLES[3], POLES[2]],
+      [POLES[0], POLES[3]],
+      [POLES[1], POLES[2]],
+    ]
+    const spots: { x: number; y: number; z: number; rot: number }[] = []
+    for (const [a, b] of runs) {
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1])
+      const n = Math.floor(len / 0.7)
+      const rot = Math.atan2(-(b[1] - a[1]), b[0] - a[0])
+      for (let i = 1; i < n; i++) {
+        const t = i / n
+        spots.push({ x: a[0] + (b[0] - a[0]) * t, y: 2.75 - 0.9 * 4 * t * (1 - t), z: a[1] + (b[1] - a[1]) * t, rot })
+      }
+    }
+    const tri = new THREE.BufferGeometry()
+    tri.setAttribute('position', new THREE.Float32BufferAttribute([-0.22, 0, 0, 0.22, 0, 0, 0, -0.42, 0], 3))
+    const m = new THREE.InstancedMesh(tri, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), spots.length)
+    const o = new THREE.Object3D()
+    const colors = [new THREE.Color('#ffd400'), new THREE.Color('#2f6bff'), new THREE.Color('#ffffff')]
+    spots.forEach((p, i) => {
+      o.position.set(p.x, p.y, p.z)
+      o.rotation.set(0, p.rot, 0)
+      o.updateMatrix()
+      m.setMatrixAt(i, o.matrix)
+      m.setColorAt(i, colors[i % 3])
+    })
+    return m
+  }, [])
+  return <primitive object={mesh} />
+}
+
+function BalloonBunch({ x, z }: { x: number; z: number }) {
+  const g = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (g.current) g.current.rotation.z = Math.sin(s.clock.elapsedTime * 0.8 + x) * 0.05
+  })
+  return (
+    <group position={[x, 0, z]}>
+      <mesh geometry={rbox(0.25, 0.2, 0.25, 0.04)} material={toon('#e6c160')} position={[0, 0.1, 0]} />
+      <group ref={g}>
+        {[
+          [0, 2.3, 0, '#ffd400'],
+          [0.32, 2.05, 0.1, '#2f6bff'],
+          [-0.3, 2.1, -0.08, '#2f6bff'],
+          [0.12, 2.6, -0.2, '#ffffff'],
+          [-0.15, 2.5, 0.22, '#ffd400'],
+        ].map(([bx, by, bz, c], i) => (
+          <group key={i}>
+            <Part geo={sphere(0.26, 16, 12)} mat={toon(c as string)} scale={[1, 1.18, 1]} position={[bx as number, by as number, bz as number]} outline={0.012} />
+          </group>
+        ))}
+        <mesh geometry={cyl(0.01, 0.01, 2, 4)} material={toon('#6b6f80')} position={[0, 1.15, 0]} />
+      </group>
+    </group>
+  )
+}
+
+function ReopenBanner() {
+  const tex = useMemo(() => {
+    const c = document.createElement('canvas')
+    c.width = 1024
+    c.height = 220
+    const g = c.getContext('2d')!
+    g.fillStyle = '#2f6bff'
+    g.fillRect(0, 0, 1024, 220)
+    g.fillStyle = '#ffd400'
+    g.fillRect(14, 14, 996, 192)
+    g.fillStyle = '#0c0812'
+    g.font = `900 112px ${FONT}`
+    g.textAlign = 'center'
+    g.textBaseline = 'middle'
+    g.fillText('頂樓花園 重新開張', 512, 116)
+    const t = new THREE.CanvasTexture(c)
+    t.colorSpace = THREE.SRGBColorSpace
+    return t
+  }, [])
+  return (
+    <group position={[0, 0, DEPTH / 2 - 0.5]}>
+      {[-2.7, 2.7].map((x) => (
+        <mesh key={x} geometry={cyl(0.05, 0.05, 3.2, 8)} material={toon('#f2f3f6')} position={[x, 1.6, 0]} />
+      ))}
+      <mesh position={[0, 2.75, 0.02]}>
+        <planeGeometry args={[5.2, 1.12]} />
+        <meshBasicMaterial map={tex} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  )
+}
+
 const SEATS: { x: number; z: number; rot: number; color: string }[] = [
   { x: -3.4, z: 2.6, rot: 0.5, color: '#e7d9bd' },
   { x: -1.4, z: 3.4, rot: 0.1, color: '#d8e6f0' },
@@ -241,6 +344,7 @@ export function Rooftop({ y, messages, showBubbles }: { y: number; messages: Cha
     if (fire.current) fire.current.scale.y = 1 + Math.sin(s.clock.elapsedTime * 11) * 0.12 + Math.sin(s.clock.elapsedTime * 7.3) * 0.08
   })
   const recent = messages.slice(0, SEATS.length)
+  const day = useSite((s) => s.season === '2099')
   return (
     <group position={[0, y, 0]}>
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -268,6 +372,14 @@ export function Rooftop({ y, messages, showBubbles }: { y: number; messages: Cha
       <BulbSign />
       <WaterTower />
       <StringLights />
+      {day && (
+        <>
+          <Bunting />
+          <ReopenBanner />
+          <BalloonBunch x={-WIDTH / 2 + 0.9} z={DEPTH / 2 - 0.9} />
+          <BalloonBunch x={WIDTH / 2 - 0.9} z={DEPTH / 2 - 0.9} />
+        </>
+      )}
 
       <group position={[0, 0, 1.6]}>
         <Part geo={cyl(0.9, 0.9, 0.45, 24)} mat={toon('#3a3640')} position={[0, 0.23, 0]} outline={0.02} />

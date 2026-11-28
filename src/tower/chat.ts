@@ -9,9 +9,6 @@ export interface ChatMessage {
   pending?: boolean
 }
 
-/** false while the roof garden is between seasons: no chat panel, no polling, empty deck chairs. */
-export const ROOF_CHAT_OPEN = false
-
 const NAME_KEY = 'encore.chatName'
 const MINE_KEY = 'encore.chatMine'
 const KEEP_MS = 24 * 3600 * 1000
@@ -48,6 +45,7 @@ const ERRORS: Record<string, string> = {
   slow_down: '你今天說了好多，休息一下再來聊。',
   reserved_name: '這個暱稱不能用，換一個吧。',
   rate_limited: '頂樓太熱鬧了，等一分鐘再說。',
+  closed: '聊天角休息中，晚點再來。',
 }
 
 export async function postChat(name: string, body: string): Promise<ChatMessage> {

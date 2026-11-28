@@ -55,6 +55,8 @@ interface ChatRow {
   created_at: string
   /** Salted hash of the poster's address; the same value means the same source. */
   ip_hash: string | null
+  /** 'auto' when the 10-minute review pass approved it, 'expired' when it waited over 3 days, 'admin' after a person decided. */
+  review_note: string | null
 }
 
 const chatWaiting = (r: ChatRow) => !r.approved && !r.hidden
@@ -226,6 +228,83 @@ function RotateKey({ adminKey, onRotated }: { adminKey: string; onRotated: (k: s
   )
 }
 
+type SiteSettings = { season: '2099' | 'backrooms'; roof_chat: 'open' | 'closed' }
+
+/**
+ * The two public switches: which season the TV room and tower wear, and whether the rooftop chat is open.
+ * Both take effect on the next page load, with no deploy.
+ */
+function SiteSwitches({ adminKey }: { adminKey: string }) {
+  const [now, setNow] = useState<SiteSettings | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
+
+  useEffect(() => {
+    rpc<SiteSettings>('encore_public_settings')
+      .then(setNow)
+      .catch(() => setFailed('讀不到目前的設定，請重新整理。'))
+  }, [])
+
+  const set = async (name: keyof SiteSettings, value: string, ask: string) => {
+    if (!window.confirm(ask)) return
+    setBusy(true)
+    setFailed(null)
+    try {
+      await rpc('encore_admin_set_setting', { p_key: adminKey, p_name: name, p_value: value })
+      setNow((n) => (n ? { ...n, [name]: value } : n))
+    } catch {
+      setFailed('切換失敗，請再試一次。')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const choice = (active: boolean, label: string, onClick: () => void) => (
+    <button
+      type="button"
+      disabled={busy || active}
+      onClick={onClick}
+      className={`rounded-md px-3 py-1.5 text-xs font-bold ${active ? 'bg-[#66c0f4] text-[#10151d]' : 'bg-white/10 text-[#c7d5e0] hover:bg-white/20'} disabled:cursor-default`}
+    >
+      {label}
+    </button>
+  )
+
+  return (
+    <section className="rounded-lg border border-white/10 bg-[#18212c] p-4">
+      <h2 className="font-black text-white">季節與頂樓</h2>
+      <p className="mt-0.5 text-xs text-[#8fa3b5]">切換後，訪客下次打開頁面就會套用，不用重新部署。出狀況時可以在這裡一鍵切回。</p>
+      {failed && <p className="mt-2 rounded-md bg-[#e0304a]/20 p-2 text-sm text-[#ff8a99]">{failed}</p>}
+      {now ? (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="mb-1.5 text-sm font-bold text-white">電視與大樓的風格</p>
+            <div className="flex flex-wrap gap-1.5">
+              {choice(now.season === '2099', '台北 2099（目前季節）', () => set('season', '2099', '切換成「台北 2099」風格？'))}
+              {choice(now.season === 'backrooms', '後室（十月）', () => set('season', 'backrooms', '切回十月的「後室」風格？'))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-1.5 text-sm font-bold text-white">頂樓聊天</p>
+            <div className="flex flex-wrap gap-1.5">
+              {choice(now.roof_chat === 'open', '開放留言', () => set('roof_chat', 'open', '重新開放頂樓聊天？'))}
+              {choice(now.roof_chat === 'closed', '休息（顯示換季公告）', () =>
+                set('roof_chat', 'closed', '讓頂樓聊天休息？訪客會看到「頂樓花園換季整理中」，伺服器也會暫停收新留言。'),
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        !failed && (
+          <p className="mt-3 flex items-center gap-2 text-sm">
+            <Loader2 className="size-4 animate-spin" /> 讀取中…
+          </p>
+        )
+      )}
+    </section>
+  )
+}
+
 /**
  * Tower rooftop chat moderation. New messages wait here (their author already sees them) until approved;
  * the waiting ones are listed first and can be approved all at once.
@@ -250,7 +329,7 @@ function RoofChatAdmin({
     setFailed(null)
     try {
       await rpc<number>('encore_admin_chat_review', { p_key: adminKey, p_ids: ids, p_approved: approved })
-      onChange((rs) => rs.map((r) => (ids.includes(r.id) ? { ...r, approved, hidden: !approved } : r)))
+      onChange((rs) => rs.map((r) => (ids.includes(r.id) ? { ...r, approved, hidden: !approved, review_note: 'admin' } : r)))
     } catch {
       setFailed('更新失敗，請再試一次。')
     } finally {
@@ -294,7 +373,12 @@ function RoofChatAdmin({
               來源 {r.ip_hash.slice(0, 6)}
             </span>
           )}
-          {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">已隱藏</span>}
+          {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">{r.review_note === 'expired' ? '逾時收起' : '已隱藏'}</span>}
+          {r.approved && r.review_note === 'auto' && (
+            <span className="ml-2 rounded bg-[#75b022]/25 px-1.5 py-px text-[11px] text-[#b6ffb0]" title="每 10 分鐘的自動審核通過：整句只有問候、加油或稱讚">
+              自動通過
+            </span>
+          )}
         </p>
         <p className="break-words text-[#c7d5e0]">{r.body}</p>
       </div>
@@ -324,7 +408,7 @@ function RoofChatAdmin({
       <section>
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h2 className="font-black text-white">待審核 {waiting.length} 則</h2>
-          <p className="mr-auto text-xs text-[#8fa3b5]">留言的人自己看得到，通過後其他人才看得到。</p>
+          <p className="mr-auto text-xs text-[#8fa3b5]">留言的人自己看得到，通過後其他人才看得到。只有問候、加油、稱讚的留言會每 10 分鐘自動通過，等超過 3 天會自動收起。</p>
           {waiting.length > 1 && (
             <>
               <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review(waiting.map((r) => r.id), true)}>
@@ -961,7 +1045,12 @@ export function AdminApp() {
             <Loader2 className="size-4 animate-spin" /> 讀取投稿中…
           </p>
         )}
-        {filter === 'chat' && <RoofChatAdmin adminKey={key} rows={chatRows} error={chatError} onChange={(f) => setChatRows((rs) => (rs ? f(rs) : rs))} />}
+        {filter === 'chat' && (
+          <div className="space-y-5">
+            <SiteSwitches adminKey={key} />
+            <RoofChatAdmin adminKey={key} rows={chatRows} error={chatError} onChange={(f) => setChatRows((rs) => (rs ? f(rs) : rs))} />
+          </div>
+        )}
         {rows && filter !== 'chat' && shown.length === 0 && <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm">這裡還沒有東西。</p>}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shown.map((ch) => (

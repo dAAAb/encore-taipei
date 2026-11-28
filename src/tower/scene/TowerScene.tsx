@@ -1,9 +1,10 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
-import { Suspense } from 'react'
+import { Suspense, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 import type { Rgb } from '@/lib/page-edge'
+import { useSite } from '@/lib/season'
 import { EdgeSampler } from '@/three/EdgeSampler'
 import type { ChatMessage } from '../chat'
 import { roofY, type Floor } from '../layout'
@@ -13,7 +14,7 @@ import { Building } from './Building'
 import { Drone } from './Drone'
 import { FOV, Rig } from './Rig'
 import { Rooftop } from './Rooftop'
-import { SKY_FOG, Skyline } from './Skyline'
+import { DAY_FOG, DAY_SKY, SKY_FOG, Skyline } from './Skyline'
 
 interface Props {
   floors: Floor[]
@@ -26,8 +27,19 @@ interface Props {
   onEdgeColor?: (rgb: Rgb) => void
 }
 
+/** Background and fog follow the season: night over the old tower, daytime haze in 2099. */
+function Air({ day }: { day: boolean }) {
+  const scene = useThree((s) => s.scene)
+  useLayoutEffect(() => {
+    scene.background = new THREE.Color(day ? DAY_SKY : '#05040c')
+    if (scene.fog) scene.fog.color.copy(day ? DAY_FOG : SKY_FOG)
+  }, [scene, day])
+  return null
+}
+
 export function TowerScene({ floors, messages, nearRoof, lowPower, onPick, onEntered, onLeft, onEdgeColor }: Props) {
   const inside = useTower((s) => s.mode === 'floor')
+  const day = useSite((s) => s.season === '2099')
   return (
     <Canvas
       flat
@@ -36,15 +48,27 @@ export function TowerScene({ floors, messages, nearRoof, lowPower, onPick, onEnt
       camera={{ position: [9, 2.2, 46], fov: FOV, near: 0.3, far: 4000 }}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       onCreated={({ scene }) => {
-        scene.background = new THREE.Color('#05040c')
-        scene.fog = new THREE.Fog(SKY_FOG, 160, 1100)
+        const sunny = useSite.getState().season === '2099'
+        scene.background = new THREE.Color(sunny ? DAY_SKY : '#05040c')
+        scene.fog = new THREE.Fog(sunny ? DAY_FOG : SKY_FOG, 160, 1100)
       }}
       onPointerMissed={() => useTower.getState().setHover(null)}
     >
       <Suspense fallback={null}>
-        <hemisphereLight args={['#7a86ff', '#1a0c1e', 1.1]} />
-        <directionalLight position={[-40, 80, 60]} intensity={1.4} color="#c9d4ff" />
-        <ambientLight intensity={0.35} />
+        <Air day={day} />
+        {day ? (
+          <>
+            <hemisphereLight args={['#fff3dc', '#b9c3d8', 1.25]} />
+            <directionalLight position={[-40, 80, 60]} intensity={1.7} color="#fff0d2" />
+            <ambientLight intensity={0.4} />
+          </>
+        ) : (
+          <>
+            <hemisphereLight args={['#7a86ff', '#1a0c1e', 1.1]} />
+            <directionalLight position={[-40, 80, 60]} intensity={1.4} color="#c9d4ff" />
+            <ambientLight intensity={0.35} />
+          </>
+        )}
         <Skyline />
         <Building floors={floors} onPick={onPick} />
         <Rooftop y={roofY(floors.length)} messages={messages} showBubbles={nearRoof} />
