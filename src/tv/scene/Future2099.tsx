@@ -8,6 +8,7 @@ import { Part } from '@/three/Part'
 import { BANDS, ink, neon, SANITIZE, toon } from '@/three/toon'
 import { roomLight } from './Backroom'
 import type { Layout } from './layouts'
+import { printAlong, ribbonTexture, type RibbonKind } from './ribbons'
 import { tiles } from './textures'
 
 const HEIGHT = 3
@@ -249,27 +250,18 @@ function Drones({ count }: { count: number }) {
   )
 }
 
-/** Ribbon cloth: a band of `color` with `edge` piping down both sides. */
-function ribbonTexture(color: string, edge: string) {
-  const c = document.createElement('canvas')
-  c.width = 32
-  c.height = 4
-  const g = c.getContext('2d')!
-  g.fillStyle = edge
-  g.fillRect(0, 0, 32, 4)
-  g.fillStyle = color
-  g.fillRect(5, 0, 22, 4)
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  return t
-}
+const RIBBON_W = 0.56
+const RUNNER_W = 0.5
 
-/** A garland ribbon strung along the corridor under the skylight, rippling and twisting a little. */
-function Ribbon({ color, edge, x, y, z0, z1, phase }: { color: string; edge: string; x: number; y: number; z0: number; z1: number; phase: number }) {
+/** A campaign-streamer garland strung along the corridor under the skylight, rippling and twisting a little. */
+function Ribbon({ kind, x, y, z0, z1, phase }: { kind: RibbonKind; x: number; y: number; z0: number; z1: number; phase: number }) {
   const len = z1 - z0
-  const geo = useMemo(() => new THREE.PlaneGeometry(0.46, len, 1, Math.max(24, Math.round(len * 5))).rotateX(-Math.PI / 2), [len])
+  const geo = useMemo(
+    () => printAlong(new THREE.PlaneGeometry(RIBBON_W, len, 1, Math.max(24, Math.round(len * 5))), RIBBON_W, len, true).rotateX(-Math.PI / 2),
+    [len],
+  )
   const rest = useMemo(() => Float32Array.from(geo.attributes.position.array), [geo])
-  const mat = useMemo(() => new THREE.MeshBasicMaterial({ map: ribbonTexture(color, edge), side: THREE.DoubleSide }), [color, edge])
+  const mat = useMemo(() => new THREE.MeshBasicMaterial({ map: ribbonTexture(kind), side: THREE.DoubleSide }), [kind])
   useFrame((s) => {
     const t = s.clock.elapsedTime
     const pos = geo.attributes.position as THREE.BufferAttribute
@@ -279,7 +271,7 @@ function Ribbon({ color, edge, x, y, z0, z1, phase }: { color: string; edge: str
       const z = lz + len / 2
       const sag = -0.3 * Math.abs(Math.sin((Math.PI * z) / 4))
       const wave = Math.sin(z * 0.6 + t * 1.3 + phase) * 0.06
-      const twist = lx * Math.sin(z * 0.45 + t * 0.9 + phase) * 0.6
+      const twist = lx * Math.sin(z * 0.45 + t * 0.9 + phase) * 0.45
       pos.setY(i, sag + wave + twist)
     }
     pos.needsUpdate = true
@@ -411,6 +403,8 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
   }, [scene, camera])
 
   const { bounds } = layout
+  const laneEnd = bounds.maxZ - 1
+  const runnerGeo = useMemo(() => printAlong(new THREE.PlaneGeometry(RUNNER_W, laneEnd + 0.6), RUNNER_W, laneEnd + 0.6), [laneEnd])
   const w = bounds.maxX - bounds.minX + 24
   const d = bounds.maxZ - bounds.minZ + 24
   const cx = (bounds.minX + bounds.maxX) / 2
@@ -418,7 +412,11 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
 
   const floor = useMemo(() => new THREE.MeshToonMaterial({ map: tiles([w / 2.4, d / 2.4]), gradientMap: BANDS }), [w, d])
   const glass = useMemo(() => new THREE.MeshBasicMaterial({ color: '#cfe6ff', transparent: true, opacity: 0.2, depthWrite: false }), [])
-  const inlay = useMemo(() => [glowMaterial(LIGHT), glowMaterial(BLUE)], [])
+  const runners = useMemo(
+    () =>
+      (['anxin', 'encore'] as const).map((kind) => new THREE.MeshBasicMaterial({ map: ribbonTexture(kind), toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2 })),
+    [],
+  )
   const strips = useMemo(() => glowMaterial('#fff2d2'), [])
   const rings = useMemo(() => [glowMaterial(LIGHT), glowMaterial(SKY)], [])
 
@@ -470,15 +468,12 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
     const k = roomLight.level
     if (hemi.current) hemi.current.intensity = 0.45 + 1.15 * k
     if (sun.current) sun.current.intensity = 0.35 + 1.5 * k
-    const glow = 0.35 + 1.25 * k
-    inlay[0].color.set(LIGHT).multiplyScalar(glow)
-    inlay[1].color.set(BLUE).multiplyScalar(glow * 1.2)
+    for (const m of runners) m.color.setScalar(0.5 + 0.58 * k)
     rings[0].color.set(LIGHT).multiplyScalar(0.5 + 1.1 * k + Math.sin(s.clock.elapsedTime * 2) * 0.1)
     rings[1].color.set(SKY).multiplyScalar(0.5 + 1.1 * k)
     strips.color.set('#fff2d2').multiplyScalar(0.25 + 0.4 * k)
   })
 
-  const laneEnd = bounds.maxZ - 1
   return (
     <group>
       <hemisphereLight ref={hemi} args={['#fff3dc', '#d8c9a8', 0.6]} />
@@ -499,10 +494,14 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[cx, 0, cz]} material={floor}>
         <planeGeometry args={[w, d]} />
       </mesh>
-      {[-0.34, 0.34].map((x, i) => (
-        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.006, (laneEnd - 0.6) / 2]} material={inlay[i]}>
-          <planeGeometry args={[0.1, laneEnd + 0.6]} />
-        </mesh>
+      {[-0.42, 0.42].map((x, i) => (
+        <mesh
+          key={x}
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[x, 0.006, (laneEnd - 0.6) / 2]}
+          material={runners[i]}
+          geometry={runnerGeo}
+        />
       ))}
       {parts.base && <mesh geometry={parts.base} material={toon('#f6f3ec')} />}
       {parts.base && <mesh geometry={parts.base} material={ink(0.012)} />}
@@ -518,8 +517,8 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
         </mesh>
       ))}
 
-      <Ribbon color={LIGHT} edge={SKY} x={-1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={0} />
-      <Ribbon color={BLUE} edge="#ffffff" x={1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={1.7} />
+      <Ribbon kind="anxin" x={-1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={0} />
+      <Ribbon kind="encore" x={1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={1.7} />
       <Balloon x={-2.35} y={2.35} z={-1.1} color={LIGHT} phase={0} />
       <Balloon x={-2.05} y={2.7} z={-1.7} color={BLUE} phase={1.3} />
       <Balloon x={-2.6} y={2.05} z={-1.6} color={BLUE} phase={2.1} />
