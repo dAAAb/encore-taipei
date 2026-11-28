@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo } from 'react'
 import * as THREE from 'three'
-import { useSite } from '@/lib/season'
+import { ACCENT, useSite } from '@/lib/season'
 import { cyl, rbox, sphere } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, SANITIZE, toon } from '@/three/toon'
@@ -153,7 +153,7 @@ function City({ day }: { day: boolean }) {
           }
           if (uDay > 0.5) {
             float tint = hash(floor(vWorld.xz / 9.0));
-            vec3 facade = mix(vec3(0.95, 0.95, 0.96), vec3(0.98, 0.92, 0.76), step(0.78, tint));
+            vec3 facade = mix(vec3(0.95, 0.95, 0.96), vec3(${ACCENT.facade}), step(0.78, tint));
             col = facade * (0.72 + 0.28 * abs(vNormal.x) + 0.2 * step(0.5, vNormal.y));
             if (abs(vNormal.y) < 0.5) {
               vec2 c = abs(vNormal.x) > 0.5 ? vWorld.zy : vWorld.xy;
@@ -211,14 +211,14 @@ function Taipei101({ day }: { day: boolean }) {
           <mesh
             position={[0, 17.6, 0]}
             rotation={[0, Math.PI / 4, 0]}
-            material={day ? neon(i % 2 ? '#ffd400' : '#7fb2ff', 1.2) : neon(['#59ff7a', '#2ef2ff', '#ffd400', '#ff6ad5'][i % 4], 1.8)}
+            material={day ? neon(i % 2 ? ACCENT.light : ACCENT.sky, 1.2) : neon(['#59ff7a', '#2ef2ff', '#ffd400', '#ff6ad5'][i % 4], 1.8)}
           >
             <cylinderGeometry args={[15.1, 15.1, 0.4, 4, 1, true]} />
           </mesh>
         </group>
       ))}
       <Part geo={rbox(16, 14, 16, 0.6)} mat={toon(body)} position={[0, 211, 0]} outline={0.3} />
-      <mesh geometry={cyl(0.6, 1.4, 50, 8)} material={toon(day ? '#e8c15a' : '#1c2430')} position={[0, 243, 0]} />
+      <mesh geometry={cyl(0.6, 1.4, 50, 8)} material={toon(day ? ACCENT.crown : '#1c2430')} position={[0, 243, 0]} />
       <mesh geometry={sphere(1.6, 10, 8)} material={neon('#ff2a4d', 4)} position={[0, 269, 0]} />
     </group>
   )

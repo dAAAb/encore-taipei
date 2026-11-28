@@ -2,7 +2,7 @@ import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { useSite } from '@/lib/season'
+import { ACCENT, useSite } from '@/lib/season'
 import { capsule, cyl, rbox, sphere, torus } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, SANITIZE, toon } from '@/three/toon'
@@ -223,7 +223,7 @@ const POLES: [number, number][] = [
 ]
 const FONT = `'NotoTC', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif`
 
-/** Yellow and blue pennants strung under the café lights for the garden's reopening. */
+/** Pennants in the season's accent colours strung under the café lights for the garden's reopening. */
 function Bunting() {
   const mesh = useMemo(() => {
     const runs: [[number, number], [number, number]][] = [
@@ -246,7 +246,7 @@ function Bunting() {
     tri.setAttribute('position', new THREE.Float32BufferAttribute([-0.22, 0, 0, 0.22, 0, 0, 0, -0.42, 0], 3))
     const m = new THREE.InstancedMesh(tri, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), spots.length)
     const o = new THREE.Object3D()
-    const colors = [new THREE.Color('#ffd400'), new THREE.Color('#2f6bff'), new THREE.Color('#ffffff')]
+    const colors = [ACCENT.light, ACCENT.blue, ACCENT.light === '#ffffff' ? ACCENT.sky : '#ffffff'].map((c) => new THREE.Color(c))
     spots.forEach((p, i) => {
       o.position.set(p.x, p.y, p.z)
       o.rotation.set(0, p.rot, 0)
@@ -266,14 +266,14 @@ function BalloonBunch({ x, z }: { x: number; z: number }) {
   })
   return (
     <group position={[x, 0, z]}>
-      <mesh geometry={rbox(0.25, 0.2, 0.25, 0.04)} material={toon('#e6c160')} position={[0, 0.1, 0]} />
+      <mesh geometry={rbox(0.25, 0.2, 0.25, 0.04)} material={toon(ACCENT.trim)} position={[0, 0.1, 0]} />
       <group ref={g}>
         {[
-          [0, 2.3, 0, '#ffd400'],
+          [0, 2.3, 0, ACCENT.light],
           [0.32, 2.05, 0.1, '#2f6bff'],
           [-0.3, 2.1, -0.08, '#2f6bff'],
-          [0.12, 2.6, -0.2, '#ffffff'],
-          [-0.15, 2.5, 0.22, '#ffd400'],
+          [0.12, 2.6, -0.2, ACCENT.sky],
+          [-0.15, 2.5, 0.22, ACCENT.light],
         ].map(([bx, by, bz, c], i) => (
           <group key={i}>
             <Part geo={sphere(0.26, 16, 12)} mat={toon(c as string)} scale={[1, 1.18, 1]} position={[bx as number, by as number, bz as number]} outline={0.012} />
@@ -291,11 +291,11 @@ function ReopenBanner() {
     c.width = 1024
     c.height = 220
     const g = c.getContext('2d')!
-    g.fillStyle = '#2f6bff'
+    g.fillStyle = ACCENT.blue
     g.fillRect(0, 0, 1024, 220)
-    g.fillStyle = '#ffd400'
+    g.fillStyle = ACCENT.light
     g.fillRect(14, 14, 996, 192)
-    g.fillStyle = '#0c0812'
+    g.fillStyle = ACCENT.ink
     g.font = `900 112px ${FONT}`
     g.textAlign = 'center'
     g.textBaseline = 'middle'
