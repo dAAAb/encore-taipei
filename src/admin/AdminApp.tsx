@@ -55,7 +55,7 @@ interface ChatRow {
   created_at: string
   /** Salted hash of the poster's address; the same value means the same source. */
   ip_hash: string | null
-  /** 'auto' when the 10-minute review pass approved it, 'expired' when it waited over 3 days, 'admin' after a person decided. */
+  /** 'expired' for the backlog put away after waiting over 3 days, 'admin' after a person decided. */
   review_note: string | null
 }
 
@@ -374,11 +374,6 @@ function RoofChatAdmin({
             </span>
           )}
           {r.hidden && <span className="ml-2 rounded bg-white/10 px-1.5 py-px text-[11px]">{r.review_note === 'expired' ? '逾時收起' : '已隱藏'}</span>}
-          {r.approved && r.review_note === 'auto' && (
-            <span className="ml-2 rounded bg-[#75b022]/25 px-1.5 py-px text-[11px] text-[#b6ffb0]" title="每 10 分鐘的自動審核通過：整句只有問候、加油或稱讚">
-              自動通過
-            </span>
-          )}
         </p>
         <p className="break-words text-[#c7d5e0]">{r.body}</p>
       </div>
@@ -408,7 +403,7 @@ function RoofChatAdmin({
       <section>
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h2 className="font-black text-white">待審核 {waiting.length} 則</h2>
-          <p className="mr-auto text-xs text-[#8fa3b5]">留言的人自己看得到，通過後其他人才看得到。只有問候、加油、稱讚的留言會每 10 分鐘自動通過，等超過 3 天會自動收起。</p>
+          <p className="mr-auto text-xs text-[#8fa3b5]">留言的人自己看得到，通過後其他人才看得到。</p>
           {waiting.length > 1 && (
             <>
               <button type="button" disabled={busy} className="steam-btn steam-btn--go flex items-center gap-1.5 text-xs" onClick={() => review(waiting.map((r) => r.id), true)}>

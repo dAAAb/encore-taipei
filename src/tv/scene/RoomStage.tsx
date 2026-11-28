@@ -1,11 +1,12 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
-import { BlendFunction, type VignetteEffect } from 'postprocessing'
+import { BlendFunction, KernelSize, type VignetteEffect } from 'postprocessing'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { Rgb } from '@/lib/page-edge'
 import { useSite } from '@/lib/season'
 import { EdgeSampler } from '@/three/EdgeSampler'
+import { PeripheryHazeEffect } from '@/three/PeripheryHaze'
 import { SceneBoundary } from '@/three/SceneBoundary'
 import { Montage } from '../montage/Montage'
 import { Narrator } from '../montage/narrator'
@@ -23,7 +24,7 @@ if (import.meta.env.DEV) Object.assign(window, { __roomLight: roomLight })
 
 const FOV = 45
 /** Post effects the director fades out so the last frame matches the flat DOM channel underneath. */
-const fx = { vignette: 0.7 }
+const fx = { vignette: 0.7, mist: 0 }
 
 function VignetteDriver() {
   const ref = useRef<VignetteEffect>(null)
@@ -31,6 +32,16 @@ function VignetteDriver() {
     if (ref.current) ref.current.darkness = fx.vignette
   })
   return <Vignette ref={ref} eskil={false} offset={0.3} darkness={0.7} />
+}
+
+/** Soft, bright out-of-focus edges for the 2099 set, cleared by the director as the camera reaches the TV. */
+function MistDriver({ lowPower }: { lowPower: boolean }) {
+  const effect = useMemo(() => new PeripheryHazeEffect({ kernelSize: lowPower ? KernelSize.MEDIUM : KernelSize.LARGE, color: '#fff3df' }), [lowPower])
+  useEffect(() => () => effect.dispose(), [effect])
+  useFrame(() => {
+    effect.strength = fx.mist
+  })
+  return <primitive object={effect} dispose={null} />
 }
 const START = new THREE.Vector3(0, 1.55, 26)
 const ease = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2)
@@ -109,7 +120,7 @@ function Director({
     cam.updateProjectionMatrix()
     if (mode === 'gate') {
       cam.position.copy(START)
-      roomLight.level = 0.12
+      roomLight.level = roomLight.start
       roomLight.flicker = 1
       screen.uniforms.uPower.value = 0
       eraRef.current = 'film'
@@ -124,7 +135,8 @@ function Director({
 
     const fog = state.scene.fog as THREE.Fog | null
     if (mode === 'gate') {
-      fx.vignette = 0.7
+      fx.vignette = roomLight.misty ? 0 : 0.7
+      fx.mist = roomLight.misty ? 0.85 : 0
       if (fog) {
         fog.near = 2 * roomLight.haze
         fog.far = 18 * roomLight.haze
@@ -176,7 +188,7 @@ function Director({
     showSubtitle(montage.subtitleAt(t))
 
     const progress = Math.min(1, t / montage.pushAt)
-    roomLight.level = 0.12 + 0.88 * smooth(progress)
+    roomLight.level = roomLight.start + (1 - roomLight.start) * smooth(progress)
     roomLight.flicker = 1 - smooth(Math.min(1, progress * 1.4))
     if (fog) {
       fog.near = (2 + 6 * roomLight.level) * roomLight.haze
@@ -185,7 +197,8 @@ function Director({
 
     const { pos: fill, target } = fillPose(aspect)
     if (t < montage.pushAt) {
-      fx.vignette = 0.7
+      fx.vignette = roomLight.misty ? 0 : 0.7
+      fx.mist = roomLight.misty ? 0.85 - 0.55 * smooth(progress) : 0
       const k = ease(progress)
       const from = quick ? new THREE.Vector3(0, 1.45, 12) : START
       const dollyEnd = new THREE.Vector3(0, 1.05, TV_POS.z + 3.1)
@@ -198,7 +211,8 @@ function Director({
     } else {
       if (!pushFrom.current) pushFrom.current = { pos: cam.position.clone(), look: look.current.clone() }
       const k = ease(Math.min(1, (t - montage.pushAt) / (montage.total - montage.pushAt - 0.25)))
-      fx.vignette = 0.7 * (1 - k)
+      fx.vignette = roomLight.misty ? 0 : 0.7 * (1 - k)
+      fx.mist = roomLight.misty ? 0.3 * (1 - k) : 0
       cam.position.lerpVectors(pushFrom.current.pos, fill, k)
       look.current.lerpVectors(pushFrom.current.look, target, k)
       cam.lookAt(look.current)
@@ -262,6 +276,7 @@ export function RoomStage({
           <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={0.7} radius={0.6} />
           <Noise premultiply blendFunction={BlendFunction.SCREEN} opacity={0.12} />
           <VignetteDriver />
+          <MistDriver lowPower={lowPower} />
         </EffectComposer>
         {onEdgeColor && <EdgeSampler onColor={onEdgeColor} />}
       </Suspense>

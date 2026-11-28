@@ -397,7 +397,13 @@ export function TvApp() {
       )}
 
       {phase === 'gate' && !resuming && (
-        <div className="fixed inset-0 z-30 flex flex-col items-center justify-end bg-[radial-gradient(ellipse_at_50%_35%,transparent_30%,rgba(0,0,0,0.65))] p-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-center">
+        <div
+          className={`fixed inset-0 z-30 flex flex-col items-center justify-end p-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-center ${
+            season === '2099'
+              ? 'bg-[linear-gradient(to_top,rgba(14,20,40,0.66),rgba(14,20,40,0.22)_45%,transparent_65%)]'
+              : 'bg-[radial-gradient(ellipse_at_50%_35%,transparent_30%,rgba(0,0,0,0.65))]'
+          }`}
+        >
           <p className="tv-caption text-xs font-black tracking-[0.5em] text-[#ffd400]/90">ENCORE.TAIPEI</p>
           <h2 className="tv-caption mt-2 text-[34px] leading-none font-black tracking-[0.08em] text-[#fff4d6] sm:text-[52px]">台北安可大舞台</h2>
           <p className="tv-caption mt-3 max-w-md text-sm leading-relaxed text-[#f3e6bf]/85 sm:text-base">每一台，都是一位市民用 AI 做的安可政策大舞台。</p>
