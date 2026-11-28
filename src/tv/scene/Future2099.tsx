@@ -2,6 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { ACCENT } from '@/lib/season'
 import { cyl, rbox, sphere } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { BANDS, ink, neon, SANITIZE, toon } from '@/three/toon'
@@ -12,8 +13,9 @@ import { tiles } from './textures'
 const HEIGHT = 3
 const BASE_H = 0.9
 const THICK = 0.16
-const YELLOW = '#ffd400'
-const BLUE = '#2f6bff'
+const LIGHT = ACCENT.light
+const BLUE = ACCENT.blue
+const SKY = ACCENT.sky
 
 const DAWN = { top: new THREE.Color('#252c66'), hor: new THREE.Color('#e5966a'), fog: new THREE.Color('#6a678c') }
 const DAY = { top: new THREE.Color('#3f94ff'), hor: new THREE.Color('#ffe3a6'), fog: new THREE.Color('#f2e4c6') }
@@ -90,10 +92,10 @@ function Sky() {
 function City({ layout, count }: { layout: Layout; count: number }) {
   const { bodies, crowns } = useMemo(() => {
     const r = rand(2099)
-    const palette = ['#ffffff', '#eef2f8', '#9cc4f0', '#6fa5e4', '#f0cf73', '#f4efe4', '#86b6ec'].map((c) => new THREE.Color(c))
+    const palette = ['#ffffff', '#eef2f8', '#9cc4f0', '#6fa5e4', ACCENT.city, '#f4efe4', '#86b6ec'].map((c) => new THREE.Color(c))
     const bodyGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0)
     const bodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshToonMaterial({ gradientMap: BANDS }), count)
-    const crowns = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.5, 0.62, 1, 4).translate(0, 0.5, 0), toon('#e8c15a'), count)
+    const crowns = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.5, 0.62, 1, 4).translate(0, 0.5, 0), toon(ACCENT.crown), count)
     const o = new THREE.Object3D()
     const { minX, maxX, minZ, maxZ } = layout.bounds
     let k = 0
@@ -133,7 +135,7 @@ function City({ layout, count }: { layout: Layout; count: number }) {
   )
 }
 
-/** Taipei 101, re-dressed for 2099 in white and gold. */
+/** Taipei 101, re-dressed for 2099 in white with light rings. */
 function Taipei101() {
   return (
     <group position={[95, 0, -240]} scale={0.95}>
@@ -141,13 +143,13 @@ function Taipei101() {
       {Array.from({ length: 8 }, (_, i) => (
         <group key={i} position={[0, 60 + i * 18, 0]}>
           <Part geo={cyl(15, 12, 18, 4)} mat={toon('#f4f6fa')} rotation={[0, Math.PI / 4, 0]} position={[0, 9, 0]} outline={0.35} />
-          <mesh position={[0, 17.6, 0]} rotation={[0, Math.PI / 4, 0]} material={neon(i % 2 ? YELLOW : '#7fb2ff', 1.3)}>
+          <mesh position={[0, 17.6, 0]} rotation={[0, Math.PI / 4, 0]} material={neon(i % 2 ? LIGHT : SKY, 1.3)}>
             <cylinderGeometry args={[15.1, 15.1, 0.5, 4, 1, true]} />
           </mesh>
         </group>
       ))}
       <Part geo={rbox(16, 14, 16, 0.6)} mat={toon('#eef1f6')} position={[0, 211, 0]} outline={0.3} />
-      <mesh geometry={cyl(0.6, 1.4, 50, 8)} material={toon('#e8c15a')} position={[0, 243, 0]} />
+      <mesh geometry={cyl(0.6, 1.4, 50, 8)} material={toon(ACCENT.crown)} position={[0, 243, 0]} />
     </group>
   )
 }
@@ -164,7 +166,7 @@ function AiCampus() {
       <mesh position={[0, 8.6, 0]} rotation={[Math.PI / 2, 0, 0]} material={neon('#8cc4ff', 1.6)}>
         <torusGeometry args={[26.4, 0.5, 6, 64]} />
       </mesh>
-      <mesh position={[0, 21, 0]} rotation={[Math.PI / 2, 0, 0]} material={neon(YELLOW, 1.4)}>
+      <mesh position={[0, 21, 0]} rotation={[Math.PI / 2, 0, 0]} material={neon(LIGHT, 1.4)}>
         <torusGeometry args={[19.5, 0.35, 6, 64]} />
       </mesh>
       {[-34, 34].map((x) => (
@@ -195,7 +197,7 @@ function Maglev() {
             <mesh position={[0, 0.2, 1.62]} material={neon('#8cd2ff', 1.4)}>
               <boxGeometry args={[10, 0.7, 0.05]} />
             </mesh>
-            <mesh position={[0, -0.75, 1.63]} material={neon(YELLOW, 1.2)}>
+            <mesh position={[0, -0.75, 1.63]} material={neon(LIGHT, 1.2)}>
               <boxGeometry args={[12, 0.16, 0.05]} />
             </mesh>
           </group>
@@ -240,20 +242,34 @@ function Drones({ count }: { count: number }) {
           ].map(([x, z]) => (
             <mesh key={`${x}${z}`} position={[x, 0.18, z]} geometry={cyl(0.5, 0.5, 0.04, 14)} material={toon('#c9d3e6')} />
           ))}
-          <mesh position={[0.72, 0, 0]} geometry={sphere(0.12, 8, 6)} material={neon(i % 2 ? YELLOW : '#7fb2ff', 3)} />
+          <mesh position={[0.72, 0, 0]} geometry={sphere(0.12, 8, 6)} material={neon(i % 2 ? LIGHT : SKY, 3)} />
         </group>
       ))}
     </group>
   )
 }
 
+/** Ribbon cloth: a band of `color` with `edge` piping down both sides. */
+function ribbonTexture(color: string, edge: string) {
+  const c = document.createElement('canvas')
+  c.width = 32
+  c.height = 4
+  const g = c.getContext('2d')!
+  g.fillStyle = edge
+  g.fillRect(0, 0, 32, 4)
+  g.fillStyle = color
+  g.fillRect(5, 0, 22, 4)
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+
 /** A garland ribbon strung along the corridor under the skylight, rippling and twisting a little. */
-function Ribbon({ color, x, y, z0, z1, phase }: { color: string; x: number; y: number; z0: number; z1: number; phase: number }) {
+function Ribbon({ color, edge, x, y, z0, z1, phase }: { color: string; edge: string; x: number; y: number; z0: number; z1: number; phase: number }) {
   const len = z1 - z0
   const geo = useMemo(() => new THREE.PlaneGeometry(0.46, len, 1, Math.max(24, Math.round(len * 5))).rotateX(-Math.PI / 2), [len])
   const rest = useMemo(() => Float32Array.from(geo.attributes.position.array), [geo])
-  const mat = useMemo(() => new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }), [color])
-  const base = useMemo(() => new THREE.Color(color), [color])
+  const mat = useMemo(() => new THREE.MeshBasicMaterial({ map: ribbonTexture(color, edge), side: THREE.DoubleSide }), [color, edge])
   useFrame((s) => {
     const t = s.clock.elapsedTime
     const pos = geo.attributes.position as THREE.BufferAttribute
@@ -267,7 +283,7 @@ function Ribbon({ color, x, y, z0, z1, phase }: { color: string; x: number; y: n
       pos.setY(i, sag + wave + twist)
     }
     pos.needsUpdate = true
-    mat.color.copy(base).multiplyScalar(0.5 + 0.5 * roomLight.level)
+    mat.color.setScalar(0.5 + 0.5 * roomLight.level)
   })
   return <mesh geometry={geo} material={mat} position={[x, y, (z0 + z1) / 2]} />
 }
@@ -285,7 +301,7 @@ function Balloon({ x, y, z, color, phase }: { x: number; y: number; z: number; c
   const len = y - 0.36 - 0.1
   return (
     <group position={[x, 0, z]}>
-      <mesh geometry={rbox(0.14, 0.12, 0.14, 0.03)} material={toon('#e6c160')} position={[0, 0.06, 0]} />
+      <mesh geometry={rbox(0.14, 0.12, 0.14, 0.03)} material={toon(ACCENT.trim)} position={[0, 0.06, 0]} />
       <group ref={g} position={[0, y, 0]}>
         <Part geo={sphere(0.26, 18, 14)} mat={toon(color)} scale={[1, 1.18, 1]} outline={0.012} />
         <mesh geometry={cyl(0.03, 0.05, 0.06, 8)} material={toon(color)} position={[0, -0.33, 0]} />
@@ -305,7 +321,7 @@ function DriftingBalloons({ count }: { count: number }) {
       z: -30 + r() * 50,
       y0: r() * 40,
       speed: 0.5 + r() * 0.5,
-      color: i % 2 ? YELLOW : BLUE,
+      color: i % 2 ? LIGHT : BLUE,
       ph: r() * 6,
     }))
   }, [count])
@@ -355,7 +371,7 @@ function Airship() {
   return (
     <group ref={ship}>
       <group scale={[11, 3.6, 3.6]}>
-        <Part geo={sphere(1, 32, 20)} mat={toon(YELLOW)} outline={0.02} />
+        <Part geo={sphere(1, 32, 20)} mat={toon(LIGHT)} outline={0.02} />
       </group>
       <mesh rotation={[0, 0, Math.PI / 2]} material={toon(BLUE)}>
         <cylinderGeometry args={[3.66, 3.66, 2.2, 32, 1, true]} />
@@ -364,7 +380,7 @@ function Airship() {
         <mesh key={a} geometry={rbox(4, 0.3, 2.8, 0.1)} material={toon(BLUE)} position={[-9.5, Math.sin(a) * 2, Math.cos(a) * 2]} rotation={[a, 0, 0]} />
       ))}
       <Part geo={rbox(4.5, 1.4, 1.8, 0.4)} mat={toon('#ffffff')} position={[1, -4, 0]} outline={0.05} />
-      {[YELLOW, BLUE].map((c, j) => (
+      {[LIGHT, BLUE].map((c, j) => (
         <mesh key={c} geometry={geos[j]} position={[-26 - j * 1.5, -1 - j * 2.2, 0]}>
           <meshBasicMaterial color={c} side={THREE.DoubleSide} />
         </mesh>
@@ -402,9 +418,9 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
 
   const floor = useMemo(() => new THREE.MeshToonMaterial({ map: tiles([w / 2.4, d / 2.4]), gradientMap: BANDS }), [w, d])
   const glass = useMemo(() => new THREE.MeshBasicMaterial({ color: '#cfe6ff', transparent: true, opacity: 0.2, depthWrite: false }), [])
-  const inlay = useMemo(() => [glowMaterial(YELLOW), glowMaterial(BLUE)], [])
+  const inlay = useMemo(() => [glowMaterial(LIGHT), glowMaterial(BLUE)], [])
   const strips = useMemo(() => glowMaterial('#fff2d2'), [])
-  const rings = useMemo(() => [glowMaterial(YELLOW), glowMaterial('#6fa6ff')], [])
+  const rings = useMemo(() => [glowMaterial(LIGHT), glowMaterial(SKY)], [])
 
   const parts = useMemo(() => {
     const base: THREE.BufferGeometry[] = []
@@ -455,10 +471,10 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
     if (hemi.current) hemi.current.intensity = 0.45 + 1.15 * k
     if (sun.current) sun.current.intensity = 0.35 + 1.5 * k
     const glow = 0.35 + 1.25 * k
-    inlay[0].color.set(YELLOW).multiplyScalar(glow)
+    inlay[0].color.set(LIGHT).multiplyScalar(glow)
     inlay[1].color.set(BLUE).multiplyScalar(glow * 1.2)
-    rings[0].color.set(YELLOW).multiplyScalar(0.5 + 1.1 * k + Math.sin(s.clock.elapsedTime * 2) * 0.1)
-    rings[1].color.set('#6fa6ff').multiplyScalar(0.5 + 1.1 * k)
+    rings[0].color.set(LIGHT).multiplyScalar(0.5 + 1.1 * k + Math.sin(s.clock.elapsedTime * 2) * 0.1)
+    rings[1].color.set(SKY).multiplyScalar(0.5 + 1.1 * k)
     strips.color.set('#fff2d2').multiplyScalar(0.25 + 0.4 * k)
   })
 
@@ -491,7 +507,7 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
       {parts.base && <mesh geometry={parts.base} material={toon('#f6f3ec')} />}
       {parts.base && <mesh geometry={parts.base} material={ink(0.012)} />}
       {parts.panes && <mesh geometry={parts.panes} material={glass} />}
-      {parts.trim && <mesh geometry={parts.trim} material={toon('#e6c160')} />}
+      {parts.trim && <mesh geometry={parts.trim} material={toon(ACCENT.trim)} />}
       {parts.columns && <mesh geometry={parts.columns} material={toon('#fbfaf6')} />}
       {parts.columns && <mesh geometry={parts.columns} material={ink(0.012)} />}
       {parts.rings.map((g, i) => g && <mesh key={i} geometry={g} material={rings[i]} />)}
@@ -502,14 +518,14 @@ export function Future2099({ layout, lowPower }: { layout: Layout; lowPower: boo
         </mesh>
       ))}
 
-      <Ribbon color={YELLOW} x={-1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={0} />
-      <Ribbon color={BLUE} x={1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={1.7} />
-      <Balloon x={-2.35} y={2.35} z={-1.1} color={YELLOW} phase={0} />
+      <Ribbon color={LIGHT} edge={SKY} x={-1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={0} />
+      <Ribbon color={BLUE} edge="#ffffff" x={1.05} y={2.88} z0={-3} z1={Math.min(laneEnd, 15)} phase={1.7} />
+      <Balloon x={-2.35} y={2.35} z={-1.1} color={LIGHT} phase={0} />
       <Balloon x={-2.05} y={2.7} z={-1.7} color={BLUE} phase={1.3} />
       <Balloon x={-2.6} y={2.05} z={-1.6} color={BLUE} phase={2.1} />
       <Balloon x={2.35} y={2.35} z={-1.1} color={BLUE} phase={0.6} />
-      <Balloon x={2.05} y={2.7} z={-1.7} color={YELLOW} phase={1.9} />
-      <Balloon x={2.6} y={2.05} z={-1.6} color={YELLOW} phase={2.7} />
+      <Balloon x={2.05} y={2.7} z={-1.7} color={LIGHT} phase={1.9} />
+      <Balloon x={2.6} y={2.05} z={-1.6} color={LIGHT} phase={2.7} />
     </group>
   )
 }

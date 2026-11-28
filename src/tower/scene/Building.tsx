@@ -1,7 +1,7 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useEffect, useMemo, useReducer } from 'react'
 import * as THREE from 'three'
-import { useSite } from '@/lib/season'
+import { ACCENT, useSite } from '@/lib/season'
 import { rbox } from '@/three/geo'
 import { Part } from '@/three/Part'
 import { neon, toon } from '@/three/toon'
@@ -128,7 +128,7 @@ function Frame({ floors }: { floors: number }) {
         <Part key={`${x}${z}`} geo={rbox(0.5, h, 0.5, 0.06)} mat={toon(day ? '#f2f3f6' : '#101018')} position={[x, cy, z]} outline={0.03} />
       ))}
       {[WIDTH / 2 + 0.27, -WIDTH / 2 - 0.27].map((x) => (
-        <mesh key={x} position={[x, cy, DEPTH / 2 + 0.27]} material={day ? neon('#ffd400', 1.8) : neon('#ff2a4d', 2.2)}>
+        <mesh key={x} position={[x, cy, DEPTH / 2 + 0.27]} material={day ? neon(ACCENT.stripe, 1.8) : neon('#ff2a4d', 2.2)}>
           <boxGeometry args={[0.04, h, 0.04]} />
         </mesh>
       ))}
